@@ -12,6 +12,8 @@ import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServlet;
 import com.linkedin.kafka.cruisecontrol.servlet.security.CruiseControlSecurityHandler;
 import com.linkedin.kafka.cruisecontrol.servlet.security.SecurityProvider;
+import com.linkedin.kafka.cruisecontrol.vertx.MainVerticle;
+import io.vertx.core.Vertx;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.NCSARequestLog;
@@ -32,6 +34,7 @@ public class KafkaCruiseControlApp {
   private final KafkaCruiseControlConfig _config;
   private final AsyncKafkaCruiseControl _kafkaCruiseControl;
   private final JmxReporter _jmxReporter;
+  public static AsyncKafkaCruiseControl kafkaCruiseControl;
 
   KafkaCruiseControlApp(KafkaCruiseControlConfig config, Integer port, String hostname) throws ServletException {
     this._config = config;
@@ -41,6 +44,7 @@ public class KafkaCruiseControlApp {
     _jmxReporter.start();
 
     _kafkaCruiseControl = new AsyncKafkaCruiseControl(config, metricRegistry);
+    kafkaCruiseControl = _kafkaCruiseControl;
 
     _server = new Server();
     NCSARequestLog requestLog = createRequestLog();
@@ -63,8 +67,11 @@ public class KafkaCruiseControlApp {
 
   void start() throws Exception {
     _kafkaCruiseControl.startUp();
-    _server.start();
-    printStartupInfo();
+
+    Vertx vertx = Vertx.vertx();
+    vertx.deployVerticle(new MainVerticle());
+    //_server.start();
+    //printStartupInfo();
   }
 
   void registerShutdownHook() {
