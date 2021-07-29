@@ -3,6 +3,7 @@
 .classpath
 .gradle
 .idea
+.vertx
 *.iml
 *.ipr
 *.iws
@@ -17,3 +18,4 @@ target/
 access.log
 *.egg
 /bin/
+**openapi.json

@@ -15,7 +15,6 @@ import java.util.TreeSet;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.DROP_RECENTLY_REMOVED_BROKERS_PARAM;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.DROP_RECENTLY_DEMOTED_BROKERS_PARAM;
 
-
 /**
  * Optional Parameters for {@link CruiseControlEndPoint#ADMIN}.
  * This class holds all the request parameters for {@link AdminParameters.AdminType#DROP_RECENT_BROKERS}.
@@ -39,8 +38,8 @@ public class DropRecentBrokersParameters extends AbstractParameters {
   @Override
   protected void initParameters() throws UnsupportedEncodingException {
     super.initParameters();
-    _dropRecentlyRemovedBrokers = ParameterUtils.dropRecentlyRemovedBrokers(_request);
-    _dropRecentlyDemotedBrokers = ParameterUtils.dropRecentlyDemotedBrokers(_request);
+    _dropRecentlyRemovedBrokers = ParameterUtils.dropRecentlyRemovedBrokers(_handler);
+    _dropRecentlyDemotedBrokers = ParameterUtils.dropRecentlyDemotedBrokers(_handler);
   }
 
   /**

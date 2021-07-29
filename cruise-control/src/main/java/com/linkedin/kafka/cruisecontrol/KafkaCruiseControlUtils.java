@@ -7,6 +7,7 @@ package com.linkedin.kafka.cruisecontrol;
 import com.linkedin.kafka.cruisecontrol.analyzer.AnalyzerUtils;
 import com.linkedin.kafka.cruisecontrol.analyzer.goals.Goal;
 import com.linkedin.kafka.cruisecontrol.analyzer.goals.PreferredLeaderElectionGoal;
+import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import com.linkedin.kafka.cruisecontrol.metricsreporter.config.EnvConfigProvider;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.AnalyzerConfig;
@@ -64,6 +65,8 @@ import org.apache.kafka.common.utils.SystemTime;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Option;
+import javax.servlet.ServletException;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -74,7 +77,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
-import scala.Option;
 
 import static com.linkedin.kafka.cruisecontrol.config.constants.MonitorConfig.RECONNECT_BACKOFF_MS_CONFIG;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.SKIP_HARD_GOAL_CHECK_PARAM;
@@ -900,6 +902,23 @@ public final class KafkaCruiseControlUtils {
     consumerProps.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, valueDeserializer.getName());
     consumerProps.setProperty(ConsumerConfig.RECONNECT_BACKOFF_MS_CONFIG, configs.get(RECONNECT_BACKOFF_MS_CONFIG).toString());
     return new KafkaConsumer<>(consumerProps);
+  }
+
+  /**
+   *
+   * Returns the right KafkaCruiseControl app, depending on the vertx.enabled property.
+   *
+   * @param config The configurations for Cruise Control.
+   * @param port The port for the REST API.
+   * @param hostname The hostname for the REST API.
+   * @return KafkaCruiseControlApp class depending on the vertx.enabled property.
+   * @throws ServletException
+   */
+  public static KafkaCruiseControlApp getCruiseControlApp(KafkaCruiseControlConfig config, Integer port, String hostname) throws ServletException {
+    if (config.getBoolean(WebServerConfig.VERTX_ENABLED_CONFIG)) {
+      return new KafkaCruiseControlVertxApp(config, port, hostname);
+    }
+    return new KafkaCruiseControlServletApp(config, port, hostname);
   }
 
   public enum CompletionType {
