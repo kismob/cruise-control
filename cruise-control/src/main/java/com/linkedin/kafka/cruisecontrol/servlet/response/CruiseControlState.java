@@ -66,6 +66,13 @@ public class CruiseControlState extends AbstractCruiseControlResponse {
     return gson.toJson(jsonStructure);
   }
 
+  public String getJSONString(boolean verbose) {
+    Gson gson = new Gson();
+    Map<String, Object> jsonStructure = getJsonStructure(verbose);
+    jsonStructure.put(VERSION, JSON_VERSION);
+    return gson.toJson(jsonStructure);
+  }
+
   /**
    * @param verbose {@code true} if verbose, {@code false} otherwise.
    * @return An object that can be further used to encode into JSON.
@@ -171,6 +178,25 @@ public class CruiseControlState extends AbstractCruiseControlResponse {
     boolean verbose = ((CruiseControlStateParameters) parameters).isVerbose();
     boolean superVerbose = ((CruiseControlStateParameters) parameters).isSuperVerbose();
 
+    StringBuilder sb = new StringBuilder();
+    sb.append(_monitorState != null ? String.format("MonitorState: %s%n", _monitorState) : "");
+    sb.append(_executorState == null ? "" : String.format("ExecutorState: %s%n", _executorState.getPlaintext()));
+    sb.append(_analyzerState != null ? String.format("AnalyzerState: %s%n", _analyzerState) : "");
+    sb.append(_anomalyDetectorState != null ? String.format("AnomalyDetectorState: %s%n", _anomalyDetectorState) : "");
+
+    if (verbose || superVerbose) {
+      writeVerboseMonitorState(sb);
+      writeVerboseAnalyzerState(sb);
+      writeVerboseExecutorState(sb);
+      if (superVerbose) {
+        writeSuperVerbose(sb);
+      }
+    }
+
+    return sb.toString();
+  }
+
+  public String getPlaintext(boolean verbose, boolean superVerbose) {
     StringBuilder sb = new StringBuilder();
     sb.append(_monitorState != null ? String.format("MonitorState: %s%n", _monitorState) : "");
     sb.append(_executorState == null ? "" : String.format("ExecutorState: %s%n", _executorState.getPlaintext()));

@@ -93,7 +93,8 @@ public class MainVerticle extends AbstractVerticle {
     router.route().failureHandler(ErrorHandler.create(true));
 
     // Routing section - this is where we declare which end points we want to use
-    router.get("/kafka_cluster_state").handler(endPoints::kafkaClusterState);
+    router.get("/kafka_cluster_state").handler(endPoints::KafkaClusterState);
+    router.get("/state").handler(endPoints::CruiseControlState);
 
     OpenAPI openAPIDoc = OpenApiRoutePublisher.publishOpenApiSpec(
       router,
