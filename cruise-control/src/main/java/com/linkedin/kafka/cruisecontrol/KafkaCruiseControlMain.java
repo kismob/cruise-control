@@ -9,6 +9,8 @@ import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.ServerSocket;
+
 import static com.linkedin.kafka.cruisecontrol.KafkaCruiseControlUtils.readConfig;
 
 /**
@@ -35,7 +37,7 @@ public final class KafkaCruiseControlMain {
     KafkaCruiseControlConfig config = readConfig(args[0]);
     Integer port = parsePort(args, config);
     String hostname = parseHostname(args, config);
-    KafkaCruiseControlApp app = new KafkaCruiseControlApp(config, port, hostname);
+    KafkaCruiseControlServletApp app = new KafkaCruiseControlServletApp(config, port, hostname);
     app.registerShutdownHook();
     app.start();
   }

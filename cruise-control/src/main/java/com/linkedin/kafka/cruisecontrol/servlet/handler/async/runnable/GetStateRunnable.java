@@ -7,8 +7,6 @@ package com.linkedin.kafka.cruisecontrol.servlet.handler.async.runnable;
 import com.linkedin.kafka.cruisecontrol.KafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.servlet.parameters.CruiseControlStateParameters;
 import com.linkedin.kafka.cruisecontrol.servlet.response.CruiseControlState;
-
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;

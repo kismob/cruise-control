@@ -2,8 +2,11 @@
  * Copyright 2017 LinkedIn Corp. Licensed under the BSD 2-Clause License (the "License"). See License in the project root for license information.
  */
 
-package com.linkedin.kafka.cruisecontrol.async.progress;
+package com.linkedin.kafka.cruisecontrol.async;
 
+import com.linkedin.kafka.cruisecontrol.async.progress.OperationProgress;
+import com.linkedin.kafka.cruisecontrol.async.progress.Pending;
+import com.linkedin.kafka.cruisecontrol.async.progress.WaitingForClusterModel;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
