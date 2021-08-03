@@ -1,7 +1,7 @@
 {
   "brokerCapacities":[
     {
-      "brokerId": "-1",
+      "brokerId": "2",
       "capacity": {
         "DISK": {"/tmp/kafka-logs-1": "100000", "/tmp/kafka-logs-2": "100000", "/tmp/kafka-logs-3": "50000",
           "/tmp/kafka-logs-4": "50000", "/tmp/kafka-logs-5": "150000", "/tmp/kafka-logs-6": "50000"},

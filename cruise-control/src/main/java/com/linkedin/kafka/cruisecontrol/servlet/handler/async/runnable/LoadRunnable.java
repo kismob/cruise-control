@@ -6,6 +6,7 @@ package com.linkedin.kafka.cruisecontrol.servlet.handler.async.runnable;
 
 import com.linkedin.kafka.cruisecontrol.KafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.async.progress.OperationProgress;
+import com.linkedin.kafka.cruisecontrol.exception.BrokerCapacityResolutionException;
 import com.linkedin.kafka.cruisecontrol.exception.KafkaCruiseControlException;
 import com.linkedin.kafka.cruisecontrol.model.Broker;
 import com.linkedin.kafka.cruisecontrol.model.ClusterModel;
@@ -14,6 +15,8 @@ import com.linkedin.kafka.cruisecontrol.servlet.UserRequestException;
 import com.linkedin.kafka.cruisecontrol.servlet.parameters.ClusterLoadParameters;
 import com.linkedin.kafka.cruisecontrol.servlet.parameters.PartitionLoadParameters;
 import com.linkedin.kafka.cruisecontrol.servlet.response.stats.BrokerStats;
+
+import java.util.concurrent.TimeoutException;
 
 import static com.linkedin.kafka.cruisecontrol.config.constants.MonitorConfig.MIN_VALID_PARTITION_RATIO_CONFIG;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.DEFAULT_START_TIME_FOR_CLUSTER_MODEL;
@@ -48,6 +51,17 @@ public class LoadRunnable extends OperationRunnable {
     _capacityOnly = false;
   }
 
+  public LoadRunnable(KafkaCruiseControl kafkaCruiseControl, OperationFuture future, long start, long end,
+                      boolean allow_capacity_estimation, boolean populate_disk_info, boolean capacity_only) {
+    super(kafkaCruiseControl, future);
+    _start = start;
+    _end = end;
+    _modelCompletenessRequirements = new ModelCompletenessRequirements(1, 0, true);
+    _allowCapacityEstimation = allow_capacity_estimation;
+    _populateDiskInfo = populate_disk_info;
+    _capacityOnly = capacity_only;
+  }
+
   public LoadRunnable(KafkaCruiseControl kafkaCruiseControl, OperationFuture future, ClusterLoadParameters parameters) {
     super(kafkaCruiseControl, future);
     _start = parameters.startMs();
@@ -59,7 +73,7 @@ public class LoadRunnable extends OperationRunnable {
   }
 
   @Override
-  protected BrokerStats getResult() throws Exception {
+  public BrokerStats getResult() throws Exception {
     if (!_populateDiskInfo) {
       // Check whether the cached broker stats is still valid.
       BrokerStats cachedBrokerStats = _kafkaCruiseControl.cachedBrokerLoadStats(_allowCapacityEstimation);
@@ -76,6 +90,7 @@ public class LoadRunnable extends OperationRunnable {
       return clusterModelFromEarliest().brokerStats(_kafkaCruiseControl.config());
     }
   }
+
 
   private boolean isClusterUsingJBOD() throws Exception {
     ClusterModel clusterModel = _kafkaCruiseControl.loadMonitor().clusterCapacity();

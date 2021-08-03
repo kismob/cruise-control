@@ -39,7 +39,7 @@ final class AnnotationMappers {
         operation.deprecated(annotation.deprecated());
         operation.setTags(Arrays.asList(annotation.tags()));
 
-        if(annotation.requestBody().content().length !=0) {
+        if (annotation.requestBody().content().length != 0) {
             io.swagger.v3.oas.models.parameters.RequestBody rb = new io.swagger.v3.oas.models.parameters.RequestBody();
 
             Map<String, Object> map = new HashMap<String, Object>();
@@ -64,7 +64,7 @@ final class AnnotationMappers {
             fields = FieldUtils.getFieldsListWithAnnotation(annotation.requestBody().content()[0].schema().implementation(), Required.class).toArray(new Field[0]);
             List<String> requiredParameters = new ArrayList<String>();
 
-            for(Field requiredField : fields) {
+            for (Field requiredField : fields) {
               requiredParameters.add(requiredField.getName());
             }
 
@@ -147,7 +147,7 @@ final class AnnotationMappers {
         Class componentType = field.getType().getComponentType();
 
         Field[] fields = field.getType().getDeclaredFields();
-        if (componentType !=null && fields.length == 0 && !isPrimitiveOrWrapper(componentType)) {
+        if (componentType != null && fields.length == 0 && !isPrimitiveOrWrapper(componentType)) {
             //this may be an array
             fields = componentType.getDeclaredFields();
         }

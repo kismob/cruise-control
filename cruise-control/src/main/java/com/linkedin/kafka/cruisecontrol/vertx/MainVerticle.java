@@ -28,11 +28,20 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 public class MainVerticle extends AbstractVerticle {
 
   public static final String APPLICATION_JSON = "application/json";
-  private static final int PORT = 9090;
-  private static final String HOST = "localhost";
+  private int PORT;
+  private String HOST;
   private HttpServer server;
 
   private EndPoints endPoints;
+
+  public HttpServer getServer() {
+    return server;
+  }
+
+  public MainVerticle(int port, String host){
+    PORT = port;
+    HOST = host;
+  }
 
   @Override
   public void start(Future<Void> startFuture) throws Exception {
@@ -95,6 +104,7 @@ public class MainVerticle extends AbstractVerticle {
     // Routing section - this is where we declare which end points we want to use
     router.get("/kafka_cluster_state").handler(endPoints::KafkaClusterState);
     router.get("/state").handler(endPoints::CruiseControlState);
+    router.get("/load").handler(endPoints::Load);
 
     OpenAPI openAPIDoc = OpenApiRoutePublisher.publishOpenApiSpec(
       router,
@@ -108,19 +118,18 @@ public class MainVerticle extends AbstractVerticle {
      */
     //openAPIDoc.addTagsItem( new io.swagger.v3.oas.models.tags.Tag().name("Product").description("Product operations"));
 
-
     // Generate the SCHEMA section of Swagger, using the definitions in the Model folder
         ImmutableSet<ClassPath.ClassInfo> modelClasses = getClassesInPackage("io.vertx.VertxAutoSwagger.Model");
 
         Map<String, Object> map = new HashMap<String, Object>();
 
-        for(ClassPath.ClassInfo modelClass : modelClasses){
+        for (ClassPath.ClassInfo modelClass : modelClasses){
 
           Field[] fields = FieldUtils.getFieldsListWithAnnotation(modelClass.load(), Required.class).toArray(new
                 Field[0]);
           List<String> requiredParameters = new ArrayList<String>();
 
-          for(Field requiredField : fields){
+          for (Field requiredField : fields){
               requiredParameters.add(requiredField.getName());
           }
 
@@ -154,7 +163,6 @@ public class MainVerticle extends AbstractVerticle {
 
     return router;
   }
-
 
   private void mapParameters(Field field, Map<String, Object> map) {
     Class type = field.getType();
