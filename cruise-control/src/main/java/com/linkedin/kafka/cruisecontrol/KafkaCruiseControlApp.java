@@ -19,7 +19,6 @@ abstract class KafkaCruiseControlApp {
   protected final KafkaCruiseControlConfig _config;
   protected final AsyncKafkaCruiseControl _kafkaCruiseControl;
   protected final JmxReporter _jmxReporter;
-  public static AsyncKafkaCruiseControl kafkaCruiseControl;
   protected MetricRegistry _metricRegistry;
   protected Integer _port;
   protected String _hostname;
@@ -37,7 +36,6 @@ abstract class KafkaCruiseControlApp {
     _hostname = hostname;
 
     _kafkaCruiseControl = new AsyncKafkaCruiseControl(config, _metricRegistry);
-    kafkaCruiseControl = _kafkaCruiseControl;
 
   }
 

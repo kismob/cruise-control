@@ -1,7 +1,17 @@
 package com.linkedin.kafka.cruisecontrol.vertx;
 
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.ClassPath;
+import com.linkedin.cruisecontrol.servlet.EndPoint;
+import com.linkedin.kafka.cruisecontrol.async.AsyncKafkaCruiseControl;
+import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
+import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
+import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
+import com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager;
+import com.linkedin.kafka.cruisecontrol.servlet.purgatory.Purgatory;
 import com.linkedin.kafka.cruisecontrol.vertx.generator.OpenApiRoutePublisher;
 import com.linkedin.kafka.cruisecontrol.vertx.generator.Required;
 import io.swagger.v3.core.util.Json;
@@ -23,11 +33,20 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.*;
 
+import static com.linkedin.kafka.cruisecontrol.KafkaCruiseControlUtils.KAFKA_CRUISE_CONTROL_SERVLET_SENSOR;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 
 public class MainVerticle extends AbstractVerticle {
 
   public static final String APPLICATION_JSON = "application/json";
+  private final KafkaCruiseControlConfig _config;
+  private AsyncKafkaCruiseControl _asyncKafkaCruiseControl;
+  private final boolean _twoStepVerification;
+  private final Purgatory _purgatory;
+  private final UserTaskManager _userTaskManager;
+  private final Map<EndPoint, Timer> _successfulRequestExecutionTimer = new HashMap<>();
+  private final ThreadLocal<Object> _asyncOperationStep;
+  private final Map<EndPoint, Meter> _requestMeter = new HashMap<>();
   private int PORT;
   private String HOST;
   private HttpServer server;
@@ -38,9 +57,24 @@ public class MainVerticle extends AbstractVerticle {
     return server;
   }
 
-  public MainVerticle(int port, String host){
+  public MainVerticle(AsyncKafkaCruiseControl asynckafkaCruiseControl, MetricRegistry dropwizardMetricRegistry, int port, String host) {
     PORT = port;
     HOST = host;
+    _config = asynckafkaCruiseControl.config();
+    _asyncKafkaCruiseControl = asynckafkaCruiseControl;
+    _twoStepVerification = _config.getBoolean(WebServerConfig.TWO_STEP_VERIFICATION_ENABLED_CONFIG);
+    _purgatory = _twoStepVerification ? new Purgatory(_config) : null;
+    _userTaskManager = new UserTaskManager(_config, dropwizardMetricRegistry, _successfulRequestExecutionTimer, _purgatory);
+    _asyncKafkaCruiseControl.setUserTaskManagerInExecutor(_userTaskManager);
+    _asyncOperationStep = new ThreadLocal<>();
+    _asyncOperationStep.set(0);
+
+    for (CruiseControlEndPoint endpoint : CruiseControlEndPoint.cachedValues()) {
+      _requestMeter.put(endpoint, dropwizardMetricRegistry.meter(
+              MetricRegistry.name(KAFKA_CRUISE_CONTROL_SERVLET_SENSOR, endpoint.name() + "-request-rate")));
+      _successfulRequestExecutionTimer.put(endpoint, dropwizardMetricRegistry.timer(
+              MetricRegistry.name(KAFKA_CRUISE_CONTROL_SERVLET_SENSOR, endpoint.name() + "-successful-request-execution-timer")));
+    }
   }
 
   @Override
@@ -105,6 +139,7 @@ public class MainVerticle extends AbstractVerticle {
     router.get("/kafka_cluster_state").handler(endPoints::KafkaClusterState);
     router.get("/state").handler(endPoints::CruiseControlState);
     router.get("/load").handler(endPoints::Load);
+    router.get("/user_tasks").handler(endPoints::userTasks);
 
     OpenAPI openAPIDoc = OpenApiRoutePublisher.publishOpenApiSpec(
       router,
@@ -211,4 +246,7 @@ public class MainVerticle extends AbstractVerticle {
       return null;
     }
   }
+
+  public AsyncKafkaCruiseControl getKafkaCruiseControl(){return _asyncKafkaCruiseControl;}
+  public UserTaskManager getUserTaskManager() {return _userTaskManager;}
 }
