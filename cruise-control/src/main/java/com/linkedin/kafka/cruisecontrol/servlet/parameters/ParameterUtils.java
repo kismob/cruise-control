@@ -171,6 +171,7 @@ public final class ParameterUtils {
    */
   public static CruiseControlEndPoint endPoint(HttpServletRequest request) {
     List<CruiseControlEndPoint> supportedEndpoints;
+    System.out.println(request.getMethod());
     switch (request.getMethod()) {
       case GET_METHOD:
         supportedEndpoints = CruiseControlEndPoint.getEndpoints();
@@ -800,6 +801,14 @@ public final class ParameterUtils {
     return entries;
   }
 
+  public static int entries(String parameterString) {
+    int entries = parameterString == null ? Integer.MAX_VALUE : Integer.parseInt(parameterString);
+    if (entries <= 0) {
+      throw new UserRequestException("The requested entries must be positive (Requested: " + entries + ").");
+    }
+    return entries;
+  }
+
   /**
    * @param values Integer values
    * @return A set of negative integer values contained in the given set.
@@ -1078,6 +1087,12 @@ public final class ParameterUtils {
            : Arrays.stream(urlDecode(request.getParameter(parameterString)).split(",")).map(UUID::fromString).collect(Collectors.toSet());
   }
 
+  public static Set<UUID> userTaskIds(String parameterString) throws UnsupportedEncodingException {
+    return parameterString == null
+            ? Collections.emptySet()
+            : Arrays.stream(parameterString.split(",")).map(UUID::fromString).collect(Collectors.toSet());
+  }
+
   /**
    * Default: An empty set.
    * @param request Http servlet request.
@@ -1086,6 +1101,16 @@ public final class ParameterUtils {
   public static Set<String> clientIds(HttpServletRequest request) throws UnsupportedEncodingException {
     Set<String> parsedClientIds = parseParamToStringSet(request, CLIENT_IDS_PARAM);
     // May need to validate clientIds
+    return Collections.unmodifiableSet(parsedClientIds);
+  }
+
+  public static Set<String> clientIds(String parameterString) throws UnsupportedEncodingException {
+    Set<String> parsedClientIds = parameterString == null
+            ? new HashSet<>(0)
+            : new HashSet<>(Arrays.asList(parameterString.split(","))).stream()
+              .map(String::toUpperCase)
+              .collect(Collectors.toSet());
+    parsedClientIds.removeIf(String::isEmpty);
     return Collections.unmodifiableSet(parsedClientIds);
   }
 
@@ -1108,6 +1133,22 @@ public final class ParameterUtils {
     return Collections.unmodifiableSet(endPoints);
   }
 
+  public static Set<CruiseControlEndPoint> endPoints(String parameterString) throws UnsupportedEncodingException {
+    Set<String> parsedEndPoints = parameterString == null
+            ? new HashSet<>(0)
+            : new HashSet<>(Arrays.asList(parameterString.split(","))).stream()
+              .map(String::toUpperCase)
+              .collect(Collectors.toSet());
+
+    Set<CruiseControlEndPoint> endPoints = new HashSet<>();
+    for (CruiseControlEndPoint endPoint : CruiseControlEndPoint.cachedValues()) {
+      if (parsedEndPoints.contains(endPoint.toString())) {
+        endPoints.add(endPoint);
+      }
+    }
+    return Collections.unmodifiableSet(endPoints);
+  }
+
   /**
    * Default: An empty set.
    * @param request Http servlet request.
@@ -1115,6 +1156,22 @@ public final class ParameterUtils {
    */
   public static Set<UserTaskManager.TaskState> types(HttpServletRequest request) throws UnsupportedEncodingException {
     Set<String> parsedTaskStates = parseParamToStringSet(request, TYPES_PARAM);
+
+    Set<UserTaskManager.TaskState> taskStates = new HashSet<>();
+    for (UserTaskManager.TaskState state : UserTaskManager.TaskState.cachedValues()) {
+      if (parsedTaskStates.contains(state.toString())) {
+        taskStates.add(state);
+      }
+    }
+    return Collections.unmodifiableSet(taskStates);
+  }
+
+  public static Set<UserTaskManager.TaskState> types(String parameterString) throws UnsupportedEncodingException {
+    Set<String> parsedTaskStates = parameterString == null
+            ? new HashSet<>(0)
+            : new HashSet<>(Arrays.asList(parameterString.split(","))).stream()
+            .map(String::toUpperCase)
+            .collect(Collectors.toSet());
 
     Set<UserTaskManager.TaskState> taskStates = new HashSet<>();
     for (UserTaskManager.TaskState state : UserTaskManager.TaskState.cachedValues()) {

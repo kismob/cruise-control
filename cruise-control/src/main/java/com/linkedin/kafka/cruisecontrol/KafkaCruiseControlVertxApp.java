@@ -8,7 +8,7 @@ import javax.servlet.ServletException;
 
 
 public class KafkaCruiseControlVertxApp extends KafkaCruiseControlApp{
-    protected MainVerticle verticle;
+    protected static MainVerticle verticle;
     KafkaCruiseControlVertxApp(KafkaCruiseControlConfig config, Integer port, String hostname) throws ServletException {
         super(config, port, hostname);
     }
@@ -21,8 +21,10 @@ public class KafkaCruiseControlVertxApp extends KafkaCruiseControlApp{
     void start() {
         _kafkaCruiseControl.startUp();
         Vertx vertx = Vertx.vertx();
-        verticle= new MainVerticle(_port, _hostname);
+        verticle= new MainVerticle(_kafkaCruiseControl,_metricRegistry, _port, _hostname);
         vertx.deployVerticle(verticle);
     }
+
+    public static MainVerticle getVerticle(){return verticle;}
 
 }

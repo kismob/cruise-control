@@ -28,6 +28,7 @@ import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils
  */
 public class CruiseControlStateParameters extends AbstractParameters {
   protected static final SortedSet<String> CASE_INSENSITIVE_PARAMETER_NAMES;
+  protected static final String STATE = "STATE";
   static {
     SortedSet<String> validParameterNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     validParameterNames.add(SUBSTATES_PARAM);
@@ -51,6 +52,16 @@ public class CruiseControlStateParameters extends AbstractParameters {
     _isVerbose = ParameterUtils.isVerbose(_request);
     _isSuperVerbose = ParameterUtils.isSuperVerbose(_request);
   }
+
+  public void initParameters(boolean json, Set<CruiseControlState.SubState> substates,
+                                boolean verbose, boolean superVerbose) throws UnsupportedEncodingException {
+    super.initParameters(json, STATE);
+    _substates = substates;
+    _isVerbose = verbose;
+    _isSuperVerbose = superVerbose;
+  }
+
+
 
   public Set<CruiseControlState.SubState> substates() {
     return _substates;
