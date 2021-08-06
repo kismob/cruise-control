@@ -7,19 +7,10 @@ package com.linkedin.kafka.cruisecontrol.servlet.parameters;
 import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
 import com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager;
 import java.io.UnsupportedEncodingException;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.USER_TASK_IDS_PARAM;
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.CLIENT_IDS_PARAM;
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.ENTRIES_PARAM;
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.ENDPOINTS_PARAM;
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.TYPES_PARAM;
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.FETCH_COMPLETED_TASK_PARAM;
+import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.*;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.REASON_PARAM;
 
 
@@ -34,6 +25,8 @@ import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils
  * </pre>
  */
 public class UserTasksParameters extends AbstractParameters {
+  protected static final String USER_TASKS = "USER_TASKS";
+
   protected static final SortedSet<String> CASE_INSENSITIVE_PARAMETER_NAMES;
   static {
     SortedSet<String> validParameterNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
@@ -67,6 +60,17 @@ public class UserTasksParameters extends AbstractParameters {
     _types = ParameterUtils.types(_request);
     _entries = ParameterUtils.entries(_request);
     _fetchCompletedTask = ParameterUtils.fetchCompletedTask(_request);
+  }
+
+  public void initParameters(boolean json, String user_task_ids_string, String client_ids_string, String end_points_string,
+                                     String types_string, String entries_string, boolean fetch_completed_task) throws UnsupportedEncodingException {
+    super.initParameters(json, USER_TASKS);
+    _userTaskIds = ParameterUtils.userTaskIds(user_task_ids_string);
+    _clientIds = ParameterUtils.clientIds(client_ids_string);
+    _endPoints = ParameterUtils.endPoints(end_points_string);
+    _types = ParameterUtils.types(types_string);
+    _entries = ParameterUtils.entries(entries_string);
+    _fetchCompletedTask = fetch_completed_task;
   }
 
   public Set<UUID> userTaskIds() {
