@@ -17,6 +17,7 @@ import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils
 
 public abstract class KafkaOptimizationParameters extends AbstractParameters {
   protected static final SortedSet<String> CASE_INSENSITIVE_PARAMETER_NAMES;
+  protected static final String PROPOSALS = "PROPOSALS";
   static {
     SortedSet<String> validParameterNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     validParameterNames.add(ALLOW_CAPACITY_ESTIMATION_PARAM);
@@ -39,6 +40,13 @@ public abstract class KafkaOptimizationParameters extends AbstractParameters {
     _allowCapacityEstimation = ParameterUtils.allowCapacityEstimation(_request);
     _isVerbose = ParameterUtils.isVerbose(_request);
     _excludeRecentlyDemotedBrokers = ParameterUtils.excludeRecentlyDemotedBrokers(_request);
+  }
+
+  protected void initParameters(boolean allowCapacityEstimation, boolean excludeRecentlyDemotedBrokers, boolean json, boolean verbose) throws UnsupportedEncodingException {
+    super.initParameters(json, PROPOSALS);
+    _allowCapacityEstimation = allowCapacityEstimation;
+    _isVerbose = verbose;
+    _excludeRecentlyDemotedBrokers = excludeRecentlyDemotedBrokers;
   }
 
   public boolean allowCapacityEstimation() {

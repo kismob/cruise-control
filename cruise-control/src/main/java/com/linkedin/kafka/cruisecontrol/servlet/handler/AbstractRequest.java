@@ -9,6 +9,7 @@ import com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServlet;
 import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
 import com.linkedin.cruisecontrol.servlet.response.CruiseControlResponse;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import javax.servlet.http.HttpServletRequest;
@@ -32,7 +33,7 @@ public abstract class AbstractRequest implements Request {
    */
   @Override
   public void handle(HttpServletRequest request, HttpServletResponse response)
-      throws IOException, ExecutionException, InterruptedException {
+          throws Exception {
     if (parameters().parseParameters(response)) {
       LOG.warn("Failed to parse parameters: {} for request: {}.", request.getParameterMap(), request.getPathInfo());
       return;
@@ -54,7 +55,7 @@ public abstract class AbstractRequest implements Request {
    * @return Response of the requests.
    */
   protected abstract CruiseControlResponse getResponse(HttpServletRequest request, HttpServletResponse response)
-      throws ExecutionException, InterruptedException;
+          throws Exception;
 
   public abstract CruiseControlParameters parameters();
 

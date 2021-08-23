@@ -25,5 +25,5 @@ public interface Request extends CruiseControlConfigurable {
    * @param response Http servlet response.
    */
   void handle(HttpServletRequest request, HttpServletResponse response)
-      throws IOException, ExecutionException, InterruptedException;
+          throws Exception;
 }
