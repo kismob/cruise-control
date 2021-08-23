@@ -7,6 +7,7 @@ package com.linkedin.kafka.cruisecontrol.servlet.handler.async;
 import com.linkedin.kafka.cruisecontrol.async.AsyncKafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.async.progress.OperationProgress;
 import com.linkedin.kafka.cruisecontrol.async.progress.Pending;
+import com.linkedin.kafka.cruisecontrol.common_api.CommonApi;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager;
 import com.linkedin.kafka.cruisecontrol.servlet.handler.AbstractRequest;
@@ -14,6 +15,8 @@ import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
 import com.linkedin.cruisecontrol.servlet.response.CruiseControlResponse;
 import com.linkedin.kafka.cruisecontrol.servlet.handler.async.runnable.OperationFuture;
 import com.linkedin.kafka.cruisecontrol.servlet.response.ProgressResult;
+
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -46,11 +49,11 @@ public abstract class AbstractAsyncRequest extends AbstractRequest {
 
   @Override
   public CruiseControlResponse getResponse(HttpServletRequest request, HttpServletResponse response)
-      throws ExecutionException, InterruptedException {
+          throws Exception {
     LOG.info("Processing async request {}.", name());
     int step = _asyncOperationStep.get();
     List<OperationFuture>
-        futures = _userTaskManager.getOrCreateUserTask(request, response, this::handle, step, true, parameters());
+        futures = _userTaskManager.getOrCreateUserTask(new CommonApi(request, response), this::handle, step, true, parameters());
     _asyncOperationStep.set(step + 1);
     CruiseControlResponse ccResponse;
     try {

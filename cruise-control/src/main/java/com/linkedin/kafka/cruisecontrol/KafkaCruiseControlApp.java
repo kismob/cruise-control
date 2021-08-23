@@ -27,7 +27,7 @@ abstract class KafkaCruiseControlApp {
 
   public int get_port(){return _port;}
 
-  KafkaCruiseControlApp(KafkaCruiseControlConfig config, Integer port, String hostname) throws ServletException {
+  KafkaCruiseControlApp(KafkaCruiseControlConfig config, Integer port, String hostname) {
     this._config = config;
     _metricRegistry = new MetricRegistry();
     _jmxReporter = JmxReporter.forRegistry(_metricRegistry).inDomain(METRIC_DOMAIN).build();

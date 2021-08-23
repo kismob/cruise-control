@@ -51,16 +51,6 @@ public class LoadRunnable extends OperationRunnable {
     _capacityOnly = false;
   }
 
-  public LoadRunnable(KafkaCruiseControl kafkaCruiseControl, OperationFuture future, long start, long end,
-                      boolean allow_capacity_estimation, boolean populate_disk_info, boolean capacity_only) {
-    super(kafkaCruiseControl, future);
-    _start = start;
-    _end = end;
-    _modelCompletenessRequirements = new ModelCompletenessRequirements(1, 0, true);
-    _allowCapacityEstimation = allow_capacity_estimation;
-    _populateDiskInfo = populate_disk_info;
-    _capacityOnly = capacity_only;
-  }
 
   public LoadRunnable(KafkaCruiseControl kafkaCruiseControl, OperationFuture future, ClusterLoadParameters parameters) {
     super(kafkaCruiseControl, future);
