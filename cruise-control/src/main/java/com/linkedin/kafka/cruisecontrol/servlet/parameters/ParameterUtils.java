@@ -13,6 +13,7 @@ import com.linkedin.kafka.cruisecontrol.analyzer.goals.IntraBrokerDiskCapacityGo
 import com.linkedin.kafka.cruisecontrol.analyzer.goals.IntraBrokerDiskUsageDistributionGoal;
 import com.linkedin.kafka.cruisecontrol.analyzer.kafkaassigner.KafkaAssignerDiskUsageDistributionGoal;
 import com.linkedin.kafka.cruisecontrol.analyzer.kafkaassigner.KafkaAssignerEvenRackAwareGoal;
+import com.linkedin.kafka.cruisecontrol.common_api.CommonApi;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.ExecutorConfig;
 import com.linkedin.kafka.cruisecontrol.detector.notifier.KafkaAnomalyType;
@@ -24,6 +25,8 @@ import com.linkedin.kafka.cruisecontrol.servlet.UserRequestException;
 import com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager;
 import com.linkedin.kafka.cruisecontrol.servlet.purgatory.ReviewStatus;
 import com.linkedin.kafka.cruisecontrol.servlet.response.CruiseControlState;
+import io.vertx.ext.web.RoutingContext;
+
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -197,6 +200,33 @@ public final class ParameterUtils {
     return null;
   }
 
+  public static CruiseControlEndPoint endPoint(CommonApi common) {
+    List<CruiseControlEndPoint> supportedEndpoints;
+    switch (common.get_method()) {
+      case GET_METHOD:
+        supportedEndpoints = CruiseControlEndPoint.getEndpoints();
+        break;
+      case POST_METHOD:
+        supportedEndpoints = CruiseControlEndPoint.postEndpoints();
+        break;
+      default:
+        throw new UserRequestException("Unsupported request method: " + common.get_method() + ".");
+    }
+    String pathInfo = common.get_pathInfo();
+    if (pathInfo == null) {
+      // URL does not have any extra path information
+      return null;
+    }
+    // Skip the first character '/'
+    String path = pathInfo.substring(1);
+    for (CruiseControlEndPoint endPoint : supportedEndpoints) {
+      if (endPoint.toString().equalsIgnoreCase(path)) {
+        return endPoint;
+      }
+    }
+    return null;
+  }
+
   static void handleParameterParseException(Exception e,
                                             HttpServletResponse response,
                                             String errorMessage,
@@ -284,6 +314,13 @@ public final class ParameterUtils {
     String parameterString = caseSensitiveParameterName(request.getParameterMap(), parameter);
     List<String> retList = parameterString == null ? new ArrayList<>()
                                                    : Arrays.asList(urlDecode(request.getParameter(parameterString)).split(","));
+    retList.removeIf(String::isEmpty);
+    return Collections.unmodifiableList(retList);
+  }
+
+  public static List<String> getListParam(String parameterString, String parameter) throws UnsupportedEncodingException {
+    List<String> retList = parameterString == null ? new ArrayList<>()
+            : Arrays.asList(urlDecode(parameterString).split(","));
     retList.removeIf(String::isEmpty);
     return Collections.unmodifiableList(retList);
   }
@@ -545,6 +582,10 @@ public final class ParameterUtils {
     return parameterString == null ? DEFAULT_PARTITION_LOAD_RESOURCE : request.getParameter(parameterString);
   }
 
+  public static String resourceString(String parameterString) {
+    return parameterString == null ? DEFAULT_PARTITION_LOAD_RESOURCE : parameterString;
+  }
+
   /**
    * Get the {@link #REASON_PARAM} from the request.
    *
@@ -596,6 +637,12 @@ public final class ParameterUtils {
     return parameterString == null ? new HashSet<>(0)
                                    : Arrays.stream(urlDecode(request.getParameter(parameterString)).split(","))
                                            .map(Integer::parseInt).collect(Collectors.toSet());
+  }
+
+  public static Set<Integer> parseParamToIntegerSet(String parameterString) throws UnsupportedEncodingException {
+    return parameterString == null ? new HashSet<>(0)
+            : Arrays.stream(parameterString.split(","))
+            .map(Integer::parseInt).collect(Collectors.toSet());
   }
 
   /**
@@ -774,13 +821,39 @@ public final class ParameterUtils {
       if (!goals.isEmpty()) {
         throw new UserRequestException("Kafka assigner mode does not support explicitly specifying goals in request.");
       }
-      return List.of(KafkaAssignerEvenRackAwareGoal.class.getSimpleName(), KafkaAssignerDiskUsageDistributionGoal.class.getSimpleName());
+      return Collections.unmodifiableList(Arrays.asList(KafkaAssignerEvenRackAwareGoal.class.getSimpleName(),
+                                                        KafkaAssignerDiskUsageDistributionGoal.class.getSimpleName()));
     }
     if (isRebalanceDiskMode) {
       if (!goals.isEmpty()) {
         throw new UserRequestException("Rebalance disk mode does not support explicitly specifying goals in request.");
       }
-      return List.of(IntraBrokerDiskCapacityGoal.class.getSimpleName(), IntraBrokerDiskUsageDistributionGoal.class.getSimpleName());
+      return Collections.unmodifiableList(Arrays.asList(IntraBrokerDiskCapacityGoal.class.getSimpleName(),
+                                                        IntraBrokerDiskUsageDistributionGoal.class.getSimpleName()));
+    }
+    return goals;
+  }
+
+  static List<String> getGoals(String goalString, boolean isKafkaAssignerMode, boolean isRebalanceDiskMode) throws UnsupportedEncodingException {
+    // Sanity check isKafkaAssignerMode and isRebalanceDiskMode are not both true at the same time.
+    if (isKafkaAssignerMode && isRebalanceDiskMode) {
+      throw new UserRequestException("Kafka assigner mode and rebalance disk mode cannot be set the at the same time.");
+    }
+    List<String> goals = getListParam(goalString, GOALS_PARAM);
+    // KafkaAssigner mode is assumed to use two KafkaAssigner goals, if client specifies goals in request, throw exception.
+    if (isKafkaAssignerMode) {
+      if (!goals.isEmpty()) {
+        throw new UserRequestException("Kafka assigner mode does not support explicitly specifying goals in request.");
+      }
+      return List.of(KafkaAssignerEvenRackAwareGoal.class.getSimpleName(),
+              KafkaAssignerDiskUsageDistributionGoal.class.getSimpleName());
+    }
+    if (isRebalanceDiskMode) {
+      if (!goals.isEmpty()) {
+        throw new UserRequestException("Rebalance disk mode does not support explicitly specifying goals in request.");
+      }
+      return List.of(IntraBrokerDiskCapacityGoal.class.getSimpleName(),
+              IntraBrokerDiskUsageDistributionGoal.class.getSimpleName());
     }
     return goals;
   }
@@ -937,6 +1010,21 @@ public final class ParameterUtils {
     return Integer.parseInt(boundaries[isUpperBound ? 1 : 0]);
   }
 
+  static int partitionBoundary(String partitionString, boolean isUpperBound) {
+    if (partitionString == null) {
+      return isUpperBound ? Integer.MAX_VALUE : Integer.MIN_VALUE;
+    }
+    if (!partitionString.contains("-")) {
+      return Integer.parseInt(partitionString);
+    }
+
+    String[] boundaries = partitionString.split("-");
+    if (boundaries.length > 2) {
+      throw new UserRequestException("The " + PARTITION_PARAM + " parameter cannot contain multiple dashes.");
+    }
+    return Integer.parseInt(boundaries[isUpperBound ? 1 : 0]);
+  }
+
   /**
    * Get the {@link #NUM_BROKERS_TO_ADD} from the request.
    *
@@ -1016,6 +1104,20 @@ public final class ParameterUtils {
       // Sanity check: Ensure that BROKER_ID_PARAM and DESTINATION_BROKER_IDS_PARAM configs share nothing.
       ensureDisjoint(parseParamToIntegerSet(request, BROKER_ID_PARAM), brokerIds,
                      "No overlap is allowed between the specified destination broker ids and broker ids");
+    }
+
+    return brokerIds;
+  }
+
+  static Set<Integer> destinationBrokerIds(String parameterString, boolean isKafkaAssignerMode) throws UnsupportedEncodingException {
+    Set<Integer> brokerIds = Collections.unmodifiableSet(parseParamToIntegerSet(parameterString));
+    if (!brokerIds.isEmpty()) {
+      if (isKafkaAssignerMode) {
+        throw new UserRequestException("Kafka assigner mode does not support explicitly specifying destination broker ids.");
+      }
+      // Sanity check: Ensure that BROKER_ID_PARAM and DESTINATION_BROKER_IDS_PARAM configs share nothing.
+      ensureDisjoint(parseParamToIntegerSet(parameterString), brokerIds,
+              "No overlap is allowed between the specified destination broker ids and broker ids");
     }
 
     return brokerIds;
@@ -1192,6 +1294,14 @@ public final class ParameterUtils {
     String parameterString = caseSensitiveParameterName(request.getParameterMap(), DATA_FROM_PARAM);
     if (parameterString != null) {
       dataFrom = DataFrom.valueOf(request.getParameter(parameterString).toUpperCase());
+    }
+    return dataFrom;
+  }
+
+  static DataFrom getDataFrom(String parameterString) {
+    DataFrom dataFrom = DataFrom.VALID_WINDOWS;
+    if (parameterString != null) {
+      dataFrom = DataFrom.valueOf(parameterString.toUpperCase());
     }
     return dataFrom;
   }

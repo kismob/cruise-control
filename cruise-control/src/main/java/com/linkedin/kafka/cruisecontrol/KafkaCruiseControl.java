@@ -1,7 +1,3 @@
-/*
- * Copyright 2017 LinkedIn Corp. Licensed under the BSD 2-Clause License (the "License"). See License in the project root for license information.
- */
-
 package com.linkedin.kafka.cruisecontrol;
 
 import com.codahale.metrics.MetricRegistry;
@@ -194,7 +190,7 @@ public class KafkaCruiseControl {
    * @return A new auto closeable semaphore for the cluster model generation.
    */
   public LoadMonitor.AutoCloseableSemaphore acquireForModelGeneration(OperationProgress operationProgress)
-      throws InterruptedException {
+          throws InterruptedException {
     return _loadMonitor.acquireForModelGeneration(operationProgress);
   }
 
@@ -274,8 +270,8 @@ public class KafkaCruiseControl {
     if (hasOngoingExecution()) {
       if (!stopOngoingExecution) {
         throw new IllegalStateException(String.format("Cannot start a new execution while there is an ongoing execution. "
-                                                      + "Please use %s=true to stop ongoing execution and start a new one.",
-                                                      STOP_ONGOING_EXECUTION_PARAM));
+                        + "Please use %s=true to stop ongoing execution and start a new one.",
+                STOP_ONGOING_EXECUTION_PARAM));
       }
     } else {
       Set<TopicPartition> partitionsBeingReassigned;
@@ -284,11 +280,11 @@ public class KafkaCruiseControl {
       } catch (TimeoutException | InterruptedException | ExecutionException e) {
         // This may indicate transient (e.g. network) issues.
         throw new IllegalStateException("Cannot execute new proposals due to failure to retrieve whether the Kafka cluster has "
-                                        + "an already ongoing partition reassignment.", e);
+                + "an already ongoing partition reassignment.", e);
       }
       if (!partitionsBeingReassigned.isEmpty()) {
         throw new IllegalStateException(String.format("Cannot execute new proposals while there are ongoing partition reassignments "
-                                                      + "initiated by external agent: %s", partitionsBeingReassigned));
+                + "initiated by external agent: %s", partitionsBeingReassigned));
       }
     }
   }
@@ -333,7 +329,7 @@ public class KafkaCruiseControl {
   public ClusterModel clusterModel(ModelCompletenessRequirements requirements,
                                    boolean allowCapacityEstimation,
                                    OperationProgress operationProgress)
-      throws NotEnoughValidWindowsException, TimeoutException, BrokerCapacityResolutionException {
+          throws NotEnoughValidWindowsException, TimeoutException, BrokerCapacityResolutionException {
     return _loadMonitor.clusterModel(timeMs(), requirements, allowCapacityEstimation, operationProgress);
   }
 
@@ -356,7 +352,7 @@ public class KafkaCruiseControl {
                                    boolean populateReplicaPlacementInfo,
                                    boolean allowCapacityEstimation,
                                    OperationProgress operationProgress)
-      throws NotEnoughValidWindowsException, TimeoutException, BrokerCapacityResolutionException {
+          throws NotEnoughValidWindowsException, TimeoutException, BrokerCapacityResolutionException {
     return _loadMonitor.clusterModel(from, to, requirements, populateReplicaPlacementInfo, allowCapacityEstimation, operationProgress);
   }
 
@@ -530,7 +526,7 @@ public class KafkaCruiseControl {
    * @return The optimization result.
    */
   public OptimizerResult getProposals(OperationProgress operationProgress, boolean allowCapacityEstimation)
-      throws KafkaCruiseControlException {
+          throws KafkaCruiseControlException {
     try {
       return _goalOptimizer.optimizations(operationProgress, allowCapacityEstimation);
     } catch (InterruptedException ie) {
@@ -570,14 +566,14 @@ public class KafkaCruiseControl {
                                      boolean isRebalanceDiskMode) {
     ModelCompletenessRequirements requirementsForCache = _goalOptimizer.modelCompletenessRequirementsForPrecomputing();
     boolean hasWeakerRequirement =
-        requirementsForCache.minMonitoredPartitionsPercentage() > requirements.minMonitoredPartitionsPercentage()
-        || requirementsForCache.minRequiredNumWindows() > requirements.minRequiredNumWindows()
-        || (requirementsForCache.includeAllTopics() && !requirements.includeAllTopics());
+            requirementsForCache.minMonitoredPartitionsPercentage() > requirements.minMonitoredPartitionsPercentage()
+                    || requirementsForCache.minRequiredNumWindows() > requirements.minRequiredNumWindows()
+                    || (requirementsForCache.includeAllTopics() && !requirements.includeAllTopics());
 
     return hasOngoingExecution() || ignoreProposalCache || (goals != null && !goals.isEmpty())
-           || hasWeakerRequirement || excludedTopics != null || excludeBrokers || isTriggeredByGoalViolation
-           || !requestedDestinationBrokerIds.isEmpty() || isRebalanceDiskMode
-           || partitionWithOfflineReplicas(kafkaCluster()) != null;
+            || hasWeakerRequirement || excludedTopics != null || excludeBrokers || isTriggeredByGoalViolation
+            || !requestedDestinationBrokerIds.isEmpty() || isRebalanceDiskMode
+            || partitionWithOfflineReplicas(kafkaCluster()) != null;
   }
 
   /**
@@ -599,7 +595,7 @@ public class KafkaCruiseControl {
                                                     OperationProgress operationProgress,
                                                     Map<TopicPartition, List<ReplicaPlacementInfo>> initReplicaDistribution,
                                                     OptimizationOptions optimizationOptions)
-      throws KafkaCruiseControlException {
+          throws KafkaCruiseControlException {
     return _goalOptimizer.optimizations(clusterModel, goalsByPriority, operationProgress, initReplicaDistribution, optimizationOptions);
   }
 
@@ -664,10 +660,10 @@ public class KafkaCruiseControl {
                                boolean skipInterBrokerReplicaConcurrencyAdjustment) throws OngoingExecutionException {
     if (hasProposalsToExecute(proposals, uuid)) {
       _executor.executeProposals(proposals, unthrottledBrokers, null, _loadMonitor,
-                                 concurrentInterBrokerPartitionMovements, concurrentIntraBrokerPartitionMovements,
-                                 concurrentLeaderMovements, executionProgressCheckIntervalMs, replicaMovementStrategy,
-                                 replicationThrottle, isTriggeredByUserRequest, uuid, isKafkaAssignerMode,
-                                 skipInterBrokerReplicaConcurrencyAdjustment);
+              concurrentInterBrokerPartitionMovements, concurrentIntraBrokerPartitionMovements,
+              concurrentLeaderMovements, executionProgressCheckIntervalMs, replicaMovementStrategy,
+              replicationThrottle, isTriggeredByUserRequest, uuid, isKafkaAssignerMode,
+              skipInterBrokerReplicaConcurrencyAdjustment);
     } else {
       failGeneratingProposalsForExecution(uuid);
     }
@@ -705,9 +701,9 @@ public class KafkaCruiseControl {
                              String uuid) throws OngoingExecutionException {
     if (hasProposalsToExecute(proposals, uuid)) {
       _executor.executeProposals(proposals, throttleDecommissionedBroker ? Collections.emptySet() : removedBrokers,
-                                 removedBrokers, _loadMonitor, concurrentInterBrokerPartitionMovements, 0,
-                                 concurrentLeaderMovements, executionProgressCheckIntervalMs, replicaMovementStrategy,
-                                 replicationThrottle, isTriggeredByUserRequest, uuid, isKafkaAssignerMode, false);
+              removedBrokers, _loadMonitor, concurrentInterBrokerPartitionMovements, 0,
+              concurrentLeaderMovements, executionProgressCheckIntervalMs, replicaMovementStrategy,
+              replicationThrottle, isTriggeredByUserRequest, uuid, isKafkaAssignerMode, false);
     } else {
       failGeneratingProposalsForExecution(uuid);
     }
@@ -743,13 +739,13 @@ public class KafkaCruiseControl {
       // (2) Ensure that replica swaps within partitions, which are prerequisites for broker demotion and does not trigger data move,
       //     are throttled by concurrentLeaderMovements and config max.num.cluster.movements.
       int concurrentSwaps = concurrentLeaderMovements != null
-                            ? concurrentLeaderMovements
-                            : _config.getInt(ExecutorConfig.NUM_CONCURRENT_LEADER_MOVEMENTS_CONFIG);
+              ? concurrentLeaderMovements
+              : _config.getInt(ExecutorConfig.NUM_CONCURRENT_LEADER_MOVEMENTS_CONFIG);
       concurrentSwaps = Math.min(_config.getInt(ExecutorConfig.MAX_NUM_CLUSTER_MOVEMENTS_CONFIG) / brokerCount, concurrentSwaps);
 
       _executor.executeDemoteProposals(proposals, demotedBrokers, _loadMonitor, concurrentSwaps, concurrentLeaderMovements,
-                                       executionProgressCheckIntervalMs, replicaMovementStrategy, replicationThrottle,
-                                       isTriggeredByUserRequest, uuid);
+              executionProgressCheckIntervalMs, replicaMovementStrategy, replicationThrottle,
+              isTriggeredByUserRequest, uuid);
     } else {
       failGeneratingProposalsForExecution(uuid);
     }
@@ -771,7 +767,7 @@ public class KafkaCruiseControl {
    * @param isTriggeredByUserRequest Whether the execution is triggered by a user request.
    */
   public void setGeneratingProposalsForExecution(String uuid, Supplier<String> reasonSupplier, boolean isTriggeredByUserRequest)
-      throws OngoingExecutionException {
+          throws OngoingExecutionException {
     _executor.setGeneratingProposalsForExecution(uuid, reasonSupplier, isTriggeredByUserRequest);
   }
 
@@ -868,7 +864,7 @@ public class KafkaCruiseControl {
    */
   public ModelCompletenessRequirements modelCompletenessRequirements(Collection<Goal> goals) {
     return goals == null || goals.isEmpty() ? _goalOptimizer.defaultModelCompletenessRequirements()
-                                            : MonitorUtils.combineLoadRequirementOptions(goals);
+            : MonitorUtils.combineLoadRequirementOptions(goals);
   }
 
   /**
@@ -880,7 +876,7 @@ public class KafkaCruiseControl {
   public boolean meetCompletenessRequirements(List<String> goals) {
     MetadataClient.ClusterAndGeneration clusterAndGeneration = _loadMonitor.refreshClusterAndGeneration();
     return goalsByPriority(goals, _config).stream().allMatch(g -> _loadMonitor.meetCompletenessRequirements(
-        clusterAndGeneration.cluster(), g.clusterModelCompletenessRequirements()));
+            clusterAndGeneration.cluster(), g.clusterModelCompletenessRequirements()));
   }
 
   /**

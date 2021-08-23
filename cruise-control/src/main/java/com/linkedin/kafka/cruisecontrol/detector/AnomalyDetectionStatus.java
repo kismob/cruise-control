@@ -14,7 +14,7 @@ import java.util.List;
  * <ul>
  *   <li>{@link #READY}: Ready to initiate anomaly detection.</li>
  *   <li>{@link #SKIP_HAS_OFFLINE_REPLICAS}: Offline replicas in the cluster prevent anomaly detection.</li>
- *   <li>{@link #SKIP_LOAD_MONITOR_NOT_READY}: Load monitor is not ready.</li>
+ *   <li>{@link #SKIP_LOAD_MONITOR_NOT_READY}: load monitor is not ready.</li>
  *   <li>{@link #SKIP_EXECUTOR_NOT_READY}: An execution is in progress, starting, or stopping.</li>
  *   <li>{@link #SKIP_MODEL_GENERATION_NOT_CHANGED}: Cluster model generation has not changed since the last check.</li>
  *   <li>{@link #SKIP_HAS_DEAD_BROKERS}: Dead brokers in the cluster prevent anomaly detection.</li>
@@ -31,6 +31,6 @@ public enum AnomalyDetectionStatus {
    * @return enumerated values in the same order as values()
    */
   public static List<AnomalyDetectionStatus> cachedValues() {
-    return Collections.unmodifiableList(CACHED_VALUES);
+    return CACHED_VALUES;
   }
 }

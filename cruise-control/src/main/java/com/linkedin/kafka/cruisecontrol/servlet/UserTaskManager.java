@@ -9,6 +9,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.linkedin.cruisecontrol.servlet.EndPoint;
 import com.linkedin.cruisecontrol.servlet.EndpointType;
+import com.linkedin.kafka.cruisecontrol.common_api.CommonApi;
 import com.linkedin.kafka.cruisecontrol.config.constants.UserTaskManagerConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import com.linkedin.kafka.cruisecontrol.servlet.handler.async.runnable.OperationFuture;
@@ -43,6 +44,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import com.linkedin.kafka.cruisecontrol.servlet.response.JsonResponseClass;
 import com.linkedin.kafka.cruisecontrol.servlet.response.JsonResponseField;
+import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.Session;
 import org.apache.kafka.common.utils.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -258,8 +261,63 @@ public class UserTaskManager implements Closeable {
     }
   }
 
+  public List<OperationFuture> getOrCreateUserTask(CommonApi common,
+                                                    Function<String, OperationFuture> function,
+                                                    int step,
+                                                    boolean isAsyncRequest,
+                                                    CruiseControlParameters parameters) throws Exception {
+    UUID userTaskId = getUserTaskId(common);
+    UserTaskInfo userTaskInfo = getUserTaskByUserTaskId(userTaskId, common);
+
+    if (userTaskInfo != null) {
+      LOG.info("Fetch an existing UserTask {}", userTaskId);
+      common.setOrPutHeader(USER_TASK_HEADER_NAME, userTaskId.toString());
+      if (step < userTaskInfo.futures().size()) {
+        return Collections.unmodifiableList(userTaskInfo.futures());
+      } else if (step == userTaskInfo.futures().size()) {
+        LOG.info("Add a new future to existing UserTask {}", userTaskId);
+        return Collections.unmodifiableList(insertFuturesByUserTaskId(userTaskId, function, common, parameters).futures());
+      } else {
+        throw new IllegalArgumentException(
+                String.format("There are %d steps in the session. Cannot add step %d.", userTaskInfo.futures().size(), step));
+      }
+    } else {
+      ensureHeaderNotPresent(common, USER_TASK_HEADER_NAME);
+      if (step != 0) {
+        throw new IllegalArgumentException(
+                String.format("There are no step in the session. Cannot add step %d.", step));
+      }
+      userTaskId = _uuidGenerator.randomUUID();
+      userTaskInfo = insertFuturesByUserTaskId(userTaskId, function, common, parameters);
+      // Only create user task id to session mapping for async request
+      if (isAsyncRequest) {
+        createSessionKeyMapping(userTaskId, common);
+      }
+
+      common.setOrPutHeader(USER_TASK_HEADER_NAME, userTaskId.toString());
+      return Collections.unmodifiableList(userTaskInfo.futures());
+    }
+  }
+
   private void createSessionKeyMapping(UUID userTaskId, HttpServletRequest httpServletRequest) {
     SessionKey sessionKey = new SessionKey(httpServletRequest);
+    LOG.info("Create a new UserTask {} with SessionKey {}", userTaskId, sessionKey);
+    synchronized (_sessionKeyToUserTaskIdMap) {
+      _sessionKeyToUserTaskIdMap.put(sessionKey, userTaskId);
+    }
+  }
+
+  private void createSessionKeyMapping(UUID userTaskId, CommonApi common) {
+    SessionKey sessionKey;
+    if(common.get_vertxSession() != null && common.get_servletSession() == null) {
+      sessionKey = new SessionKey(common.get_vertxSession(), common.get_requestURL(), common.get_queryParamsMap());
+    }
+    else if(common.get_vertxSession() == null && common.get_servletSession() != null) {
+      sessionKey = new SessionKey(common.get_servletSession(), common.get_requestURL(), common.get_queryParamsMap());
+    }
+    else{
+      sessionKey = null;
+    }
     LOG.info("Create a new UserTask {} with SessionKey {}", userTaskId, sessionKey);
     synchronized (_sessionKeyToUserTaskIdMap) {
       _sessionKeyToUserTaskIdMap.put(sessionKey, userTaskId);
@@ -295,21 +353,22 @@ public class UserTaskManager implements Closeable {
       while (iter.hasNext()) {
         Map.Entry<SessionKey, UUID> entry = iter.next();
         SessionKey sessionKey = entry.getKey();
-        HttpSession session = sessionKey.httpSession();
-        try {
-          if (LOG.isTraceEnabled()) {
-            LOG.trace("Session {} was last accessed at {}, age is {} ms.", session, session.getLastAccessedTime(),
-                      now - session.getLastAccessedTime());
-          }
-          if (now >= session.getLastAccessedTime() + _sessionExpiryMs) {
-            LOG.info("Expiring the session associated with {}.", sessionKey);
-            session.invalidate();
+          try {
+            if (LOG.isTraceEnabled()) {
+              LOG.trace("Session {} was last accessed at {}, age is {} ms.",
+                      sessionKey._vertxSession != null ? sessionKey._vertxSession : sessionKey._httpSession, sessionKey.getLastAccessed(),
+                      now - sessionKey.getLastAccessed());
+            }
+            if (now >= sessionKey.getLastAccessed() + _sessionExpiryMs) {
+              LOG.info("Expiring the session associated with {}.", sessionKey);
+              sessionKey.invalidateSession();
+              iter.remove();
+            }
+          } catch (IllegalStateException e) {
+            LOG.info("Already expired the session associated with {}.", sessionKey);
             iter.remove();
           }
-        } catch (IllegalStateException e) {
-          LOG.info("Already expired the session associated with {}.", sessionKey);
-          iter.remove();
-        }
+          return;
       }
     }
   }
@@ -335,7 +394,31 @@ public class UserTaskManager implements Closeable {
         userTaskId = _sessionKeyToUserTaskIdMap.get(sessionKey);
       }
     }
-
+    return userTaskId;
+  }
+  public UUID getUserTaskId(CommonApi common) {
+    String userTaskIdString = common.get_userTaskIdString();
+    UUID userTaskId;
+    if (userTaskIdString != null && !userTaskIdString.isEmpty()) {
+      // valid user task id
+      userTaskId = UUID.fromString(userTaskIdString);
+    } else {
+        if(common.get_vertxSession() == null && common.get_servletSession() != null) {
+          SessionKey sessionKey = new SessionKey(common.get_servletSession(), common.get_requestURL(), common.get_queryParamsMap());
+          synchronized (_sessionKeyToUserTaskIdMap) {
+            userTaskId = _sessionKeyToUserTaskIdMap.get(sessionKey);
+          }
+        }
+        else if(common.get_vertxSession() != null && common.get_servletSession() == null) {
+          SessionKey sessionKey = new SessionKey(common.get_vertxSession(), common.get_requestURL(), common.get_queryParamsMap());
+          synchronized (_sessionKeyToUserTaskIdMap) {
+            userTaskId = _sessionKeyToUserTaskIdMap.get(sessionKey);
+          }
+        }
+        else{
+          userTaskId = null;
+        }
+      }
     return userTaskId;
   }
 
@@ -479,6 +562,40 @@ public class UserTaskManager implements Closeable {
     return null;
   }
 
+  public synchronized UserTaskInfo getUserTaskByUserTaskId(UUID userTaskId, CommonApi common) {
+    if (userTaskId == null) {
+      return null;
+    }
+
+    String requestUrl = common.get_requestURL();
+    for (Map<UUID, UserTaskInfo> infoMap : _uuidToCompletedUserTaskInfoMap.values()) {
+      if (infoMap.containsKey(userTaskId)) {
+        UserTaskInfo userTaskInfo = infoMap.get(userTaskId);
+        if (userTaskInfo.requestUrl().equals(requestUrl)
+                && hasTheSameHttpParameter(userTaskInfo.queryParams(), common.get_queryParamsMap())) {
+          return userTaskInfo;
+        }
+      }
+    }
+
+    if (_uuidToActiveUserTaskInfoMap.containsKey(userTaskId)) {
+      UserTaskInfo userTaskInfo = _uuidToActiveUserTaskInfoMap.get(userTaskId);
+      if (userTaskInfo.requestUrl().equals(requestUrl)
+              && hasTheSameHttpParameter(userTaskInfo.queryParams(), common.get_queryParamsMap())) {
+        return userTaskInfo;
+      }
+    }
+
+    if (_inExecutionUserTaskInfo != null
+            && _inExecutionUserTaskInfo.userTaskId().equals(userTaskId)
+            && _inExecutionUserTaskInfo.requestUrl().equals(requestUrl)
+            && hasTheSameHttpParameter(_inExecutionUserTaskInfo.queryParams(), common.get_queryParamsMap())) {
+      return _inExecutionUserTaskInfo;
+    }
+
+    return null;
+  }
+
   /**
    * Common function for adding sync/async tasks
    * @param userTaskId UUID to uniquely identify task.
@@ -501,6 +618,25 @@ public class UserTaskManager implements Closeable {
       UserTaskInfo userTaskInfo =
           new UserTaskInfo(httpServletRequest, new ArrayList<>(Collections.singleton(operation.apply(userTaskId.toString()))),
                            _time.milliseconds(), userTaskId, TaskState.ACTIVE, parameters);
+      _uuidToActiveUserTaskInfoMap.put(userTaskId, userTaskInfo);
+    }
+    return _uuidToActiveUserTaskInfoMap.get(userTaskId);
+  }
+
+  private synchronized UserTaskInfo insertFuturesByUserTaskId(UUID userTaskId,
+                                                              Function<String, OperationFuture> operation,
+                                                              CommonApi common,
+                                                              CruiseControlParameters parameters) {
+    if (_uuidToActiveUserTaskInfoMap.containsKey(userTaskId)) {
+      _uuidToActiveUserTaskInfoMap.get(userTaskId).futures().add(operation.apply(userTaskId.toString()));
+    } else {
+      if (_uuidToActiveUserTaskInfoMap.size() >= _maxActiveUserTasks) {
+        throw new RuntimeException("There are already " + _uuidToActiveUserTaskInfoMap.size()
+                + " active user tasks, which has reached the servlet capacity.");
+      }
+      UserTaskInfo userTaskInfo =
+              new UserTaskInfo(common, new ArrayList<>(Collections.singleton(operation.apply(userTaskId.toString()))),
+                      _time.milliseconds(), userTaskId, TaskState.ACTIVE, parameters);
       _uuidToActiveUserTaskInfoMap.put(userTaskId, userTaskInfo);
     }
     return _uuidToActiveUserTaskInfoMap.get(userTaskId);
@@ -568,13 +704,51 @@ public class UserTaskManager implements Closeable {
     private final HttpSession _httpSession;
     private final String _requestUrl;
     private final Map<String, Set<String>> _queryParams;
+    private final Session _vertxSession;
 
     SessionKey(HttpServletRequest httpServletRequest) {
+      _vertxSession = null;
       _httpSession = httpServletRequest.getSession();
       _requestUrl = httpServletRequestToString(httpServletRequest);
       _queryParams = new HashMap<>();
       httpServletRequest.getParameterMap().forEach((k, v) -> _queryParams.put(k, new HashSet<>(Arrays.asList(v))));
     }
+
+    SessionKey(HttpSession session, String requestUrl, Map<String, String[]> params) {
+      _vertxSession = null;
+      _httpSession = session;
+      _requestUrl = requestUrl;
+      _queryParams = new HashMap<>();
+      params.forEach((k, v) -> _queryParams.put(k, new HashSet<>(Arrays.asList(v))));
+    }
+
+    SessionKey(Session session, String requestUrl, Map<String, String[]> params) {
+      _vertxSession = session;
+      _httpSession = null;
+      _requestUrl = requestUrl;
+      _queryParams = new HashMap<>();
+      params.forEach((k, v) -> _queryParams.put(k, new HashSet<>(Arrays.asList(v))));
+    }
+
+    protected void invalidateSession(){
+      if(_vertxSession != null && _httpSession == null){
+        _vertxSession.destroy();
+      }
+      if(_vertxSession == null && _httpSession != null){
+        _httpSession.invalidate();
+      }
+    }
+
+    protected long getLastAccessed(){
+      if(_vertxSession != null && _httpSession == null){
+        return _vertxSession.lastAccessed();
+      }
+      if(_vertxSession == null && _httpSession != null){
+        return _httpSession.getLastAccessedTime();
+      }
+      return -1L;
+    }
+
 
     @Override
     public boolean equals(Object o) {
@@ -587,22 +761,27 @@ public class UserTaskManager implements Closeable {
       SessionKey that = (SessionKey) o;
       return Objects.equals(_httpSession, that._httpSession)
              && Objects.equals(_requestUrl, that._requestUrl)
-             && Objects.equals(_queryParams, that._queryParams);
+             && Objects.equals(_queryParams, that._queryParams)
+             && Objects.equals(_vertxSession, that._vertxSession);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(_httpSession, _requestUrl, _queryParams);
+      return Objects.hash(_httpSession, _requestUrl, _queryParams, _vertxSession);
     }
 
     @Override
     public String toString() {
-      return String.format("SessionKey{_httpSession=%s,_requestUrl=%s,_queryParams=%s}", _httpSession, _requestUrl,
-                           _queryParams);
+      return String.format("SessionKey{_httpSession=%s,_requestUrl=%s,_queryParams=%s, _vertxSession=%s}", _httpSession, _requestUrl,
+                           _queryParams, _vertxSession);
     }
 
     public HttpSession httpSession() {
       return _httpSession;
+    }
+
+    public Session vertxSession(){
+      return _vertxSession;
     }
   }
 
@@ -659,6 +838,26 @@ public class UserTaskManager implements Closeable {
       _userTaskId = userTaskId;
       _queryParams = httpServletRequest.getParameterMap();
       _endPoint = ParameterUtils.endPoint(httpServletRequest);
+      _state = state;
+      _parameters = parameters;
+    }
+
+    public UserTaskInfo(CommonApi common,
+                        List<OperationFuture> futures,
+                        long startMs,
+                        UUID userTaskId,
+                        TaskState state,
+                        CruiseControlParameters parameters) {
+      if (futures == null || futures.isEmpty()) {
+        throw new IllegalArgumentException("Invalid OperationFuture list " + futures + " is provided for UserTaskInfo.");
+      }
+      _futures = futures;
+      _requestUrl = common.get_requestURL();
+      _clientIdentity = common.get_clientIdentity();
+      _startMs = startMs;
+      _userTaskId = userTaskId;
+      _queryParams = common.get_queryParamsMap();
+      _endPoint = ParameterUtils.endPoint(common);
       _state = state;
       _parameters = parameters;
     }
@@ -821,7 +1020,7 @@ public class UserTaskManager implements Closeable {
      * @return enumerated values in the same order as values()
      */
     public static List<TaskState> cachedValues() {
-      return Collections.unmodifiableList(CACHED_VALUES);
+      return CACHED_VALUES;
     }
   }
 }

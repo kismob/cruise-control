@@ -45,7 +45,7 @@ public class RequestParameterTest {
   }
 
   /**
-   * Load the OpenAPI files for endpoints and compares them against the source code
+   * load the OpenAPI files for endpoints and compares them against the source code
    */
   @Test
   public void checkOpenApiSpec() {

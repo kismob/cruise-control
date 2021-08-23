@@ -57,17 +57,6 @@ public class KafkaClusterState extends AbstractCruiseControlResponse {
     return gson.toJson(jsonStructure);
   }
 
-  public String getJSONString(boolean verbose, Pattern topic) {
-    Gson gson = new Gson();
-    Map<String, Object> jsonStructure;
-    try {
-      jsonStructure = getJsonStructure(verbose, topic);
-      jsonStructure.put(VERSION, JSON_VERSION);
-    } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException("Failed to populate broker logDir state.", e);
-    }
-    return gson.toJson(jsonStructure);
-  }
 
   /**
    * Return an object that can be further used to encode into JSON.
@@ -96,19 +85,6 @@ public class KafkaClusterState extends AbstractCruiseControlResponse {
       new ClusterBrokerState(_kafkaCluster, _adminClient, _config).writeBrokerSummary(sb);
       // Partition summary.
       new ClusterPartitionState(isVerbose, topic, _kafkaCluster, _allTopicConfigs, _clusterConfigs).writePartitionSummary(sb, isVerbose);
-    } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException("Failed to populate broker logDir state.", e);
-    }
-    return sb.toString();
-  }
-
-  public String getPlaintext(boolean verbose, Pattern topic) {
-    StringBuilder sb = new StringBuilder();
-    try {
-      // Broker summary.
-      new ClusterBrokerState(_kafkaCluster, _adminClient, _config).writeBrokerSummary(sb);
-      // Partition summary.
-      new ClusterPartitionState(verbose, topic, _kafkaCluster, _allTopicConfigs, _clusterConfigs).writePartitionSummary(sb, verbose);
     } catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException("Failed to populate broker logDir state.", e);
     }

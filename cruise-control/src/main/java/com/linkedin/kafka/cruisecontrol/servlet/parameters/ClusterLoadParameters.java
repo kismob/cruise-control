@@ -54,6 +54,8 @@ public class ClusterLoadParameters extends AbstractParameters {
   protected boolean _populateDiskInfo;
   protected boolean _capacityOnly;
 
+  protected static final String LOAD = "LOAD";
+
   public ClusterLoadParameters() {
     super();
   }
@@ -69,6 +71,17 @@ public class ClusterLoadParameters extends AbstractParameters {
     _allowCapacityEstimation = ParameterUtils.allowCapacityEstimation(_request);
     _populateDiskInfo = ParameterUtils.populateDiskInfo(_request);
     _capacityOnly = ParameterUtils.capacityOnly(_request);
+  }
+
+  public void initParameters(boolean json, Long end, Long start, boolean allowCapacityEstimation, boolean populateDiskInfo, boolean capacityOnly) throws UnsupportedEncodingException {
+    super.initParameters(json, LOAD);
+    _endMs = end;
+    _startMs = start;
+    ParameterUtils.validateTimeRange(_startMs, _endMs);
+    _requirements = new ModelCompletenessRequirements(1, 0.0, true);
+    _allowCapacityEstimation = allowCapacityEstimation;
+    _populateDiskInfo = populateDiskInfo;
+    _capacityOnly = capacityOnly;
   }
 
   public long startMs() {

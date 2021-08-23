@@ -161,7 +161,7 @@ public class KafkaCruiseControlServlet extends HttpServlet {
                          CruiseControlEndPoint endPoint,
                          Map<String, Object> requestConfigOverrides,
                          Map<String, Object> parameterConfigOverrides)
-      throws InterruptedException, ExecutionException, IOException {
+          throws Exception {
     // Sanity check: if the request is for REVIEW_BOARD, two step verification must be enabled.
     if (endPoint == REVIEW_BOARD && !_twoStepVerification) {
       throw new ConfigException(String.format("Attempt to access %s endpoint without enabling '%s' config.",
@@ -193,7 +193,7 @@ public class KafkaCruiseControlServlet extends HttpServlet {
                           CruiseControlEndPoint endPoint,
                           Map<String, Object> requestConfigOverrides,
                           Map<String, Object> parameterConfigOverrides)
-      throws InterruptedException, ExecutionException, IOException {
+          throws Exception {
     CruiseControlParameters parameters;
     RequestParameterWrapper requestParameter = requestParameterFor(endPoint);
     if (endPoint == REVIEW) {
