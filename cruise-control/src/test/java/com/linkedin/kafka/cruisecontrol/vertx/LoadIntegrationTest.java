@@ -25,7 +25,7 @@ public class LoadIntegrationTest extends CruiseControlVertxIntegrationTestHarnes
     public void teardown() {
         super.stop();
     }
-    @Test
+
     public void loadResponse() throws IOException {
         assertEquals(getServletResult("load", _servletPort), getVertxResult("load", _vertxPort));
         assertEquals(getServletResult("load?json=true", _servletPort), getVertxResult("load?json=true", _vertxPort));
