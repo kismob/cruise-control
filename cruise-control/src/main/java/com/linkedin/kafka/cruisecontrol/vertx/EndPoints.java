@@ -174,7 +174,7 @@ public class EndPoints {
     }
     @Operation(summary = "Once Cruise Control load Monitor shows it is in the RUNNING state, Users can use the following HTTP GET to get the cluster load.", method = "GET", operationId = "load",
             tags = {
-                    "load"
+                    "Load"
             },
             parameters = {
                     @Parameter(in = ParameterIn.QUERY, name = "start",

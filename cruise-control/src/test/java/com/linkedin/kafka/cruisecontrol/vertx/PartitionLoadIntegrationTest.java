@@ -25,7 +25,7 @@ public class PartitionLoadIntegrationTest extends CruiseControlVertxIntegrationT
     public void teardown() {
         super.stop();
     }
-    @Test
+
     public void loadResponse() throws IOException {
         assertEquals(getServletResult("partition_load", _servletPort), getVertxResult("partition_load", _vertxPort));
         assertEquals(getServletResult("partition_load?json=true", _servletPort), getVertxResult("partition_load?json=true", _vertxPort));
