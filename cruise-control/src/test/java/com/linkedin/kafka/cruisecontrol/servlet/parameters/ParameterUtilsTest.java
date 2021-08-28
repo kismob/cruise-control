@@ -170,28 +170,4 @@ public class ParameterUtilsTest {
     EasyMock.verify(mockRequest);
     Assert.assertEquals(Long.valueOf(EXECUTION_PROGRESS_CHECK_INTERVAL_STRING), executionProgressCheckIntervalMs);
   }
-
-  @Test
-  public void testGetEndpoint() {
-    HttpServletRequest mockRequest = EasyMock.mock(HttpServletRequest.class);
-    for (CruiseControlEndPoint getEndPoint : CruiseControlEndPoint.getEndpoints()) {
-      EasyMock.expect(mockRequest.getMethod()).andReturn(GET_METHOD).once();
-      EasyMock.expect(mockRequest.getPathInfo()).andReturn("/" + getEndPoint).once();
-      EasyMock.replay(mockRequest);
-      CruiseControlEndPoint endPoint = ParameterUtils.endPoint(mockRequest);
-      Assert.assertEquals(getEndPoint, endPoint);
-      EasyMock.verify(mockRequest);
-      EasyMock.reset(mockRequest);
-    }
-
-    for (CruiseControlEndPoint postEndPoint : CruiseControlEndPoint.postEndpoints()) {
-      EasyMock.expect(mockRequest.getMethod()).andReturn(POST_METHOD).once();
-      EasyMock.expect(mockRequest.getPathInfo()).andReturn("/" + postEndPoint).once();
-      EasyMock.replay(mockRequest);
-      CruiseControlEndPoint endPoint = ParameterUtils.endPoint(mockRequest);
-      Assert.assertEquals(postEndPoint, endPoint);
-      EasyMock.verify(mockRequest);
-      EasyMock.reset(mockRequest);
-    }
-  }
 }
