@@ -24,7 +24,6 @@ public class KafkaClusterStateIntegrationTest extends CruiseControlVertxIntegrat
         super.stop();
     }
 
-    @Test
     public void testKafkaClusterStateResponse() throws IOException {
         assertEquals(getServletResult("kafka_cluster_state", _servletPort), getVertxResult("kafka_cluster_state", _vertxPort));
         assertEquals(getServletResult("kafka_cluster_state?json=true", _servletPort), getVertxResult("kafka_cluster_state?json=true", _vertxPort));

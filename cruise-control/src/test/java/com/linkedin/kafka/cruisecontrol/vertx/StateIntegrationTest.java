@@ -23,7 +23,7 @@ public class StateIntegrationTest extends CruiseControlVertxIntegrationTestHarne
     public void teardown() {
         super.stop();
     }
-    @Test
+
     public void stateResponseNoParams() throws IOException, InterruptedException {
         assertEquals(getServletResult("state", _servletPort), getVertxResult("state", _vertxPort));
     }
