@@ -8,9 +8,6 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.linkedin.kafka.cruisecontrol.async.AsyncKafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
-import com.linkedin.kafka.cruisecontrol.vertx.MainVerticle;
-import io.vertx.core.Vertx;
-import javax.servlet.ServletException;
 
 abstract class KafkaCruiseControlApp {
 
@@ -23,10 +20,6 @@ abstract class KafkaCruiseControlApp {
   protected Integer _port;
   protected String _hostname;
 
-  public String get_hostname(){return _hostname;}
-
-  public int get_port(){return _port;}
-
   KafkaCruiseControlApp(KafkaCruiseControlConfig config, Integer port, String hostname) {
     this._config = config;
     _metricRegistry = new MetricRegistry();
@@ -37,6 +30,14 @@ abstract class KafkaCruiseControlApp {
 
     _kafkaCruiseControl = new AsyncKafkaCruiseControl(config, _metricRegistry);
 
+  }
+
+  public String getHostname() {
+    return _hostname;
+  }
+
+  public int getPort() {
+    return _port;
   }
 
   void start() throws Exception {

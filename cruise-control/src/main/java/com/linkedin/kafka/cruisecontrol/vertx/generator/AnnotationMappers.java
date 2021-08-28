@@ -1,3 +1,6 @@
+/*
+ * Copyright 2018 LinkedIn Corp. Licensed under the BSD 2-Clause License (the "License"). See License in the project root for license information.
+ */
 package com.linkedin.kafka.cruisecontrol.vertx.generator;
 
 import com.fasterxml.jackson.core.JsonParser;
@@ -17,11 +20,15 @@ import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.common.Cluster;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 /**
@@ -61,7 +68,9 @@ final class AnnotationMappers {
                 log.error("The example could not be mapped for operation" + operation.getDescription());
             }
 
-            fields = FieldUtils.getFieldsListWithAnnotation(annotation.requestBody().content()[0].schema().implementation(), Required.class).toArray(new Field[0]);
+            fields = FieldUtils.getFieldsListWithAnnotation(
+                    annotation.requestBody().content()[0].schema().implementation(),
+                    Required.class).toArray(new Field[0]);
             List<String> requiredParameters = new ArrayList<String>();
 
             for (Field requiredField : fields) {
@@ -80,7 +89,6 @@ final class AnnotationMappers {
                 .addMediaType("application/json", new MediaType().schema(model));
 
             rb.setContent(cont);
-
 
             rb.setRequired(annotation.requestBody().required());
             rb.description(annotation.requestBody().description());
@@ -132,7 +140,9 @@ final class AnnotationMappers {
             schemaFromAnnotation.ifPresent(p::schema);*/
             Schema schema = new Schema();
             io.swagger.v3.oas.annotations.media.Schema s = parameter.schema();
-            if (!s.ref().isEmpty()) schema.set$ref(s.ref());
+            if (!s.ref().isEmpty()) {
+                schema.set$ref(s.ref());
+            }
             schema.setDeprecated(s.deprecated());
             schema.setDescription(s.description());
             schema.setName(s.name());
@@ -158,7 +168,7 @@ final class AnnotationMappers {
             HashMap<String, Object> subMap = new HashMap<String, Object>();
             subMap.put("type", "array");
 
-            if(isPrimitiveOrWrapper(componentType)){
+            if (isPrimitiveOrWrapper(componentType)) {
                 HashMap<String, Object> arrayMap = new HashMap<String, Object>();
                 arrayMap.put("type", componentType.getSimpleName() + "[]");
                 subMap.put("type", arrayMap);
@@ -170,21 +180,21 @@ final class AnnotationMappers {
         }
     }
 
-    private  static Boolean isPrimitiveOrWrapper(Type type){
-        return type.equals(Double.class) ||
-            type.equals(Float.class) ||
-            type.equals(Long.class) ||
-            type.equals(Integer.class) ||
-            type.equals(Short.class) ||
-            type.equals(Character.class) ||
-            type.equals(Byte.class) ||
-            type.equals(Boolean.class) ||
-            type.equals(String.class) ||
-            type.equals(ArrayList.class) ||
-            type.equals(Map.class) ||
-            type.equals(Properties.class) ||
-            type.equals(AdminClient.class) ||
-            type.equals(Cluster.class);
+    private static Boolean isPrimitiveOrWrapper(Type type) {
+        return type.equals(Double.class)
+                || type.equals(Float.class)
+                || type.equals(Long.class)
+                || type.equals(Integer.class)
+                || type.equals(Short.class)
+                || type.equals(Character.class)
+                || type.equals(Byte.class)
+                || type.equals(Boolean.class)
+                || type.equals(String.class)
+                || type.equals(ArrayList.class)
+                || type.equals(Map.class)
+                || type.equals(Properties.class)
+                || type.equals(AdminClient.class)
+                || type.equals(Cluster.class);
     }
 
     private static Object clean(final String in) {
@@ -225,8 +235,9 @@ final class AnnotationMappers {
 
     private static Parameter findAlreadyProcessedParamFromVertxRoute(final String name, List<Parameter> parameters) {
         for (Parameter parameter : parameters) {
-            if (name.equals(parameter.getName()))
+            if (name.equals(parameter.getName())) {
                 return parameter;
+            }
         }
         return null;
     }
@@ -237,10 +248,11 @@ final class AnnotationMappers {
         if (body.content().length == 1) {
             Content c = getContent(body.content()[0]);
             io.swagger.v3.oas.annotations.media.Content content = body.content()[0];
-            if (!Void.class.equals(content.array().schema().implementation()))
+            if (!Void.class.equals(content.array().schema().implementation())) {
                 c.get(content.mediaType()).getSchema().setExample(clean(content.array().schema().example()));
-            else if (!Void.class.equals(content.schema().implementation()))
+            } else if (!Void.class.equals(content.schema().implementation())) {
                 c.get(content.mediaType()).getSchema().setExample(content.schema().example());
+            }
             rb.setContent(c);
         }
         return rb;

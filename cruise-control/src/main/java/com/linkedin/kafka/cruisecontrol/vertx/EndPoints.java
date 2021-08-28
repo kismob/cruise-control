@@ -1,14 +1,31 @@
+/*
+ * Copyright 2018 LinkedIn Corp. Licensed under the BSD 2-Clause License (the "License"). See License in the project root for license information.
+ */
+
 package com.linkedin.kafka.cruisecontrol.vertx;
 
 
 import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
 import com.linkedin.cruisecontrol.servlet.response.CruiseControlResponse;
 import com.linkedin.kafka.cruisecontrol.KafkaCruiseControlVertxApp;
-import com.linkedin.kafka.cruisecontrol.common_api.CommonApi;
-import com.linkedin.kafka.cruisecontrol.servlet.handler.async.runnable.*;
-import com.linkedin.kafka.cruisecontrol.servlet.parameters.*;
-import com.linkedin.kafka.cruisecontrol.servlet.response.*;
+import com.linkedin.kafka.cruisecontrol.commonapi.CommonApi;
+import com.linkedin.kafka.cruisecontrol.servlet.handler.async.runnable.GetStateRunnable;
+import com.linkedin.kafka.cruisecontrol.servlet.handler.async.runnable.LoadRunnable;
+import com.linkedin.kafka.cruisecontrol.servlet.handler.async.runnable.OperationFuture;
+import com.linkedin.kafka.cruisecontrol.servlet.handler.async.runnable.PartitionLoadRunnable;
+import com.linkedin.kafka.cruisecontrol.servlet.handler.async.runnable.ProposalsRunnable;
+import com.linkedin.kafka.cruisecontrol.servlet.parameters.ClusterLoadParameters;
+import com.linkedin.kafka.cruisecontrol.servlet.parameters.CruiseControlStateParameters;
+import com.linkedin.kafka.cruisecontrol.servlet.parameters.KafkaClusterStateParameters;
+import com.linkedin.kafka.cruisecontrol.servlet.parameters.UserTasksParameters;
+import com.linkedin.kafka.cruisecontrol.servlet.parameters.PartitionLoadParameters;
+import com.linkedin.kafka.cruisecontrol.servlet.parameters.ProposalsParameters;
+import com.linkedin.kafka.cruisecontrol.servlet.response.CruiseControlState;
+import com.linkedin.kafka.cruisecontrol.servlet.response.KafkaClusterState;
+import com.linkedin.kafka.cruisecontrol.servlet.response.PartitionLoadState;
+import com.linkedin.kafka.cruisecontrol.servlet.response.UserTaskState;
 import com.linkedin.kafka.cruisecontrol.servlet.response.stats.BrokerStats;
+import com.linkedin.kafka.cruisecontrol.servlet.response.OptimizationResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -18,11 +35,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.vertx.core.MultiMap;
 import io.vertx.ext.web.RoutingContext;
-import java.io.UnsupportedEncodingException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.regex.Pattern;
+
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.*;
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.TYPES_PARAM;
 
 public class EndPoints {
 
@@ -35,11 +55,11 @@ public class EndPoints {
                 uuid -> {
                     OperationFuture future = new OperationFuture(String.format("%s request", parameters.endPoint().toString()));
                     future.complete(response);
-                    return future;}, step, false, parameters
+                    return future; }, step, false, parameters
         );
     }
 
-    /*@Operation(summary = "Gives partition healthiness on the cluster.", method = "GET", operationId = "kafka_cluster_state",
+    @Operation(summary = "Gives partition healthiness on the cluster.", method = "GET", operationId = "kafka_cluster_state",
             tags = {
                     "kafkaClusterState"
             },
@@ -56,12 +76,12 @@ public class EndPoints {
             },
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK",
-                            content = @Content(
+                            content =
+                            @Content(
                                     mediaType = "application/json",
                                     encoding = @Encoding(contentType = "application/json"),
-                                    schema = @Schema(name = "product", example =
-                                            "{\"KafkaPartitionState\":{\"offline\":[],\"urp\":[],\"with-offline-replicas\":[],\"under-min-isr\":[]}," +
-                                                    "\"KafkaBrokerState\":{\"IsController\":{\"0\":true,\"1\":false,\"2\":false},\"OfflineLogDirsByBrokerId\":{\"0\":[],\"1\":[],\"2\":[]},\"ReplicaCountByBrokerId\":{\"0\":44,\"1\":43,\"2\":42},\"OutOfSyncCountByBrokerId\":{},\"Summary\":{\"StdLeadersPerBroker\":0.4714045207910317,\"Leaders\":65,\"MaxLeadersPerBroker\":22,\"Topics\":3,\"MaxReplicasPerBroker\":44,\"StdReplicasPerBroker\":0.816496580927726,\"Brokers\":3,\"AvgReplicationFactor\":1.9846153846153847,\"AvgLeadersPerBroker\":21.666666666666668,\"Replicas\":129,\"AvgReplicasPerBroker\":43.0},\"OnlineLogDirsByBrokerId\":{\"0\":[\"/tmp/kafka-logs-0\"],\"1\":[\"/tmp/kafka-logs-1\"],\"2\":[\"/tmp/kafka-logs-2\"]},\"LeaderCountByBrokerId\":{\"0\":22,\"1\":22,\"2\":21},\"OfflineReplicaCountByBrokerId\":{}},\"version\":1}",
+                                    schema = @Schema(name = "jsonState", example =
+                                            "{\\\"KafkaPartitionState\\\":{\\\"offline\\\":[],\\\"urp\\\":[],\\\"with-offline-replicas\\\":[],\\\"under-min-isr\\\":[]},\\\"KafkaBrokerState\\\":{\\\"IsController\\\":{\\\"0\\\":true,\\\"1\\\":false,\\\"2\\\":false},\\\"OfflineLogDirsByBrokerId\\\":{\\\"0\\\":[],\\\"1\\\":[],\\\"2\\\":[]},\\\"ReplicaCountByBrokerId\\\":{\\\"0\\\":44,\\\"1\\\":43,\\\"2\\\":42},\\\"OutOfSyncCountByBrokerId\\\":{},\\\"Summary\\\":{\\\"StdLeadersPerBroker\\\":0.4714045207910317,\\\"Leaders\\\":65,\\\"MaxLeadersPerBroker\\\":22,\\\"Topics\\\":3,\\\"MaxReplicasPerBroker\\\":44,\\\"StdReplicasPerBroker\\\":0.816496580927726,\\\"Brokers\\\":3,\\\"AvgReplicationFactor\\\":1.9846153846153847,\\\"AvgLeadersPerBroker\\\":21.666666666666668,\\\"Replicas\\\":129,\\\"AvgReplicasPerBroker\\\":43.0},\\\"OnlineLogDirsByBrokerId\\\":{\\\"0\\\":[\\\"/tmp/kafka-logs-0\\\"],\\\"1\\\":[\\\"/tmp/kafka-logs-1\\\"],\\\"2\\\":[\\\"/tmp/kafka-logs-2\\\"]},\\\"LeaderCountByBrokerId\\\":{\\\"0\\\":22,\\\"1\\\":22,\\\"2\\\":21},\\\"OfflineReplicaCountByBrokerId\\\":{}},\\\"version\\\":1}",
                                             implementation = KafkaClusterState.class)
                             )
                     ),
@@ -69,7 +89,7 @@ public class EndPoints {
                     @ApiResponse(responseCode = "500", description = "Internal Server Error.")
             }
     )
-    public void kafkaClusterState(RoutingContext context){
+    public void kafkaClusterState(RoutingContext context) {
         MultiMap params = context.queryParams();
         String topic = params.get(TOPIC_PARAM) == null ? ".*" : params.get(TOPIC_PARAM);
         boolean verbose = Boolean.parseBoolean(params.get(VERBOSE_PARAM));
@@ -78,7 +98,7 @@ public class EndPoints {
             KafkaCruiseControlVertxApp.getVerticle().getKafkaCruiseControl().topicConfigProvider(),
             KafkaCruiseControlVertxApp.getVerticle().getKafkaCruiseControl().adminClient(), KafkaCruiseControlVertxApp.getVerticle().getKafkaCruiseControl().config());
         KafkaClusterStateParameters kafkaClusterStateParameters = new KafkaClusterStateParameters();
-        try{
+        try {
             kafkaClusterStateParameters.initParameters(verbose, topic, json);
             String outputString = json ? kafkaClusterState.getJSONString(kafkaClusterStateParameters) : kafkaClusterState.getPlaintext(kafkaClusterStateParameters);
             useUserTaskManager(context, kafkaClusterStateParameters, kafkaClusterState);
@@ -88,7 +108,7 @@ public class EndPoints {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }*/
+    }
 
     @Operation(summary = "Returns Cruise Control State", method = "GET", operationId = "state",
             tags = {
@@ -122,7 +142,7 @@ public class EndPoints {
                     @ApiResponse(responseCode = "500", description = "Internal Server Error.")
             }
     )
-    public void cruiseControlState(RoutingContext context){
+    public void cruiseControlState(RoutingContext context) {
         MultiMap params = context.queryParams();
         boolean verbose = Boolean.parseBoolean(params.get(VERBOSE_PARAM));
         boolean superVerbose = Boolean.parseBoolean(params.get(SUPER_VERBOSE_PARAM));
@@ -137,7 +157,7 @@ public class EndPoints {
         Set<CruiseControlState.SubState> substates = !subStateSet.isEmpty() ? subStateSet
                 : new HashSet<>(Arrays.asList(CruiseControlState.SubState.values()));
         CruiseControlStateParameters cruiseControlStateParameters = new CruiseControlStateParameters();
-        try{
+        try {
             cruiseControlStateParameters.initParameters(json, substates, verbose, superVerbose);
             GetStateRunnable getStateRunnable = new GetStateRunnable(KafkaCruiseControlVertxApp.getVerticle().getKafkaCruiseControl(),
                     new OperationFuture("Get state"), cruiseControlStateParameters);
@@ -192,7 +212,7 @@ public class EndPoints {
                     @ApiResponse(responseCode = "500", description = "Internal Server Error.")
             }
     )
-    public void load(RoutingContext context){
+    public void load(RoutingContext context) {
         MultiMap params = context.queryParams();
         boolean verbose = Boolean.parseBoolean(params.get(VERBOSE_PARAM));
         boolean json = Boolean.parseBoolean(params.get(JSON_PARAM));
@@ -201,12 +221,12 @@ public class EndPoints {
         }
         Long end = params.get(END_MS_PARAM) == null ? (params.get(TIME_PARAM) == null ? System.currentTimeMillis() : Long.parseLong(params.get("time"))) : Long.parseLong(params.get("end"));
         Long start = params.get(START_MS_PARAM) == null ? DEFAULT_START_TIME_FOR_CLUSTER_MODEL : Long.parseLong(params.get(START_MS_PARAM));
-        boolean allow_capacity_estimation = params.get(ALLOW_CAPACITY_ESTIMATION_PARAM) == null || Boolean.parseBoolean(params.get(ALLOW_CAPACITY_ESTIMATION_PARAM));
-        boolean populate_disk_info = params.get(POPULATE_DISK_INFO_PARAM) != null && Boolean.parseBoolean(params.get(POPULATE_DISK_INFO_PARAM));
-        boolean capacity_only = params.get(CAPACITY_ONLY_PARAM) != null && Boolean.parseBoolean(params.get(CAPACITY_ONLY_PARAM));
+        boolean allowCapacityEstimation = params.get(ALLOW_CAPACITY_ESTIMATION_PARAM) == null || Boolean.parseBoolean(params.get(ALLOW_CAPACITY_ESTIMATION_PARAM));
+        boolean populateDiskInfo = params.get(POPULATE_DISK_INFO_PARAM) != null && Boolean.parseBoolean(params.get(POPULATE_DISK_INFO_PARAM));
+        boolean capacityOnly = params.get(CAPACITY_ONLY_PARAM) != null && Boolean.parseBoolean(params.get(CAPACITY_ONLY_PARAM));
         ClusterLoadParameters clusterLoadParameters = new ClusterLoadParameters();
         try {
-            clusterLoadParameters.initParameters(json, end, start, allow_capacity_estimation, populate_disk_info, capacity_only);
+            clusterLoadParameters.initParameters(json, end, start, allowCapacityEstimation, populateDiskInfo, capacityOnly);
             LoadRunnable loadRunnable = new LoadRunnable(KafkaCruiseControlVertxApp.getVerticle().getKafkaCruiseControl(),
                     new OperationFuture("Get broker stats"), clusterLoadParameters);
             BrokerStats brokerStats = loadRunnable.getResult();
@@ -263,7 +283,7 @@ public class EndPoints {
     public void userTasks(RoutingContext context) {
         MultiMap params = context.queryParams();
         boolean json = Boolean.parseBoolean(params.get(JSON_PARAM));
-        boolean fetch_completed_task = Boolean.parseBoolean(params.get(FETCH_COMPLETED_TASK_PARAM));
+        boolean fetchCompletedTask = Boolean.parseBoolean(params.get(FETCH_COMPLETED_TASK_PARAM));
         String userTaskIds = params.get(USER_TASK_IDS_PARAM) == null ? null : params.get(USER_TASK_IDS_PARAM);
         String clientIds = params.get(CLIENT_IDS_PARAM) == null ? null : params.get(CLIENT_IDS_PARAM);
         String entries = params.get(ENTRIES_PARAM) == null ? null : params.get(ENTRIES_PARAM);
@@ -273,7 +293,7 @@ public class EndPoints {
                 KafkaCruiseControlVertxApp.getVerticle().getKafkaCruiseControl().config());
         UserTasksParameters userTasksParameters = new UserTasksParameters();
         try {
-            userTasksParameters.initParameters(json, userTaskIds, clientIds, endpoints, types, entries, fetch_completed_task);
+            userTasksParameters.initParameters(json, userTaskIds, clientIds, endpoints, types, entries, fetchCompletedTask);
             String outputString = json ? userTaskState.getJSONString(userTasksParameters) : userTaskState.getPlaintext(userTasksParameters);
             useUserTaskManager(context, userTasksParameters, userTaskState);
             context.response()
@@ -333,25 +353,25 @@ public class EndPoints {
             }
     )
 
-    public void partitionLoad(RoutingContext context){
+    public void partitionLoad(RoutingContext context) {
         MultiMap params = context.queryParams();
         String resource = params.get(RESOURCE_PARAM) == null ? "DISK" : params.get(RESOURCE_PARAM);
         Long start = params.get(START_MS_PARAM) == null ? DEFAULT_START_TIME_FOR_CLUSTER_MODEL : Long.parseLong(params.get(START_MS_PARAM));
         Long end = params.get(END_MS_PARAM) == null ? (params.get(TIME_PARAM) == null ? System.currentTimeMillis() : Long.parseLong(params.get("time"))) : Long.parseLong(params.get("end"));
         Integer entries = Integer.parseInt(params.get(ENTRIES_PARAM) == null ? String.valueOf(Integer.MAX_VALUE) : params.get(ENTRIES_PARAM));
         boolean json = Boolean.parseBoolean(params.get(JSON_PARAM));
-        boolean allow_capacity_estimation = params.get(ALLOW_CAPACITY_ESTIMATION_PARAM) == null || Boolean.parseBoolean(params.get(ALLOW_CAPACITY_ESTIMATION_PARAM));
-        boolean max_load = Boolean.parseBoolean(params.get(MAX_LOAD_PARAM));
-        boolean avg_load = Boolean.parseBoolean(params.get(AVG_LOAD_PARAM));
+        boolean allowCapacityEstimation = params.get(ALLOW_CAPACITY_ESTIMATION_PARAM) == null || Boolean.parseBoolean(params.get(ALLOW_CAPACITY_ESTIMATION_PARAM));
+        boolean maxLoad = Boolean.parseBoolean(params.get(MAX_LOAD_PARAM));
+        boolean avgLoad = Boolean.parseBoolean(params.get(AVG_LOAD_PARAM));
         Pattern topic = Pattern.compile(params.get(TOPIC_PARAM) == null ? ".*" : params.get(TOPIC_PARAM));
         String partition = params.get(PARTITION_PARAM);
-        Double min_valid_partition_ratio = params.get(MIN_VALID_PARTITION_RATIO_PARAM) == null ? null : Double.parseDouble(params.get(MIN_VALID_PARTITION_RATIO_PARAM));
+        Double minValidPartitionRatio = params.get(MIN_VALID_PARTITION_RATIO_PARAM) == null ? null : Double.parseDouble(params.get(MIN_VALID_PARTITION_RATIO_PARAM));
         String brokerid = params.get(BROKER_ID_PARAM);
 
         PartitionLoadParameters partitionLoadParameters = new PartitionLoadParameters();
         try {
-            partitionLoadParameters.initParameters(json, max_load, avg_load, topic, partition, entries,
-                    min_valid_partition_ratio, allow_capacity_estimation, brokerid, start, end, resource);
+            partitionLoadParameters.initParameters(json, maxLoad, avgLoad, topic, partition, entries,
+                    minValidPartitionRatio, allowCapacityEstimation, brokerid, start, end, resource);
             PartitionLoadRunnable partitionLoadRunnable = new PartitionLoadRunnable(KafkaCruiseControlVertxApp.getVerticle().getKafkaCruiseControl(),
                     new OperationFuture(String.format("Get partition load from %d to %d", start, end)), partitionLoadParameters);
             PartitionLoadState partitionLoadState = partitionLoadRunnable.getResult();
@@ -417,27 +437,27 @@ public class EndPoints {
                     @ApiResponse(responseCode = "500", description = "Internal Server Error.")
             }
     )
-    public void proposals(RoutingContext context){
+    public void proposals(RoutingContext context) {
         MultiMap params = context.queryParams();
-        boolean ignore_proposal_cache = Boolean.parseBoolean(params.get(IGNORE_PROPOSAL_CACHE_PARAM));
-        String data_from = params.get(DATA_FROM_PARAM) == null ? "VALID_WINDOWS" : params.get(DATA_FROM_PARAM);
+        boolean ignoreProposalCache = Boolean.parseBoolean(params.get(IGNORE_PROPOSAL_CACHE_PARAM));
+        String dataFrom = params.get(DATA_FROM_PARAM) == null ? "VALID_WINDOWS" : params.get(DATA_FROM_PARAM);
         String goals = params.get(GOALS_PARAM);
-        boolean kafka_assigner = Boolean.parseBoolean(params.get(KAFKA_ASSIGNER_MODE_PARAM));
-        boolean allow_capacity_estimation = params.get(ALLOW_CAPACITY_ESTIMATION_PARAM) == null || Boolean.parseBoolean(params.get(ALLOW_CAPACITY_ESTIMATION_PARAM));
-        Pattern excluded_topics = params.get(EXCLUDED_TOPICS_PARAM) == null ? null : Pattern.compile(params.get(EXCLUDED_TOPICS_PARAM));
-        boolean use_ready_default_goals = Boolean.parseBoolean(params.get(USE_READY_DEFAULT_GOALS_PARAM));
-        boolean exclude_recently_demoted_brokers = Boolean.parseBoolean(params.get(EXCLUDE_RECENTLY_DEMOTED_BROKERS_PARAM));
-        boolean exclude_recently_removed_brokers = Boolean.parseBoolean(params.get(EXCLUDE_RECENTLY_REMOVED_BROKERS_PARAM));
-        String destination_broker_ids = params.get(DESTINATION_BROKER_IDS_PARAM);
-        boolean rebalance_disk = Boolean.parseBoolean(params.get(REBALANCE_DISK_MODE_PARAM));
+        boolean kafkaAssigner = Boolean.parseBoolean(params.get(KAFKA_ASSIGNER_MODE_PARAM));
+        boolean allowCapacityEstimation = params.get(ALLOW_CAPACITY_ESTIMATION_PARAM) == null || Boolean.parseBoolean(params.get(ALLOW_CAPACITY_ESTIMATION_PARAM));
+        Pattern excludedTopics = params.get(EXCLUDED_TOPICS_PARAM) == null ? null : Pattern.compile(params.get(EXCLUDED_TOPICS_PARAM));
+        boolean useReadyDefaultGoals = Boolean.parseBoolean(params.get(USE_READY_DEFAULT_GOALS_PARAM));
+        boolean excludeRecentlyDemotedBrokers = Boolean.parseBoolean(params.get(EXCLUDE_RECENTLY_DEMOTED_BROKERS_PARAM));
+        boolean excludeRecentlyRemovedBrokers = Boolean.parseBoolean(params.get(EXCLUDE_RECENTLY_REMOVED_BROKERS_PARAM));
+        String destinationBrokerIds = params.get(DESTINATION_BROKER_IDS_PARAM);
+        boolean rebalanceDisk = Boolean.parseBoolean(params.get(REBALANCE_DISK_MODE_PARAM));
         boolean json = Boolean.parseBoolean(params.get(JSON_PARAM));
         boolean verbose = Boolean.parseBoolean(params.get(VERBOSE_PARAM));
-        boolean fast_mode = params.get(FAST_MODE_PARAM) == null || Boolean.parseBoolean(params.get(FAST_MODE_PARAM));
+        boolean fastMode = params.get(FAST_MODE_PARAM) == null || Boolean.parseBoolean(params.get(FAST_MODE_PARAM));
         ProposalsParameters proposalsParameters = new ProposalsParameters();
         try {
-            proposalsParameters.initParameters(ignore_proposal_cache, data_from, goals, kafka_assigner, rebalance_disk, allow_capacity_estimation,
-                    excluded_topics, use_ready_default_goals, exclude_recently_demoted_brokers, exclude_recently_removed_brokers, destination_broker_ids,
-                    rebalance_disk, json, verbose, fast_mode);
+            proposalsParameters.initParameters(ignoreProposalCache, dataFrom, goals, kafkaAssigner, rebalanceDisk, allowCapacityEstimation,
+                    excludedTopics, useReadyDefaultGoals, excludeRecentlyDemotedBrokers, excludeRecentlyRemovedBrokers, destinationBrokerIds,
+                    rebalanceDisk, json, verbose, fastMode);
             OperationFuture future = new OperationFuture("Get customized proposals");
             ProposalsRunnable proposalsRunnable = new ProposalsRunnable(KafkaCruiseControlVertxApp.getVerticle().getKafkaCruiseControl(), future, proposalsParameters);
             OptimizationResult optimizationResult = proposalsRunnable.getResult();
@@ -446,8 +466,6 @@ public class EndPoints {
             context.response()
                     .setStatusCode(RESPONSE_OK)
                     .end(outputString);
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
         }

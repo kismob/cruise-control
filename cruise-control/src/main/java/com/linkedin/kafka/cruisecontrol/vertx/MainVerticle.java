@@ -1,3 +1,6 @@
+/*
+ * Copyright 2018 LinkedIn Corp. Licensed under the BSD 2-Clause License (the "License"). See License in the project root for license information.
+ */
 package com.linkedin.kafka.cruisecontrol.vertx;
 
 import com.codahale.metrics.Meter;
@@ -28,10 +31,14 @@ import io.vertx.ext.web.handler.CorsHandler;
 import io.vertx.ext.web.handler.ErrorHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 import org.apache.commons.lang3.reflect.FieldUtils;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.linkedin.kafka.cruisecontrol.KafkaCruiseControlUtils.KAFKA_CRUISE_CONTROL_SERVLET_SENSOR;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
@@ -47,19 +54,14 @@ public class MainVerticle extends AbstractVerticle {
   private final Map<EndPoint, Timer> _successfulRequestExecutionTimer = new HashMap<>();
   private final ThreadLocal<Object> _asyncOperationStep;
   private final Map<EndPoint, Meter> _requestMeter = new HashMap<>();
-  private int PORT;
-  private String HOST;
-  private HttpServer server;
-
-  private EndPoints endPoints;
-
-  public HttpServer getServer() {
-    return server;
-  }
+  private int _port;
+  private String _host;
+  private HttpServer _server;
+  private EndPoints _endPoints;
 
   public MainVerticle(AsyncKafkaCruiseControl asynckafkaCruiseControl, MetricRegistry dropwizardMetricRegistry, int port, String host) {
-    PORT = port;
-    HOST = host;
+    _port = port;
+    _host = host;
     _config = asynckafkaCruiseControl.config();
     _asyncKafkaCruiseControl = asynckafkaCruiseControl;
     _twoStepVerification = _config.getBoolean(WebServerConfig.TWO_STEP_VERIFICATION_ENABLED_CONFIG);
@@ -77,14 +79,18 @@ public class MainVerticle extends AbstractVerticle {
     }
   }
 
+  public HttpServer getServer() {
+    return _server;
+  }
+
   @Override
   public void start(Future<Void> startFuture) throws Exception {
 
-    endPoints = new EndPoints();
+    _endPoints = new EndPoints();
 
-    server = vertx.createHttpServer(createOptions());
-    server.requestHandler(configurationRouter()::accept);
-    server.listen(result -> {
+    _server = vertx.createHttpServer(createOptions());
+    _server.requestHandler(configurationRouter()::accept);
+    _server.listen(result -> {
       if (result.succeeded()) {
         startFuture.complete();
       } else {
@@ -95,17 +101,17 @@ public class MainVerticle extends AbstractVerticle {
 
   @Override
   public void stop(Future<Void> future) {
-    if (server == null) {
+    if (_server == null) {
       future.complete();
       return;
     }
-    server.close(future.completer());
+    _server.close(future.completer());
   }
 
   private HttpServerOptions createOptions() {
     HttpServerOptions options = new HttpServerOptions();
-    options.setHost(HOST);
-    options.setPort(PORT);
+    options.setHost(_host);
+    options.setPort(_port);
     return options;
   }
 
@@ -136,37 +142,33 @@ public class MainVerticle extends AbstractVerticle {
     router.route().failureHandler(ErrorHandler.create(true));
 
     // Routing section - this is where we declare which end points we want to use
-    //router.get("/kafka_cluster_state").handler(endPoints::kafkaClusterState);
-    router.get("/state").handler(endPoints::cruiseControlState);
-    router.get("/load").handler(endPoints::load);
-    router.get("/user_tasks").handler(endPoints::userTasks);
-    router.get("/partition_load").handler(endPoints::partitionLoad);
-    router.get("/proposals").handler(endPoints::proposals);
+    router.get("/kafka_cluster_state").handler(_endPoints::kafkaClusterState);
+    router.get("/state").handler(_endPoints::cruiseControlState);
+    router.get("/load").handler(_endPoints::load);
+    router.get("/user_tasks").handler(_endPoints::userTasks);
+    router.get("/partition_load").handler(_endPoints::partitionLoad);
+    router.get("/proposals").handler(_endPoints::proposals);
 
     OpenAPI openAPIDoc = OpenApiRoutePublisher.publishOpenApiSpec(
       router,
       "spec",
       "Vertx Swagger Auto Generation",
       "1.0.0",
-      "http://" + HOST + ":" + PORT + "/"
+      "http://" + _host + ":" + _port + "/"
     );
 
-    /* Tagging section. This is where we can group end point operations; The tag name is then used in the end point annotation
-     */
-    //openAPIDoc.addTagsItem( new io.swagger.v3.oas.models.tags.Tag().name("Product").description("Product operations"));
-
-    // Generate the SCHEMA section of Swagger, using the definitions in the Model folder
+        // Generate the SCHEMA section of Swagger, using the definitions in the Model folder
         ImmutableSet<ClassPath.ClassInfo> modelClasses = getClassesInPackage("io.vertx.VertxAutoSwagger.Model");
 
         Map<String, Object> map = new HashMap<String, Object>();
 
-        for (ClassPath.ClassInfo modelClass : modelClasses){
+        for (ClassPath.ClassInfo modelClass : modelClasses) {
 
           Field[] fields = FieldUtils.getFieldsListWithAnnotation(modelClass.load(), Required.class).toArray(new
                 Field[0]);
           List<String> requiredParameters = new ArrayList<String>();
 
-          for (Field requiredField : fields){
+          for (Field requiredField : fields) {
               requiredParameters.add(requiredField.getName());
           }
 
@@ -195,7 +197,7 @@ public class MainVerticle extends AbstractVerticle {
         .end(Json.pretty(openAPIDoc));
     });
 
-        // Serve the Swagger UI out on /doc/index.html
+    // Serve the Swagger UI out on /doc/index.html
     router.route("/doc/*").handler(StaticHandler.create().setCachingEnabled(false).setWebRoot("webroot/node_modules/swagger-ui-dist"));
 
     return router;
@@ -212,7 +214,7 @@ public class MainVerticle extends AbstractVerticle {
     } else {
       HashMap<String, Object> subMap = new HashMap<String, Object>();
 
-      if(isPrimitiveOrWrapper(componentType)){
+      if (isPrimitiveOrWrapper(componentType)) {
         HashMap<String, Object> arrayMap = new HashMap<String, Object>();
         arrayMap.put("type", componentType.getSimpleName() + "[]");
         subMap.put("type", arrayMap);
@@ -224,18 +226,18 @@ public class MainVerticle extends AbstractVerticle {
     }
   }
 
-  private Boolean isPrimitiveOrWrapper(Type type){
-    return type.equals(Double.class) ||
-      type.equals(Float.class) ||
-      type.equals(Long.class) ||
-      type.equals(Integer.class) ||
-      type.equals(Short.class) ||
-      type.equals(Character.class) ||
-      type.equals(Byte.class) ||
-      type.equals(Boolean.class) ||
-      type.equals(String.class) ||
-      type.equals(ArrayList.class) ||
-      type.equals(Map.class);
+  private Boolean isPrimitiveOrWrapper(Type type) {
+    return type.equals(Double.class)
+            || type.equals(Float.class)
+            || type.equals(Long.class)
+            || type.equals(Integer.class)
+            || type.equals(Short.class)
+            || type.equals(Character.class)
+            || type.equals(Byte.class)
+            || type.equals(Boolean.class)
+            || type.equals(String.class)
+            || type.equals(ArrayList.class)
+            || type.equals(Map.class);
   }
 
   public ImmutableSet<ClassPath.ClassInfo> getClassesInPackage(String pckgname) {
@@ -249,6 +251,10 @@ public class MainVerticle extends AbstractVerticle {
     }
   }
 
-  public AsyncKafkaCruiseControl getKafkaCruiseControl(){return _asyncKafkaCruiseControl;}
-  public UserTaskManager getUserTaskManager() {return _userTaskManager;}
+  public AsyncKafkaCruiseControl getKafkaCruiseControl() {
+    return _asyncKafkaCruiseControl;
+  }
+  public UserTaskManager getUserTaskManager() {
+    return _userTaskManager;
+  }
 }

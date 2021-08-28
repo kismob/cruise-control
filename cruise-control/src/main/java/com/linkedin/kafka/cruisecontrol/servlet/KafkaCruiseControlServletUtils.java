@@ -6,7 +6,7 @@ package com.linkedin.kafka.cruisecontrol.servlet;
 
 import com.linkedin.cruisecontrol.common.config.ConfigException;
 import com.linkedin.cruisecontrol.servlet.EndPoint;
-import com.linkedin.kafka.cruisecontrol.common_api.CommonApi;
+import com.linkedin.kafka.cruisecontrol.commonapi.CommonApi;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.config.RequestParameterWrapper;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
@@ -291,7 +291,14 @@ public final class KafkaCruiseControlServletUtils {
    * @param headerName a <code>String</code> specifying the header name
    */
   static void ensureHeaderNotPresent(CommonApi common, String headerName) {
-    String value = common.get_headers().get(headerName);
+    String value = common.getHeaders().get(headerName);
+    if (value != null) {
+      throw new IllegalArgumentException(String.format("Unexpected header %s (value: %s) in the request.", value, headerName));
+    }
+  }
+
+  static void ensureHeaderNotPresent(HttpServletRequest request, String headerName) {
+    String value = request.getHeader(headerName);
     if (value != null) {
       throw new IllegalArgumentException(String.format("Unexpected header %s (value: %s) in the request.", value, headerName));
     }
@@ -320,12 +327,5 @@ public final class KafkaCruiseControlServletUtils {
       }
     }
     return sb.toString();
-  }
-
-  static void ensureHeaderNotPresent(HttpServletRequest request, String headerName) {
-    String value = request.getHeader(headerName);
-    if (value != null) {
-      throw new IllegalArgumentException(String.format("Unexpected header %s (value: %s) in the request.", value, headerName));
-    }
   }
 }

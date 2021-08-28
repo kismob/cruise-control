@@ -1,2 +1,33 @@
-package com.linkedin.kafka.cruisecontrol.vertx;public class PartitionLoadIntegrationTest {
+package com.linkedin.kafka.cruisecontrol.vertx;
+
+import com.linkedin.kafka.cruisecontrol.CruiseControlVertxIntegrationTestHarness;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.IOException;
+
+import static org.junit.Assert.assertEquals;
+
+public class PartitionLoadIntegrationTest extends CruiseControlVertxIntegrationTestHarness {
+    @Before
+    public void start() throws Exception {
+        super.start();
+        long startTime = System.currentTimeMillis();
+        while((getServletResult("state", _servletPort).split("NumValidWindows: \\(")[1].split("/")[0].equals("0")
+                || getVertxResult("state", _vertxPort).split("NumValidWindows: \\(")[1].split("/")[0].equals("0"))
+                && (System.currentTimeMillis()-startTime)<60000 * 60){
+            Thread.sleep(10000);
+        }
+    }
+
+    @After
+    public void teardown() {
+        super.stop();
+    }
+    @Test
+    public void loadResponse() throws IOException {
+        assertEquals(getServletResult("partition_load", _servletPort), getVertxResult("partition_load", _vertxPort));
+        assertEquals(getServletResult("partition_load?json=true", _servletPort), getVertxResult("partition_load?json=true", _vertxPort));
+    }
 }

@@ -6,7 +6,11 @@ package com.linkedin.kafka.cruisecontrol.servlet.parameters;
 
 import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
 import java.io.UnsupportedEncodingException;
-import java.util.*;
+import java.util.Collections;
+import java.util.Set;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.IGNORE_PROPOSAL_CACHE_PARAM;
@@ -56,9 +60,13 @@ public class ProposalsParameters extends GoalBasedOptimizationParameters {
     _isRebalanceDiskMode = ParameterUtils.isRebalanceDiskMode(_request);
   }
 
+  /**
+   * Initializes the parameters
+   */
   public void initParameters(boolean ignoreProposalCache, String dataFrom, String inGoals, boolean kafkaAssigner, boolean rebalanceDisk,
-                             boolean allowCapacityEstimation, Pattern excludedTopics, boolean useReadyDefaultGoals, boolean excludeRecentlyDemotedBrokers,
-                             boolean excludeRecentlyRemovedBrokers, String destinationBrokerIds, boolean isRebalanceDiskMode,
+                             boolean allowCapacityEstimation, Pattern excludedTopics, boolean useReadyDefaultGoals,
+                             boolean excludeRecentlyDemotedBrokers, boolean excludeRecentlyRemovedBrokers,
+                             String destinationBrokerIds, boolean isRebalanceDiskMode,
                              boolean json, boolean verbose, boolean fastMode) throws UnsupportedEncodingException {
     super.initParameters(dataFrom, inGoals, kafkaAssigner, rebalanceDisk, allowCapacityEstimation, excludedTopics, useReadyDefaultGoals,
             excludeRecentlyDemotedBrokers, excludeRecentlyRemovedBrokers, json, verbose, fastMode);

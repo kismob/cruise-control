@@ -1,60 +1,18 @@
 package com.linkedin.kafka.cruisecontrol.vertx;
 
-import com.linkedin.kafka.cruisecontrol.CruiseControllVertxIntegrationTestHamess;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.kafka.clients.admin.NewTopic;
+import com.linkedin.kafka.cruisecontrol.CruiseControlVertxIntegrationTestHarness;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
 
 
-public class ResponseIntegrationTest extends CruiseControllVertxIntegrationTestHamess {
+public class ResponseIntegrationTest extends CruiseControlVertxIntegrationTestHarness {
 
-    private String getServletResult(String endpoint, int port) throws IOException {
-        URL servletUrl = new URL("http://localhost:" + port +"/kafkacruisecontrol/" + endpoint);
-        HttpURLConnection servletCon = (HttpURLConnection) servletUrl.openConnection();
-        servletCon.setRequestMethod("GET");
 
-        BufferedReader servletIn = new BufferedReader(
-                new InputStreamReader(servletCon.getInputStream()));
-        String servletInputLine;
-        StringBuffer servletContent = new StringBuffer();
-        while ((servletInputLine = servletIn.readLine()) != null) {
-            servletContent.append(servletInputLine);
-        }
-        servletIn.close();
-        return servletContent.toString();
-    }
-
-    public String getVertxResult(String endpoint, Integer port) throws IOException {
-        URL vertxUrl = new URL("http://localhost:" + port + "/" + endpoint);
-        HttpURLConnection vertxCon = (HttpURLConnection) vertxUrl.openConnection();
-        vertxCon.setRequestMethod("GET");
-
-        BufferedReader vertxIn = new BufferedReader(
-                new InputStreamReader(vertxCon.getInputStream()));
-        String vertxInputLine;
-        StringBuffer vertxContent = new StringBuffer();
-        while ((vertxInputLine = vertxIn.readLine()) != null) {
-            vertxContent.append(vertxInputLine);
-        }
-        vertxIn.close();
-        return vertxContent.toString();
-    }
 
 
     @Before
@@ -69,8 +27,8 @@ public class ResponseIntegrationTest extends CruiseControllVertxIntegrationTestH
 
     @Test
     public void testKafkaClusterStateResponses() throws IOException {
-        Integer servletPort = _servletApp.get_port();
-        Integer vertxPort = _vertxApp.get_port();
+        Integer servletPort = _servletApp.getPort();
+        Integer vertxPort = _vertxApp.getPort();
         assertEquals(getServletResult("kafka_cluster_state", servletPort), getVertxResult("kafka_cluster_state", vertxPort));
         assertEquals(getServletResult("kafka_cluster_state?json=true", servletPort), getVertxResult("kafka_cluster_state?json=true", vertxPort));
         assertEquals(getServletResult("kafka_cluster_state?verbose=true", servletPort), getVertxResult("kafka_cluster_state?verbose=true", vertxPort));
@@ -83,8 +41,8 @@ public class ResponseIntegrationTest extends CruiseControllVertxIntegrationTestH
 
     @Test
     public void testCruiseControlState() throws IOException {
-        Integer servletPort = _servletApp.get_port();
-        Integer vertxPort = _vertxApp.get_port();
+        Integer servletPort = _servletApp.getPort();
+        Integer vertxPort = _vertxApp.getPort();
         assertEquals(getServletResult("state", servletPort), getVertxResult("state", vertxPort));
         assertEquals(getServletResult("state?substates=ANALYZER", servletPort), getVertxResult("state?substates=ANALYZER", vertxPort));
         assertEquals(getServletResult("state?substates=MONITOR", servletPort), getVertxResult("state?substates=MONITOR", vertxPort));
@@ -97,8 +55,8 @@ public class ResponseIntegrationTest extends CruiseControllVertxIntegrationTestH
 
     /*@Test
     public void testLoad() throws IOException{
-        Integer servletPort = _servletApp.get_port();
-        Integer vertxPort = _vertxApp.get_port();
+        Integer servletPort = _servletApp.getPort();
+        Integer vertxPort = _vertxApp.getPort();
         assertEquals(getServletResult("load", servletPort), getVertxResult("load", vertxPort));
         assertEquals(getServletResult("load?json=true", servletPort), getVertxResult("load?json=true", vertxPort));
 

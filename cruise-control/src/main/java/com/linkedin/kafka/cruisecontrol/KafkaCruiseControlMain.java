@@ -9,8 +9,6 @@ import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.ServerSocket;
-
 import static com.linkedin.kafka.cruisecontrol.KafkaCruiseControlUtils.readConfig;
 
 /**

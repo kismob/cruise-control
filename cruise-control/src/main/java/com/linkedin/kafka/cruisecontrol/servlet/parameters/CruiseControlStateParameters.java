@@ -54,7 +54,9 @@ public class CruiseControlStateParameters extends AbstractParameters {
     _isVerbose = ParameterUtils.isVerbose(_request);
     _isSuperVerbose = ParameterUtils.isSuperVerbose(_request);
   }
-
+  /**
+   * Initializes the parameters
+   */
   public void initParameters(boolean json, Set<CruiseControlState.SubState> substates,
                                 boolean verbose, boolean superVerbose) throws UnsupportedEncodingException {
     super.initParameters(json, STATE);
@@ -62,8 +64,6 @@ public class CruiseControlStateParameters extends AbstractParameters {
     _isVerbose = verbose;
     _isSuperVerbose = superVerbose;
   }
-
-
 
   public Set<CruiseControlState.SubState> substates() {
     return _substates;

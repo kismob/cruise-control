@@ -42,6 +42,10 @@ public class KafkaClusterState extends AbstractCruiseControlResponse {
     _adminClient = adminClient;
   }
 
+  /**
+   *
+   * @return JSON string
+   */
   public String getJsonString(CruiseControlParameters parameters) {
     Gson gson = new Gson();
     Map<String, Object> jsonStructure;
@@ -56,7 +60,6 @@ public class KafkaClusterState extends AbstractCruiseControlResponse {
     }
     return gson.toJson(jsonStructure);
   }
-
 
   /**
    * Return an object that can be further used to encode into JSON.
@@ -75,6 +78,10 @@ public class KafkaClusterState extends AbstractCruiseControlResponse {
     return cruiseControlState;
   }
 
+  /**
+   *
+   * @return Plain text
+   */
   public String getPlaintext(CruiseControlParameters parameters) {
     KafkaClusterStateParameters kafkaClusterStateParams = (KafkaClusterStateParameters) parameters;
     boolean isVerbose = kafkaClusterStateParams.isVerbose();
@@ -90,7 +97,6 @@ public class KafkaClusterState extends AbstractCruiseControlResponse {
     }
     return sb.toString();
   }
-
 
   @Override
   protected void discardIrrelevantAndCacheRelevant(CruiseControlParameters parameters) {

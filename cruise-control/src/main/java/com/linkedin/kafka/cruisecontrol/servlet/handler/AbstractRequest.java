@@ -5,20 +5,17 @@
 package com.linkedin.kafka.cruisecontrol.servlet.handler;
 
 import com.linkedin.cruisecontrol.servlet.handler.Request;
-import com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServlet;
 import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
 import com.linkedin.cruisecontrol.servlet.response.CruiseControlResponse;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.Map;
 
-import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG;
 import static com.linkedin.cruisecontrol.common.utils.Utils.validateNotNull;
+import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG;
 
 
 public abstract class AbstractRequest implements Request {
