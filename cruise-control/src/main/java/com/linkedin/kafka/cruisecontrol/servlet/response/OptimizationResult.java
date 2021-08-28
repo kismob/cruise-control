@@ -68,6 +68,9 @@ public class OptimizationResult extends AbstractCruiseControlResponse {
     return _cachedPlaintextResponse;
   }
 
+  /**
+   * @return Plaintext pretext
+   */
   public String getPlaintextPretext(CruiseControlParameters parameters) {
     switch ((CruiseControlEndPoint) parameters.endPoint()) {
       case ADD_BROKER:
@@ -91,6 +94,10 @@ public class OptimizationResult extends AbstractCruiseControlResponse {
     }
   }
 
+  /**
+   *
+   * @return Plain text
+   */
   public String getPlaintext(boolean isVerbose, String pretext) {
     StringBuilder sb = new StringBuilder();
     if (isVerbose) {
@@ -132,6 +139,10 @@ public class OptimizationResult extends AbstractCruiseControlResponse {
     }
   }
 
+  /**
+   *
+   * @return JSON string
+   */
   public String getJsonString(boolean isVerbose) {
     Map<String, Object> optimizationResult = new HashMap<>();
     if (isVerbose) {

@@ -5,7 +5,7 @@
 package com.linkedin.kafka.cruisecontrol.servlet.handler.sync;
 
 import com.codahale.metrics.Timer;
-import com.linkedin.kafka.cruisecontrol.common_api.CommonApi;
+import com.linkedin.kafka.cruisecontrol.commonapi.CommonApi;
 import com.linkedin.kafka.cruisecontrol.servlet.handler.async.runnable.OperationFuture;
 import com.linkedin.cruisecontrol.servlet.EndPoint;
 import com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager;
@@ -13,10 +13,7 @@ import com.linkedin.kafka.cruisecontrol.servlet.handler.AbstractRequest;
 import com.linkedin.kafka.cruisecontrol.servlet.handler.async.AbstractAsyncRequest;
 import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
 import com.linkedin.cruisecontrol.servlet.response.CruiseControlResponse;
-
-import java.io.UnsupportedEncodingException;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

@@ -123,12 +123,12 @@ subprojects {
     }
   }
   // aggregated task for checkstyle and spotbugs static analyzers
-  /*task('analyze') {
+  task('analyze') {
     dependsOn('checkstyleMain', 'checkstyleTest', 'spotbugsMain', 'spotbugsTest')
     doLast {}
   }
 
-  test.dependsOn('checkstyleMain', 'checkstyleTest', 'spotbugsMain', 'spotbugsTest')*/
+  test.dependsOn('checkstyleMain', 'checkstyleTest', 'spotbugsMain', 'spotbugsTest')
 
   jar {
     from "$rootDir/LICENSE"

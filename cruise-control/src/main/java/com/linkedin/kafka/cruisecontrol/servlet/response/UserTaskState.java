@@ -39,6 +39,10 @@ public class UserTaskState extends AbstractCruiseControlResponse {
     _userTasks = userTasks;
   }
 
+  /**
+   *
+   * @return JSON string
+   */
   public String getJsonString(UserTasksParameters parameters) {
     List<Map<String, Object>> jsonUserTaskList = new ArrayList<>();
     for (UserTaskManager.UserTaskInfo taskInfo : prepareResultList(parameters)) {
@@ -112,6 +116,10 @@ public class UserTaskState extends AbstractCruiseControlResponse {
                  .forEach(consumer);
   }
 
+  /**
+   *
+   * @return Plain text
+   */
   public String getPlaintext(UserTasksParameters parameters) {
     StringBuilder sb = new StringBuilder();
     int padding = 2;

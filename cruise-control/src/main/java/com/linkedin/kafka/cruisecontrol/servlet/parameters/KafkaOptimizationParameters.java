@@ -42,7 +42,8 @@ public abstract class KafkaOptimizationParameters extends AbstractParameters {
     _excludeRecentlyDemotedBrokers = ParameterUtils.excludeRecentlyDemotedBrokers(_request);
   }
 
-  protected void initParameters(boolean allowCapacityEstimation, boolean excludeRecentlyDemotedBrokers, boolean json, boolean verbose) throws UnsupportedEncodingException {
+  protected void initParameters(boolean allowCapacityEstimation, boolean excludeRecentlyDemotedBrokers,
+                                boolean json, boolean verbose) throws UnsupportedEncodingException {
     super.initParameters(json, PROPOSALS);
     _allowCapacityEstimation = allowCapacityEstimation;
     _isVerbose = verbose;

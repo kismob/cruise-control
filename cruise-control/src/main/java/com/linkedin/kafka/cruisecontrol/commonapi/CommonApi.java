@@ -1,7 +1,7 @@
 /*
  * Copyright 2017 LinkedIn Corp. Licensed under the BSD 2-Clause License (the "License"). See License in the project root for license information.
  */
-package com.linkedin.kafka.cruisecontrol.common_api;
+package com.linkedin.kafka.cruisecontrol.commonapi;
 
 import com.linkedin.cruisecontrol.servlet.EndPoint;
 import com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils;
@@ -11,12 +11,12 @@ import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.Session;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.io.UnsupportedEncodingException;
-import java.util.*;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager.USER_TASK_HEADER_NAME;
 
@@ -48,7 +48,6 @@ public class CommonApi {
     private HttpServerResponse _vertxResponse;
     private MultiMap _headers;
 
-
     public CommonApi(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
         _userTaskIdString = httpServletRequest.getHeader(USER_TASK_HEADER_NAME);
         _requestURL = String.format("%s %s", httpServletRequest.getMethod(), httpServletRequest.getRequestURI());
@@ -64,11 +63,11 @@ public class CommonApi {
         _headers = getServletHeaders(httpServletRequest);
     }
 
-    public CommonApi(RoutingContext context){
+    public CommonApi(RoutingContext context) {
         _userTaskIdString = context.request().getHeader(USER_TASK_HEADER_NAME);
         _requestURL = String.format("%s %s", context.request().method(), context.request().uri().split("\\?")[0]);
         _queryParamsMap = getVertxQueryParamsMap(context);
-        _clientIdentity =  getVertxClientIpAddress(context);
+        _clientIdentity = getVertxClientIpAddress(context);
         _method = context.request().method().toString();
         _pathInfo = context.request().uri().split("\\?")[0];
         _servletSession = null;
@@ -78,59 +77,71 @@ public class CommonApi {
         _headers = context.request().headers();
     }
 
-    public HttpSession get_servletSession() {
+    public HttpSession getServletSession() {
         return _servletSession;
     }
 
-    public EndPoint get_endPoint() {
+    public EndPoint getEndPoint() {
         return _endPoint;
     }
 
-
-    public Session get_vertxSession() {
+    public Session getVertxSession() {
         return _vertxSession;
     }
 
-    public String get_requestURL() {
+    public String getRequestURL() {
         return _requestURL;
     }
 
-    public Map<String, String[]> get_queryParamsMap() {
+    public Map<String, String[]> getQueryParamsMap() {
         return _queryParamsMap;
     }
 
-    public String get_userTaskIdString(){return _userTaskIdString;}
+    public String getUserTaskIdString() {
+        return _userTaskIdString;
+    }
 
-    private MultiMap getServletHeaders(HttpServletRequest request){
+    private MultiMap getServletHeaders(HttpServletRequest request) {
          Enumeration<String> headerNames = request.getHeaderNames();
          MultiMap output = new CaseInsensitiveHeaders();
-         while(headerNames.hasMoreElements()){
+         while (headerNames.hasMoreElements()) {
              String header = headerNames.nextElement();
              output.add(header, request.getHeader(header));
          }
          return output;
     }
 
+    /**
+     * Uses the proper way to get the header, depending on if it is using Vertx or Servlet.
+     */
     public void setOrPutHeader(String name, String value) throws Exception {
-        if(_vertxResponse == null && _servletResponse != null){
+        if (_vertxResponse == null && _servletResponse != null) {
             _servletResponse.setHeader(name, value);
             return;
         }
-        if(_vertxResponse != null && _servletResponse == null){
+        if (_vertxResponse != null && _servletResponse == null) {
             _vertxResponse.putHeader(name, value);
             return;
         }
         throw new Exception("Something went wrong in CommonApi setOrPutHeader");
     }
 
-    public Map<String, String[]> getVertxQueryParamsMap(RoutingContext context){
+    /**
+     * Gives back the Vertx query parameters.
+     * @return Map
+     */
+    public Map<String, String[]> getVertxQueryParamsMap(RoutingContext context) {
         Map<String, String[]> queryParamsMap = new HashMap<>();
-        for (Map.Entry<String, String> entry : context.queryParams().entries()){
+        for (Map.Entry<String, String> entry : context.queryParams().entries()) {
             queryParamsMap.put(entry.getKey(), new String[]{entry.getValue()});
         }
         return queryParamsMap;
     }
 
+    /**
+     * Returns the Vertx client IP address.
+     * @return String
+     */
     public static String getVertxClientIpAddress(RoutingContext context) {
         for (String header : HEADERS_TO_TRY) {
             String ip = context.request().getHeader(header);
@@ -141,20 +152,19 @@ public class CommonApi {
         return "[" + context.request().remoteAddress().host() + "]";
     }
 
-
-    public String get_method() {
+    public String getMethod() {
         return _method;
     }
 
-    public String get_pathInfo() {
+    public String getPathInfo() {
         return _pathInfo;
     }
 
-    public String get_clientIdentity() {
+    public String getClientIdentity() {
         return _clientIdentity;
     }
 
-    public MultiMap get_headers() {
+    public MultiMap getHeaders() {
         return _headers;
     }
 }

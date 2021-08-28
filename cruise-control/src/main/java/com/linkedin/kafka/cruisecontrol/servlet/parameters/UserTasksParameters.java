@@ -7,8 +7,12 @@ package com.linkedin.kafka.cruisecontrol.servlet.parameters;
 import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
 import com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager;
 import java.io.UnsupportedEncodingException;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.Set;
+import java.util.UUID;
 
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.*;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.REASON_PARAM;
@@ -62,15 +66,18 @@ public class UserTasksParameters extends AbstractParameters {
     _fetchCompletedTask = ParameterUtils.fetchCompletedTask(_request);
   }
 
-  public void initParameters(boolean json, String user_task_ids_string, String client_ids_string, String end_points_string,
-                                     String types_string, String entries_string, boolean fetch_completed_task) throws UnsupportedEncodingException {
+  /**
+   * Initializes the parameters
+   */
+  public void initParameters(boolean json, String userTaskIdsString, String clientIdsString, String endPointsString,
+                                     String typesString, String entriesString, boolean fetchCompletedTask) throws UnsupportedEncodingException {
     super.initParameters(json, USER_TASKS);
-    _userTaskIds = ParameterUtils.userTaskIds(user_task_ids_string);
-    _clientIds = ParameterUtils.clientIds(client_ids_string);
-    _endPoints = ParameterUtils.endPoints(end_points_string);
-    _types = ParameterUtils.types(types_string);
-    _entries = ParameterUtils.entries(entries_string);
-    _fetchCompletedTask = fetch_completed_task;
+    _userTaskIds = ParameterUtils.userTaskIds(userTaskIdsString);
+    _clientIds = ParameterUtils.clientIds(clientIdsString);
+    _endPoints = ParameterUtils.endPoints(endPointsString);
+    _types = ParameterUtils.types(typesString);
+    _entries = ParameterUtils.entries(entriesString);
+    _fetchCompletedTask = fetchCompletedTask;
   }
 
   public Set<UUID> userTaskIds() {

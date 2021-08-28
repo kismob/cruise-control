@@ -1,15 +1,16 @@
+/*
+ * Copyright 2017 LinkedIn Corp. Licensed under the BSD 2-Clause License (the "License"). See License in the project root for license information.
+ */
 package com.linkedin.kafka.cruisecontrol;
 
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.vertx.MainVerticle;
 import io.vertx.core.Vertx;
-import javax.servlet.ServletException;
 
 
-
-public class KafkaCruiseControlVertxApp extends KafkaCruiseControlApp{
+public class KafkaCruiseControlVertxApp extends KafkaCruiseControlApp {
     protected static MainVerticle verticle;
-    KafkaCruiseControlVertxApp(KafkaCruiseControlConfig config, Integer port, String hostname) throws ServletException {
+    KafkaCruiseControlVertxApp(KafkaCruiseControlConfig config, Integer port, String hostname) {
         super(config, port, hostname);
     }
 
@@ -21,10 +22,12 @@ public class KafkaCruiseControlVertxApp extends KafkaCruiseControlApp{
     void start() {
         _kafkaCruiseControl.startUp();
         Vertx vertx = Vertx.vertx();
-        verticle= new MainVerticle(_kafkaCruiseControl,_metricRegistry, _port, _hostname);
+        verticle = new MainVerticle(_kafkaCruiseControl, _metricRegistry, _port, _hostname);
         vertx.deployVerticle(verticle);
     }
 
-    public static MainVerticle getVerticle(){return verticle;}
+    public static MainVerticle getVerticle() {
+        return verticle;
+    }
 
 }

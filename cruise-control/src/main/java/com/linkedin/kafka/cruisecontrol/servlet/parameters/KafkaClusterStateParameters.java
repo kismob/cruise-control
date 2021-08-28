@@ -51,6 +51,9 @@ public class KafkaClusterStateParameters extends AbstractParameters {
     _topic = ParameterUtils.topic(_request);
   }
 
+  /**
+   * Initializes the parameters
+   */
   public void initParameters(boolean verbose, String topic, boolean json) throws UnsupportedEncodingException {
     super.initParameters(json, KAFKA_CLUSTER_STATE);
     _isVerbose = verbose;
