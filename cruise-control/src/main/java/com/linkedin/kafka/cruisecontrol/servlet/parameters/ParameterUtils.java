@@ -13,7 +13,7 @@ import com.linkedin.kafka.cruisecontrol.analyzer.goals.IntraBrokerDiskCapacityGo
 import com.linkedin.kafka.cruisecontrol.analyzer.goals.IntraBrokerDiskUsageDistributionGoal;
 import com.linkedin.kafka.cruisecontrol.analyzer.kafkaassigner.KafkaAssignerDiskUsageDistributionGoal;
 import com.linkedin.kafka.cruisecontrol.analyzer.kafkaassigner.KafkaAssignerEvenRackAwareGoal;
-import com.linkedin.kafka.cruisecontrol.common_api.CommonApi;
+import com.linkedin.kafka.cruisecontrol.commonapi.CommonApi;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.ExecutorConfig;
 import com.linkedin.kafka.cruisecontrol.detector.notifier.KafkaAnomalyType;
@@ -25,8 +25,6 @@ import com.linkedin.kafka.cruisecontrol.servlet.UserRequestException;
 import com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager;
 import com.linkedin.kafka.cruisecontrol.servlet.purgatory.ReviewStatus;
 import com.linkedin.kafka.cruisecontrol.servlet.response.CruiseControlState;
-import io.vertx.ext.web.RoutingContext;
-
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -199,10 +197,12 @@ public final class ParameterUtils {
     }
     return null;
   }
-
+  /**
+   * @return The endpoint specified in the given request.
+   */
   public static CruiseControlEndPoint endPoint(CommonApi common) {
     List<CruiseControlEndPoint> supportedEndpoints;
-    switch (common.get_method()) {
+    switch (common.getMethod()) {
       case GET_METHOD:
         supportedEndpoints = CruiseControlEndPoint.getEndpoints();
         break;
@@ -210,9 +210,9 @@ public final class ParameterUtils {
         supportedEndpoints = CruiseControlEndPoint.postEndpoints();
         break;
       default:
-        throw new UserRequestException("Unsupported request method: " + common.get_method() + ".");
+        throw new UserRequestException("Unsupported request method: " + common.getMethod() + ".");
     }
-    String pathInfo = common.get_pathInfo();
+    String pathInfo = common.getPathInfo();
     if (pathInfo == null) {
       // URL does not have any extra path information
       return null;
@@ -318,6 +318,10 @@ public final class ParameterUtils {
     return Collections.unmodifiableList(retList);
   }
 
+  /**
+   * Get the {@link List} parameter.
+   * @return The specified value for the parameter, or empty List if the parameter is missing.
+   */
   public static List<String> getListParam(String parameterString, String parameter) throws UnsupportedEncodingException {
     List<String> retList = parameterString == null ? new ArrayList<>()
             : Arrays.asList(urlDecode(parameterString).split(","));
@@ -639,6 +643,10 @@ public final class ParameterUtils {
                                            .map(Integer::parseInt).collect(Collectors.toSet());
   }
 
+  /**
+   * Parse the given parameter to a Set of Integer.
+   * @return Parsed parameter as a Set of Integer.
+   */
   public static Set<Integer> parseParamToIntegerSet(String parameterString) throws UnsupportedEncodingException {
     return parameterString == null ? new HashSet<>(0)
             : Arrays.stream(parameterString.split(","))
@@ -874,6 +882,11 @@ public final class ParameterUtils {
     return entries;
   }
 
+  /**
+   * Get the specified value for the {@link #ENTRIES_PARAM} parameter.
+   * @return The specified value for the {@link #ENTRIES_PARAM} parameter, or {@link Integer#MAX_VALUE} if the
+   * parameter is missing.
+   */
   public static int entries(String parameterString) {
     int entries = parameterString == null ? Integer.MAX_VALUE : Integer.parseInt(parameterString);
     if (entries <= 0) {
@@ -1189,6 +1202,10 @@ public final class ParameterUtils {
            : Arrays.stream(urlDecode(request.getParameter(parameterString)).split(",")).map(UUID::fromString).collect(Collectors.toSet());
   }
 
+  /**
+   * Default: An empty set.
+   * @return User task ids.
+   */
   public static Set<UUID> userTaskIds(String parameterString) throws UnsupportedEncodingException {
     return parameterString == null
             ? Collections.emptySet()
@@ -1206,6 +1223,10 @@ public final class ParameterUtils {
     return Collections.unmodifiableSet(parsedClientIds);
   }
 
+  /**
+   * Default: An empty set.
+   * @return Client ids.
+   */
   public static Set<String> clientIds(String parameterString) throws UnsupportedEncodingException {
     Set<String> parsedClientIds = parameterString == null
             ? new HashSet<>(0)
@@ -1235,6 +1256,10 @@ public final class ParameterUtils {
     return Collections.unmodifiableSet(endPoints);
   }
 
+  /**
+   * Default: An empty set.
+   * @return Endpoints.
+   */
   public static Set<CruiseControlEndPoint> endPoints(String parameterString) throws UnsupportedEncodingException {
     Set<String> parsedEndPoints = parameterString == null
             ? new HashSet<>(0)
@@ -1268,6 +1293,10 @@ public final class ParameterUtils {
     return Collections.unmodifiableSet(taskStates);
   }
 
+  /**
+   * Default: An empty set.
+   * @return Types.
+   */
   public static Set<UserTaskManager.TaskState> types(String parameterString) throws UnsupportedEncodingException {
     Set<String> parsedTaskStates = parameterString == null
             ? new HashSet<>(0)

@@ -7,10 +7,10 @@ package com.linkedin.kafka.cruisecontrol.servlet.parameters;
 import com.linkedin.kafka.cruisecontrol.monitor.ModelCompletenessRequirements;
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.DATA_FROM_PARAM;
@@ -63,8 +63,9 @@ public abstract class GoalBasedOptimizationParameters extends KafkaOptimizationP
   }
 
   protected void initParameters(String dataFrom, String inGoals, boolean kafkaAssigner, boolean rebalanceDisk, boolean allowCapacityEstimation,
-                                Pattern excludedTopics, boolean useReadyDefaultGoals, boolean excludeRecentlyDemotedBrokers, boolean excludeRecentlyRemovedBrokers,
-                                boolean json, boolean verbose, boolean fastMode) throws UnsupportedEncodingException {
+                                Pattern excludedTopics, boolean useReadyDefaultGoals, boolean excludeRecentlyDemotedBrokers,
+                                boolean excludeRecentlyRemovedBrokers, boolean json, boolean verbose,
+                                boolean fastMode)throws UnsupportedEncodingException {
     super.initParameters(allowCapacityEstimation, excludeRecentlyDemotedBrokers, json, verbose);
     _dataFrom = ParameterUtils.getDataFrom(dataFrom);
     _useReadyDefaultGoals = useReadyDefaultGoals;

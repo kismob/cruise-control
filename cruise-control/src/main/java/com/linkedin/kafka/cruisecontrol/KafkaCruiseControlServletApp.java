@@ -1,3 +1,6 @@
+/*
+ * Copyright 2017 LinkedIn Corp. Licensed under the BSD 2-Clause License (the "License"). See License in the project root for license information.
+ */
 package com.linkedin.kafka.cruisecontrol;
 
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
@@ -17,8 +20,7 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import javax.servlet.ServletException;
 import java.util.List;
 
-public class KafkaCruiseControlServletApp extends KafkaCruiseControlApp{
-
+public class KafkaCruiseControlServletApp extends KafkaCruiseControlApp {
 
     private final Server _server;
 

@@ -95,6 +95,9 @@ public class PartitionLoadParameters extends AbstractParameters {
     ParameterUtils.validateTimeRange(_startMs, _endMs);
   }
 
+  /**
+   * Initializes the parameters
+   */
   public void initParameters(boolean json, boolean maxLoad, boolean avgLoad, Pattern topic, String partitionString, Integer entries,
                                 Double minValidPartitionRatio, boolean allowCapacityEstimation, String brokerId,
                                 Long start, Long end, String resourceString) throws UnsupportedEncodingException {

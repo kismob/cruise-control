@@ -1,3 +1,6 @@
+/*
+ * Copyright 2018 LinkedIn Corp. Licensed under the BSD 2-Clause License (the "License"). See License in the project root for license information.
+ */
 package com.linkedin.kafka.cruisecontrol.vertx.generator;
 
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
@@ -14,9 +17,12 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -72,7 +78,7 @@ public final class OpenApiSpecGenerator {
                         Class<?> delegate = handler.getClass().getDeclaredField("arg$1").getType();
                         Arrays.stream(delegate.getDeclaredMethods()).distinct().forEach(method -> {
                             io.swagger.v3.oas.annotations.Operation annotation = method.getAnnotation(io.swagger.v3.oas.annotations.Operation.class);
-                            if (annotation != null ) {
+                            if (annotation != null) {
                                 String httpMethod = annotation.method();
                                 PathItem pathItem = paths.get(route.getPath());
                                 Operation matchedOperation = null;

@@ -79,6 +79,10 @@ public class BrokerStats extends AbstractCruiseControlResponse {
     return _isBrokerStatsEstimated;
   }
 
+  /**
+   *
+   * @return JSON string
+   */
   public String getJsonString() {
     Gson gson = new Gson();
     Map<String, Object> jsonStructure = getJsonStructure();

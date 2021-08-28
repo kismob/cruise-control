@@ -9,7 +9,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.linkedin.cruisecontrol.servlet.EndPoint;
 import com.linkedin.cruisecontrol.servlet.EndpointType;
-import com.linkedin.kafka.cruisecontrol.common_api.CommonApi;
+import com.linkedin.kafka.cruisecontrol.commonapi.CommonApi;
 import com.linkedin.kafka.cruisecontrol.config.constants.UserTaskManagerConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import com.linkedin.kafka.cruisecontrol.servlet.handler.async.runnable.OperationFuture;
@@ -44,7 +44,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import com.linkedin.kafka.cruisecontrol.servlet.response.JsonResponseClass;
 import com.linkedin.kafka.cruisecontrol.servlet.response.JsonResponseField;
-import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.Session;
 import org.apache.kafka.common.utils.Time;
 import org.slf4j.Logger;
@@ -261,6 +260,10 @@ public class UserTaskManager implements Closeable {
     }
   }
 
+  /**
+   * This method creates a {@link UserTaskInfo} reference for a new sync or async request and a UUID to map to it.
+   * @return An unmodifiable list of {@link OperationFuture} for the linked UserTask.
+   */
   public List<OperationFuture> getOrCreateUserTask(CommonApi common,
                                                     Function<String, OperationFuture> function,
                                                     int step,
@@ -309,13 +312,11 @@ public class UserTaskManager implements Closeable {
 
   private void createSessionKeyMapping(UUID userTaskId, CommonApi common) {
     SessionKey sessionKey;
-    if(common.get_vertxSession() != null && common.get_servletSession() == null) {
-      sessionKey = new SessionKey(common.get_vertxSession(), common.get_requestURL(), common.get_queryParamsMap());
-    }
-    else if(common.get_vertxSession() == null && common.get_servletSession() != null) {
-      sessionKey = new SessionKey(common.get_servletSession(), common.get_requestURL(), common.get_queryParamsMap());
-    }
-    else{
+    if (common.getVertxSession() != null && common.getServletSession() == null) {
+      sessionKey = new SessionKey(common.getVertxSession(), common.getRequestURL(), common.getQueryParamsMap());
+    } else if (common.getVertxSession() == null && common.getServletSession() != null) {
+      sessionKey = new SessionKey(common.getServletSession(), common.getRequestURL(), common.getQueryParamsMap());
+    } else {
       sessionKey = null;
     }
     LOG.info("Create a new UserTask {} with SessionKey {}", userTaskId, sessionKey);
@@ -396,26 +397,29 @@ public class UserTaskManager implements Closeable {
     }
     return userTaskId;
   }
+
+  /**
+   * Method returns the user task id.
+   * @return UUID of the user tasks or null if user task doesn't exist.
+   */
   public UUID getUserTaskId(CommonApi common) {
-    String userTaskIdString = common.get_userTaskIdString();
+    String userTaskIdString = common.getUserTaskIdString();
     UUID userTaskId;
     if (userTaskIdString != null && !userTaskIdString.isEmpty()) {
       // valid user task id
       userTaskId = UUID.fromString(userTaskIdString);
     } else {
-        if(common.get_vertxSession() == null && common.get_servletSession() != null) {
-          SessionKey sessionKey = new SessionKey(common.get_servletSession(), common.get_requestURL(), common.get_queryParamsMap());
+        if (common.getVertxSession() == null && common.getServletSession() != null) {
+          SessionKey sessionKey = new SessionKey(common.getServletSession(), common.getRequestURL(), common.getQueryParamsMap());
           synchronized (_sessionKeyToUserTaskIdMap) {
             userTaskId = _sessionKeyToUserTaskIdMap.get(sessionKey);
           }
-        }
-        else if(common.get_vertxSession() != null && common.get_servletSession() == null) {
-          SessionKey sessionKey = new SessionKey(common.get_vertxSession(), common.get_requestURL(), common.get_queryParamsMap());
+        } else if (common.getVertxSession() != null && common.getServletSession() == null) {
+          SessionKey sessionKey = new SessionKey(common.getVertxSession(), common.getRequestURL(), common.getQueryParamsMap());
           synchronized (_sessionKeyToUserTaskIdMap) {
             userTaskId = _sessionKeyToUserTaskIdMap.get(sessionKey);
           }
-        }
-        else{
+        } else {
           userTaskId = null;
         }
       }
@@ -562,17 +566,21 @@ public class UserTaskManager implements Closeable {
     return null;
   }
 
+  /**
+   * Get user task by user task id.
+   * @return User task by user task id.
+   */
   public synchronized UserTaskInfo getUserTaskByUserTaskId(UUID userTaskId, CommonApi common) {
     if (userTaskId == null) {
       return null;
     }
 
-    String requestUrl = common.get_requestURL();
+    String requestUrl = common.getRequestURL();
     for (Map<UUID, UserTaskInfo> infoMap : _uuidToCompletedUserTaskInfoMap.values()) {
       if (infoMap.containsKey(userTaskId)) {
         UserTaskInfo userTaskInfo = infoMap.get(userTaskId);
         if (userTaskInfo.requestUrl().equals(requestUrl)
-                && hasTheSameHttpParameter(userTaskInfo.queryParams(), common.get_queryParamsMap())) {
+                && hasTheSameHttpParameter(userTaskInfo.queryParams(), common.getQueryParamsMap())) {
           return userTaskInfo;
         }
       }
@@ -581,7 +589,7 @@ public class UserTaskManager implements Closeable {
     if (_uuidToActiveUserTaskInfoMap.containsKey(userTaskId)) {
       UserTaskInfo userTaskInfo = _uuidToActiveUserTaskInfoMap.get(userTaskId);
       if (userTaskInfo.requestUrl().equals(requestUrl)
-              && hasTheSameHttpParameter(userTaskInfo.queryParams(), common.get_queryParamsMap())) {
+              && hasTheSameHttpParameter(userTaskInfo.queryParams(), common.getQueryParamsMap())) {
         return userTaskInfo;
       }
     }
@@ -589,7 +597,7 @@ public class UserTaskManager implements Closeable {
     if (_inExecutionUserTaskInfo != null
             && _inExecutionUserTaskInfo.userTaskId().equals(userTaskId)
             && _inExecutionUserTaskInfo.requestUrl().equals(requestUrl)
-            && hasTheSameHttpParameter(_inExecutionUserTaskInfo.queryParams(), common.get_queryParamsMap())) {
+            && hasTheSameHttpParameter(_inExecutionUserTaskInfo.queryParams(), common.getQueryParamsMap())) {
       return _inExecutionUserTaskInfo;
     }
 
@@ -730,25 +738,24 @@ public class UserTaskManager implements Closeable {
       params.forEach((k, v) -> _queryParams.put(k, new HashSet<>(Arrays.asList(v))));
     }
 
-    protected void invalidateSession(){
-      if(_vertxSession != null && _httpSession == null){
+    protected void invalidateSession() {
+      if (_vertxSession != null && _httpSession == null) {
         _vertxSession.destroy();
       }
-      if(_vertxSession == null && _httpSession != null){
+      if (_vertxSession == null && _httpSession != null) {
         _httpSession.invalidate();
       }
     }
 
-    protected long getLastAccessed(){
-      if(_vertxSession != null && _httpSession == null){
+    protected long getLastAccessed() {
+      if (_vertxSession != null && _httpSession == null) {
         return _vertxSession.lastAccessed();
       }
-      if(_vertxSession == null && _httpSession != null){
+      if (_vertxSession == null && _httpSession != null) {
         return _httpSession.getLastAccessedTime();
       }
       return -1L;
     }
-
 
     @Override
     public boolean equals(Object o) {
@@ -780,7 +787,7 @@ public class UserTaskManager implements Closeable {
       return _httpSession;
     }
 
-    public Session vertxSession(){
+    public Session vertxSession() {
       return _vertxSession;
     }
   }
@@ -852,11 +859,11 @@ public class UserTaskManager implements Closeable {
         throw new IllegalArgumentException("Invalid OperationFuture list " + futures + " is provided for UserTaskInfo.");
       }
       _futures = futures;
-      _requestUrl = common.get_requestURL();
-      _clientIdentity = common.get_clientIdentity();
+      _requestUrl = common.getRequestURL();
+      _clientIdentity = common.getClientIdentity();
       _startMs = startMs;
       _userTaskId = userTaskId;
-      _queryParams = common.get_queryParamsMap();
+      _queryParams = common.getQueryParamsMap();
       _endPoint = ParameterUtils.endPoint(common);
       _state = state;
       _parameters = parameters;

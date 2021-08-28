@@ -53,6 +53,10 @@ public class PartitionLoadState extends AbstractCruiseControlResponse {
     _topicNameLength = topicNameLength;
   }
 
+  /**
+   *
+   * @return Plain text
+   */
   public String getPlaintext() {
     StringBuilder sb = new StringBuilder();
     sb.append(String.format("%" + _topicNameLength + "s%10s%30s%20s%20s%20s%20s%20s%n", "PARTITION", "LEADER", "FOLLOWERS",
@@ -100,6 +104,10 @@ public class PartitionLoadState extends AbstractCruiseControlResponse {
     _topic = null;
   }
 
+  /**
+   *
+   * @return JSON string
+   */
   public String getJsonString() {
     Map<String, Object> partitionMap = new HashMap<>();
     List<Object> partitionList = new ArrayList<>();

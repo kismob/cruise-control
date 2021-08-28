@@ -5,8 +5,6 @@
 package com.linkedin.cruisecontrol.servlet.handler;
 
 import com.linkedin.cruisecontrol.common.CruiseControlConfigurable;
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 

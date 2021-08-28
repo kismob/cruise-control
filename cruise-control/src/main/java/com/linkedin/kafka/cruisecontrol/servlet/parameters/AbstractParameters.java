@@ -15,7 +15,6 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,9 +55,9 @@ public abstract class AbstractParameters implements CruiseControlParameters {
 
   }
 
-  protected void initParameters(boolean json, String endpoint_name) throws UnsupportedEncodingException {
+  protected void initParameters(boolean json, String endpointName) throws UnsupportedEncodingException {
     _initialized = true;
-    _endPoint = CruiseControlEndPoint.valueOf(endpoint_name);
+    _endPoint = CruiseControlEndPoint.valueOf(endpointName);
     _json = json;
     _wantResponseSchema = false;
   }

@@ -6,7 +6,6 @@ package com.linkedin.kafka.cruisecontrol.servlet.handler.async.runnable;
 
 import com.linkedin.kafka.cruisecontrol.KafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.async.progress.OperationProgress;
-import com.linkedin.kafka.cruisecontrol.exception.BrokerCapacityResolutionException;
 import com.linkedin.kafka.cruisecontrol.exception.KafkaCruiseControlException;
 import com.linkedin.kafka.cruisecontrol.model.Broker;
 import com.linkedin.kafka.cruisecontrol.model.ClusterModel;
@@ -15,8 +14,6 @@ import com.linkedin.kafka.cruisecontrol.servlet.UserRequestException;
 import com.linkedin.kafka.cruisecontrol.servlet.parameters.ClusterLoadParameters;
 import com.linkedin.kafka.cruisecontrol.servlet.parameters.PartitionLoadParameters;
 import com.linkedin.kafka.cruisecontrol.servlet.response.stats.BrokerStats;
-
-import java.util.concurrent.TimeoutException;
 
 import static com.linkedin.kafka.cruisecontrol.config.constants.MonitorConfig.MIN_VALID_PARTITION_RATIO_CONFIG;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.DEFAULT_START_TIME_FOR_CLUSTER_MODEL;
@@ -51,7 +48,6 @@ public class LoadRunnable extends OperationRunnable {
     _capacityOnly = false;
   }
 
-
   public LoadRunnable(KafkaCruiseControl kafkaCruiseControl, OperationFuture future, ClusterLoadParameters parameters) {
     super(kafkaCruiseControl, future);
     _start = parameters.startMs();
@@ -80,7 +76,6 @@ public class LoadRunnable extends OperationRunnable {
       return clusterModelFromEarliest().brokerStats(_kafkaCruiseControl.config());
     }
   }
-
 
   private boolean isClusterUsingJBOD() throws Exception {
     ClusterModel clusterModel = _kafkaCruiseControl.loadMonitor().clusterCapacity();

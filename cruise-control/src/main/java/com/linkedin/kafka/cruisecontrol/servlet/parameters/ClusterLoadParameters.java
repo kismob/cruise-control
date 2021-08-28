@@ -73,7 +73,11 @@ public class ClusterLoadParameters extends AbstractParameters {
     _capacityOnly = ParameterUtils.capacityOnly(_request);
   }
 
-  public void initParameters(boolean json, Long end, Long start, boolean allowCapacityEstimation, boolean populateDiskInfo, boolean capacityOnly) throws UnsupportedEncodingException {
+  /**
+   * Initializes the parameters
+   */
+  public void initParameters(boolean json, Long end, Long start, boolean allowCapacityEstimation,
+                             boolean populateDiskInfo, boolean capacityOnly) throws UnsupportedEncodingException {
     super.initParameters(json, LOAD);
     _endMs = end;
     _startMs = start;
