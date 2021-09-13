@@ -14,21 +14,21 @@ import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
+import kafka.security.auth.Cluster;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.common.Cluster;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 /**
@@ -194,6 +194,7 @@ final class AnnotationMappers {
                 || type.equals(Map.class)
                 || type.equals(Properties.class)
                 || type.equals(AdminClient.class)
+                || type.equals(Class.class)
                 || type.equals(Cluster.class);
     }
 

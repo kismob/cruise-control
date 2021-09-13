@@ -6,6 +6,7 @@ package com.linkedin.cruisecontrol.servlet.parameters;
 
 import com.linkedin.cruisecontrol.common.CruiseControlConfigurable;
 import com.linkedin.cruisecontrol.servlet.EndPoint;
+import io.vertx.ext.web.RoutingContext;
 import java.util.SortedSet;
 import javax.servlet.http.HttpServletResponse;
 
@@ -25,6 +26,8 @@ public interface CruiseControlParameters extends CruiseControlConfigurable {
    *         directly return false.
    */
   boolean parseParameters(HttpServletResponse response);
+
+  boolean parseParameters(RoutingContext context);
 
   /**
    * @return Endpoint for which the parameters are parsed.

@@ -5,6 +5,7 @@
 package com.linkedin.kafka.cruisecontrol.servlet.purgatory;
 
 import com.linkedin.kafka.cruisecontrol.common.KafkaCruiseControlThreadFactory;
+import com.linkedin.kafka.cruisecontrol.commonapi.CommonApi;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
@@ -25,6 +26,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,6 +100,25 @@ public class Purgatory implements Closeable {
     return result;
   }
 
+  private synchronized <P extends CruiseControlParameters> ReviewResult addRequest(RoutingContext context,
+                                                                                   P parameters) {
+    if (!context.request().method().toString().equals(POST_METHOD)) {
+      throw new IllegalArgumentException(String.format("Purgatory can only contain POST request (Attempted to add: %s).",
+              httpServletRequestToString(context)));
+    }
+    RequestInfo requestInfo = new RequestInfo(context, parameters);
+    _requestInfoById.put(_requestId, requestInfo);
+
+    Map<Integer, RequestInfo> requestInfoById = new HashMap<>();
+    requestInfoById.put(_requestId, requestInfo);
+    Set<Integer> filteredRequestIds = new HashSet<>();
+    filteredRequestIds.add(_requestId);
+
+    ReviewResult result = new ReviewResult(requestInfoById, filteredRequestIds, _config);
+    _requestId++;
+    return result;
+  }
+
   /**
    * Add the given request to the purgatory unless:
    * <ul>
@@ -143,6 +164,44 @@ public class Purgatory implements Closeable {
     }
   }
 
+  /**
+   * Add the given request to the purgatory unless:
+   * <ul>
+   *   <li>Request is already in the purgatory and contains the corresponding reviewId to retrieve its parameters.</li>
+   *   <li>Request contains invalid parameter names.</li>
+   *   <li>Parameters specified in the request cannot be parsed.</li>
+   * </ul>
+   * @return Parameters of the request if it is in the purgatory, and requested with the corresponding reviewId,
+   * {@code null} otherwise.
+   */
+  public CruiseControlParameters maybeAddToPurgatory(RoutingContext context,
+                                                     String classConfig,
+                                                     Map<String, Object> parameterConfigOverrides,
+                                                     UserTaskManager userTaskManager) throws IOException {
+    Integer reviewId = ParameterUtils.reviewId(context, true);
+    if (reviewId != null) {
+      // Submit the request with reviewId that should already be in the purgatory associated with the request endpoint.
+      RequestInfo requestInfo = submit(reviewId, context);
+      // Ensure that if the request has already been submitted, the user is not attempting to create another user task
+      // with the same parameters and endpoint.
+      sanityCheckSubmittedRequest(context, requestInfo, userTaskManager);
+
+      return requestInfo.parameters();
+    } else {
+      CruiseControlParameters parameters = _config.getConfiguredInstance(classConfig,
+              CruiseControlParameters.class,
+              parameterConfigOverrides);
+      if (hasValidParameterNames(context, _config, parameters) && !parameters.parseParameters(context)) {
+        // Add request to purgatory and return ReviewResult.
+        ReviewResult reviewResult = addRequest(context, parameters);
+        reviewResult.writeSuccessResponse(parameters, context);
+        LOG.info("Added request {} (parameters: {}) to purgatory.", context.request().path(), context.request().params());
+      }
+
+      return null;
+    }
+  }
+
   private static void sanityCheckSubmittedRequest(HttpServletRequest request, RequestInfo requestInfo, UserTaskManager userTaskManager) {
     if (requestInfo.accessToAlreadySubmittedRequest()
         && userTaskManager.getUserTaskByUserTaskId(userTaskManager.getUserTaskId(request), request) == null) {
@@ -151,6 +210,17 @@ public class Purgatory implements Closeable {
                         + " the result of a submitted execution, please use its UUID in your request header via %s flag."
                         + " If you are starting a new execution with the same parameters, please submit a new review "
                         + "request and get approval for it.", UserTaskManager.USER_TASK_HEADER_NAME));
+    }
+  }
+
+  private static void sanityCheckSubmittedRequest(RoutingContext context, RequestInfo requestInfo, UserTaskManager userTaskManager) {
+    if (requestInfo.accessToAlreadySubmittedRequest()
+            && userTaskManager.getUserTaskByUserTaskId(userTaskManager.getUserTaskId(new CommonApi(context)), new CommonApi(context)) == null) {
+      throw new UserRequestException(
+              String.format("Attempt to start a new user task with an already submitted review. If you are trying to retrieve"
+                      + " the result of a submitted execution, please use its UUID in your request header via %s flag."
+                      + " If you are starting a new execution with the same parameters, please submit a new review "
+                      + "request and get approval for it.", UserTaskManager.USER_TASK_HEADER_NAME));
     }
   }
 
@@ -184,6 +254,46 @@ public class Purgatory implements Closeable {
           String.format("Request with review id %d is associated with %s endpoint, but the given request has %s endpoint."
                         + "Please use %s endpoint to check for the current requests awaiting review in purgatory.",
                         reviewId, requestInfo.endPoint(), endpoint, REVIEW));
+    }
+
+    if (requestInfo.status() == ReviewStatus.SUBMITTED) {
+      LOG.info("Request {} has already been submitted (review: {}).", requestInfo.endpointWithParams(), reviewId);
+      requestInfo.setAccessToAlreadySubmittedRequest();
+    } else {
+      // 3. Ensure that the request with the given review id is approved in the purgatory, and mark the status as submitted.
+      requestInfo.submitReview(reviewId);
+      LOG.info("Submitted request {} for execution (review: {}).", requestInfo.endpointWithParams(), reviewId);
+    }
+    return requestInfo;
+  }
+
+  /**
+   * Ensure that:
+   * <ul>
+   *   <li>A request with the given review id exists in the purgatory.</li>
+   *   <li>The request with the given review id matches the given request.</li>
+   *   <li>The request with the given review id is approved in the purgatory.</li>
+   * </ul>
+   *
+   * Then mark the review status as submitted.
+   * @return Submitted request info.
+   */
+  public synchronized RequestInfo submit(int reviewId, RoutingContext context) {
+    RequestInfo requestInfo = _requestInfoById.get(reviewId);
+    // 1. Ensure that a request with the given review id exists in the purgatory.
+    if (requestInfo == null) {
+      throw new UserRequestException(
+              String.format("No request with review id %d exists in purgatory. Please use %s endpoint to check for the "
+                      + "current requests awaiting review in purgatory.", reviewId, REVIEW));
+    }
+
+    // 2. Ensure that the request with the given review id matches the given request.
+    CruiseControlEndPoint endpoint = ParameterUtils.endPoint(new CommonApi(context));
+    if (requestInfo.endPoint() != endpoint) {
+      throw new UserRequestException(
+              String.format("Request with review id %d is associated with %s endpoint, but the given request has %s endpoint."
+                              + "Please use %s endpoint to check for the current requests awaiting review in purgatory.",
+                      reviewId, requestInfo.endPoint(), endpoint, REVIEW));
     }
 
     if (requestInfo.status() == ReviewStatus.SUBMITTED) {

@@ -42,9 +42,16 @@ public class UserTasksRequest extends AbstractSyncRequest {
   @Override
   public void configure(Map<String, ?> configs) {
     super.configure(configs);
-    _userTasks = _servlet.getAllUserTasks();
-    _config = _servlet.asyncKafkaCruiseControl().config();
-    _parameters = (UserTasksParameters) validateNotNull(configs.get(USER_TASKS_PARAMETER_OBJECT_CONFIG),
-            "Parameter configuration is missing from the request.");
+    if (_servlet != null) {
+      _userTasks = _servlet.getAllUserTasks();
+      _config = _servlet.asyncKafkaCruiseControl().config();
+      _parameters = (UserTasksParameters) validateNotNull(configs.get(USER_TASKS_PARAMETER_OBJECT_CONFIG),
+              "Parameter configuration is missing from the request.");
+    } else {
+      _userTasks = _endPoints.getAllUserTasks();
+      _config = _endPoints.asyncKafkaCruiseControl().config();
+      _parameters = (UserTasksParameters) validateNotNull(configs.get(USER_TASKS_PARAMETER_OBJECT_CONFIG),
+              "Parameter configuration is missing from the request.");
+    }
   }
 }

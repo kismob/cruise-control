@@ -16,6 +16,8 @@ import java.util.TreeSet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
+import io.vertx.ext.web.RoutingContext;
+import org.eclipse.jetty.server.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,6 +91,25 @@ public abstract class AbstractParameters implements CruiseControlParameters {
   }
 
   @Override
+  public boolean parseParameters(RoutingContext context) {
+    if (_initialized) {
+      LOG.trace("Attempt to parse an already parsed request {}.", _request);
+      return false;
+    }
+    try {
+      initParameters();
+      return false;
+    } catch (Exception e) {
+      try {
+        handleParameterParseException(e, context, e.getMessage(), _json, _wantResponseSchema, _config);
+      } catch (IOException ioe) {
+        LOG.error(String.format("Failed to write parse parameter exception to output stream. Endpoint: %s.", _endPoint), ioe);
+      }
+      return true;
+    }
+  }
+
+  @Override
   public boolean json() {
     return _json;
   }
@@ -110,8 +131,16 @@ public abstract class AbstractParameters implements CruiseControlParameters {
 
   @Override
   public void configure(Map<String, ?> configs) {
-    _request = (HttpServletRequest) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_HTTP_SERVLET_REQUEST_OBJECT_CONFIG),
-                                                    "HttpServletRequest configuration is missing from the request.");
+    if (validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_HTTP_SERVLET_REQUEST_OBJECT_CONFIG),
+            "HttpServletRequest configuration is missing from the request.").getClass().equals(Request.class)) {
+      _request = (HttpServletRequest) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_HTTP_SERVLET_REQUEST_OBJECT_CONFIG),
+              "HttpServletRequest configuration is missing from the request.");
+      _endPoint = null;
+    } else {
+      _endPoint = (EndPoint) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_HTTP_SERVLET_REQUEST_OBJECT_CONFIG),
+              "HttpServletRequest configuration is missing from the request.");
+      _request = null;
+    }
     _config = (KafkaCruiseControlConfig) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_CONFIG_OBJECT_CONFIG),
                                                          "KafkaCruiseControlConfig configuration is missing from the request.");
   }

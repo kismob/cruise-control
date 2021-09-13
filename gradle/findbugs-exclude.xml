@@ -105,7 +105,7 @@
   </Match>
 
   <Match>
-    <Class name="com.linkedin.kafka.cruisecontrol.vertx.EndPoints" />
+    <Class name="com.linkedin.kafka.cruisecontrol.vertx.parameters.VertxParameterUtils" />
     <Bug pattern="DLS_DEAD_LOCAL_STORE" />
   </Match>
 

@@ -7,6 +7,7 @@ package com.linkedin.kafka.cruisecontrol.servlet.response;
 import com.linkedin.cruisecontrol.servlet.response.CruiseControlResponse;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
+import io.vertx.ext.web.RoutingContext;
 import java.io.IOException;
 import javax.servlet.http.HttpServletResponse;
 
@@ -34,6 +35,14 @@ public abstract class AbstractCruiseControlResponse implements CruiseControlResp
     boolean wantResponseSchema = parameters.wantResponseSchema();
     discardIrrelevantResponse(parameters);
     writeResponseToOutputStream(response, SC_OK, json, wantResponseSchema, _cachedResponse, _config);
+  }
+
+  @Override
+  public void writeSuccessResponse(CruiseControlParameters parameters, RoutingContext context) throws IOException {
+    boolean json = parameters.json();
+    boolean wantResponseSchema = parameters.wantResponseSchema();
+    discardIrrelevantResponse(parameters);
+    writeResponseToOutputStream(context, SC_OK, json, wantResponseSchema, _cachedResponse, _config);
   }
 
   @Override

@@ -6,9 +6,12 @@ package com.linkedin.kafka.cruisecontrol.servlet.purgatory;
 
 import com.linkedin.cruisecontrol.servlet.EndPoint;
 import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
+import com.linkedin.kafka.cruisecontrol.commonapi.CommonApi;
 import com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils;
 import com.linkedin.kafka.cruisecontrol.servlet.response.JsonResponseClass;
 import com.linkedin.kafka.cruisecontrol.servlet.response.JsonResponseField;
+import io.vertx.ext.web.RoutingContext;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -64,6 +67,22 @@ public class RequestInfo {
     _submissionTimeMs = System.currentTimeMillis();
     _parameterMap = request.getParameterMap();
     _endPoint = ParameterUtils.endPoint(request);
+    _parameters = parameters;
+    _status = PENDING_REVIEW;
+    _reason = INIT_REASON;
+    _accessToAlreadySubmittedRequest = false;
+  }
+
+  public <P extends CruiseControlParameters> RequestInfo(RoutingContext context, P parameters) {
+    if (context == null) {
+      throw new IllegalArgumentException("Request is missing from the request info.");
+    } else if (parameters == null) {
+      throw new IllegalArgumentException("Parameter is missing from the request info.");
+    }
+    _submitterAddress = CommonApi.getVertxClientIpAddress(context);
+    _submissionTimeMs = System.currentTimeMillis();
+    _parameterMap = CommonApi.getVertxQueryParamsMap(context);
+    _endPoint = ParameterUtils.endPoint(new CommonApi(context));
     _parameters = parameters;
     _status = PENDING_REVIEW;
     _reason = INIT_REASON;

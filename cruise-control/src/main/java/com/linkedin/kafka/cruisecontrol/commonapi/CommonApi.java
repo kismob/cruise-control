@@ -130,7 +130,7 @@ public class CommonApi {
      * Gives back the Vertx query parameters.
      * @return Map
      */
-    public Map<String, String[]> getVertxQueryParamsMap(RoutingContext context) {
+    public static Map<String, String[]> getVertxQueryParamsMap(RoutingContext context) {
         Map<String, String[]> queryParamsMap = new HashMap<>();
         for (Map.Entry<String, String> entry : context.queryParams().entries()) {
             queryParamsMap.put(entry.getKey(), new String[]{entry.getValue()});

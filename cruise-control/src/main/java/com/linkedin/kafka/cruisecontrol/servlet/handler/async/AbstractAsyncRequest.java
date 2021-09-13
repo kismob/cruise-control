@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +43,7 @@ public abstract class AbstractAsyncRequest extends AbstractRequest {
    * @param uuid UUID string associated with the request.
    * @return The corresponding {@link OperationFuture}.
    */
-  protected abstract OperationFuture handle(String uuid);
+  public abstract OperationFuture handle(String uuid);
 
   @Override
   public CruiseControlResponse getResponse(HttpServletRequest request, HttpServletResponse response)
@@ -64,6 +65,25 @@ public abstract class AbstractAsyncRequest extends AbstractRequest {
   }
 
   @Override
+  public CruiseControlResponse getResponse(RoutingContext context)
+          throws Exception {
+    LOG.info("Processing async request {}.", name());
+    int step = _asyncOperationStep.get();
+    List<OperationFuture>
+            futures = _userTaskManager.getOrCreateUserTask(new CommonApi(context), this::handle, step, true, parameters());
+    _asyncOperationStep.set(step + 1);
+    CruiseControlResponse ccResponse;
+    try {
+      ccResponse = futures.get(step).get(_maxBlockMs, TimeUnit.MILLISECONDS);
+      LOG.info("Computation is completed for async request: {}.", context.request().path());
+    } catch (TimeoutException te) {
+      ccResponse = new ProgressResult(futures, _asyncKafkaCruiseControl.config());
+      LOG.info("Computation is in progress for async request: {}.", context.request().path());
+    }
+    return ccResponse;
+  }
+
+  @Override
   public abstract CruiseControlParameters parameters();
 
   public abstract String name();
@@ -71,10 +91,17 @@ public abstract class AbstractAsyncRequest extends AbstractRequest {
   @Override
   public void configure(Map<String, ?> configs) {
     super.configure(configs);
-    _asyncKafkaCruiseControl = _servlet.asyncKafkaCruiseControl();
-    _asyncOperationStep = _servlet.asyncOperationStep();
-    _userTaskManager = _servlet.userTaskManager();
-    _maxBlockMs = _asyncKafkaCruiseControl.config().getLong(WebServerConfig.WEBSERVER_REQUEST_MAX_BLOCK_TIME_MS_CONFIG);
+    if (_servlet != null) {
+      _asyncKafkaCruiseControl = _servlet.asyncKafkaCruiseControl();
+      _asyncOperationStep = _servlet.asyncOperationStep();
+      _userTaskManager = _servlet.userTaskManager();
+      _maxBlockMs = _asyncKafkaCruiseControl.config().getLong(WebServerConfig.WEBSERVER_REQUEST_MAX_BLOCK_TIME_MS_CONFIG);
+    } else {
+      _asyncKafkaCruiseControl = _endPoints.asyncKafkaCruiseControl();
+      _asyncOperationStep = _endPoints.asyncOperationStep();
+      _userTaskManager = _endPoints.userTaskManager();
+      _maxBlockMs = _asyncKafkaCruiseControl.config().getLong(WebServerConfig.WEBSERVER_REQUEST_MAX_BLOCK_TIME_MS_CONFIG);
+    }
   }
 
   protected void pending(OperationProgress progress) {

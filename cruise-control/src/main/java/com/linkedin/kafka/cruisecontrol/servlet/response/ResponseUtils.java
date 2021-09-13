@@ -11,6 +11,7 @@ import com.google.gson.JsonParser;
 import com.linkedin.kafka.cruisecontrol.KafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
+import io.vertx.ext.web.RoutingContext;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -48,6 +49,19 @@ public final class ResponseUtils {
     }
   }
 
+  static void setResponseCode(RoutingContext context, int code, KafkaCruiseControlConfig config) {
+    context.response().setStatusCode(code);
+    boolean corsEnabled = config != null && config.getBoolean(WebServerConfig.WEBSERVER_HTTP_CORS_ENABLED_CONFIG);
+    if (corsEnabled) {
+      // These headers are exposed to the browser
+      context.response().putHeader("Access-Control-Allow-Origin",
+              config.getString(WebServerConfig.WEBSERVER_HTTP_CORS_ORIGIN_CONFIG));
+      context.response().putHeader("Access-Control-Expose-Headers",
+              config.getString(WebServerConfig.WEBSERVER_HTTP_CORS_EXPOSEHEADERS_CONFIG));
+      context.response().putHeader("Access-Control-Allow-Credentials", "true");
+    }
+  }
+
   static String getBaseJsonString(String message) {
     Map<String, Object> jsonResponse = Map.of(VERSION, JSON_VERSION, MESSAGE, message);
     return new Gson().toJson(jsonResponse);
@@ -70,6 +84,22 @@ public final class ResponseUtils {
     response.setContentLength(responseMessage.length());
     out.write(responseMessage.getBytes(StandardCharsets.UTF_8));
     out.flush();
+  }
+
+  static void writeResponseToOutputStream(RoutingContext context,
+                                          int responseCode,
+                                          boolean json,
+                                          boolean wantJsonSchema,
+                                          String responseMessage,
+                                          KafkaCruiseControlConfig config) {
+    setResponseCode(context, responseCode, config);
+    context.response().putHeader("Cruise-Control-Version", KafkaCruiseControl.cruiseControlVersion());
+    context.response().putHeader("Cruise-Control-Commit_Id", KafkaCruiseControl.cruiseControlCommitId());
+    if (json && wantJsonSchema) {
+      context.response().putHeader("Cruise-Control-JSON-Schema", getJsonSchema(responseMessage));
+    }
+    context.response()
+            .end(responseMessage);
   }
 
   /**
@@ -117,6 +147,29 @@ public final class ResponseUtils {
     }
     // Send the CORS Task ID header as part of this error response if 2-step verification is enabled.
     writeResponseToOutputStream(response, responseCode, json, wantJsonSchema, responseMessage, config);
+  }
+
+  /**
+   * Write error response to the output stream.
+   */
+  public static void writeErrorResponse(RoutingContext context,
+                                        Exception e,
+                                        String errorMessage,
+                                        int responseCode,
+                                        boolean json,
+                                        boolean wantJsonSchema,
+                                        KafkaCruiseControlConfig config)
+          throws IOException {
+    String responseMessage;
+    ErrorResponse errorResponse = new ErrorResponse(e, errorMessage);
+    if (json) {
+      Gson gson = new Gson();
+      responseMessage = gson.toJson(errorResponse.getJsonStructure());
+    } else {
+      responseMessage = errorResponse.toString();
+    }
+    // Send the CORS Task ID header as part of this error response if 2-step verification is enabled.
+    writeResponseToOutputStream(context, responseCode, json, wantJsonSchema, responseMessage, config);
   }
 
   private static String getJsonSchema(String responseMessage) {
