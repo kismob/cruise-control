@@ -45,10 +45,17 @@ public class KafkaClusterStateRequest extends AbstractSyncRequest {
   @Override
   public void configure(Map<String, ?> configs) {
     super.configure(configs);
-    _kafkaCluster = _servlet.asyncKafkaCruiseControl().kafkaCluster();
-    _topicConfigProvider = _servlet.asyncKafkaCruiseControl().topicConfigProvider();
-    _config = _servlet.asyncKafkaCruiseControl().config();
-    _adminClient = _servlet.asyncKafkaCruiseControl().adminClient();
+    if (_servlet != null) {
+      _kafkaCluster = _servlet.asyncKafkaCruiseControl().kafkaCluster();
+      _topicConfigProvider = _servlet.asyncKafkaCruiseControl().topicConfigProvider();
+      _config = _servlet.asyncKafkaCruiseControl().config();
+      _adminClient = _servlet.asyncKafkaCruiseControl().adminClient();
+    } else {
+      _kafkaCluster = _endPoints.asyncKafkaCruiseControl().kafkaCluster();
+      _topicConfigProvider = _endPoints.asyncKafkaCruiseControl().topicConfigProvider();
+      _config = _endPoints.asyncKafkaCruiseControl().config();
+      _adminClient = _endPoints.asyncKafkaCruiseControl().adminClient();
+    }
     _parameters = (KafkaClusterStateParameters) validateNotNull(configs.get(KAFKA_CLUSTER_STATE_PARAMETER_OBJECT_CONFIG),
             "Parameter configuration is missing from the request.");
   }

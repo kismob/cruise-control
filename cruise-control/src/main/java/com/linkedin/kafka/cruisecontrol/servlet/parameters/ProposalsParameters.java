@@ -34,6 +34,7 @@ import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils
  */
 public class ProposalsParameters extends GoalBasedOptimizationParameters {
   protected static final SortedSet<String> CASE_INSENSITIVE_PARAMETER_NAMES;
+  protected static final String PROPOSALS = "PROPOSALS";
   static {
     SortedSet<String> validParameterNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     validParameterNames.add(KAFKA_ASSIGNER_MODE_PARAM);
@@ -67,9 +68,9 @@ public class ProposalsParameters extends GoalBasedOptimizationParameters {
                              boolean allowCapacityEstimation, Pattern excludedTopics, boolean useReadyDefaultGoals,
                              boolean excludeRecentlyDemotedBrokers, boolean excludeRecentlyRemovedBrokers,
                              String destinationBrokerIds, boolean isRebalanceDiskMode,
-                             boolean json, boolean verbose, boolean fastMode) throws UnsupportedEncodingException {
+                             boolean json, boolean verbose, boolean fastMode, String endpointName) throws UnsupportedEncodingException {
     super.initParameters(dataFrom, inGoals, kafkaAssigner, rebalanceDisk, allowCapacityEstimation, excludedTopics, useReadyDefaultGoals,
-            excludeRecentlyDemotedBrokers, excludeRecentlyRemovedBrokers, json, verbose, fastMode);
+            excludeRecentlyDemotedBrokers, excludeRecentlyRemovedBrokers, json, verbose, fastMode, endpointName);
     _destinationBrokerIds = ParameterUtils.destinationBrokerIds(destinationBrokerIds, kafkaAssigner);
     _ignoreProposalCache = ignoreProposalCache;
     _isRebalanceDiskMode = isRebalanceDiskMode;

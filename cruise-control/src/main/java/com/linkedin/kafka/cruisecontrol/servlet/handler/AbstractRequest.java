@@ -8,6 +8,8 @@ import com.linkedin.cruisecontrol.servlet.handler.Request;
 import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
 import com.linkedin.cruisecontrol.servlet.response.CruiseControlResponse;
 import com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServlet;
+import com.linkedin.kafka.cruisecontrol.vertx.EndPoints;
+import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import javax.servlet.http.HttpServletRequest;
@@ -21,6 +23,7 @@ import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServlet
 public abstract class AbstractRequest implements Request {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractRequest.class);
   protected KafkaCruiseControlServlet _servlet;
+  protected EndPoints _endPoints;
 
   /**
    * Handle the request and populate the response.
@@ -40,6 +43,18 @@ public abstract class AbstractRequest implements Request {
     ccResponse.writeSuccessResponse(parameters(), response);
   }
 
+  @Override
+  public void handle(RoutingContext context)
+          throws Exception {
+    if (parameters().parseParameters(context)) {
+      LOG.warn("Failed to parse parameters: {} for request: {}.", context.request().params(), context.request().path());
+      return;
+    }
+
+    CruiseControlResponse ccResponse = getResponse(context);
+    ccResponse.writeSuccessResponse(parameters(), context);
+  }
+
   /**
    * Get the response of the request
    * <ul>
@@ -54,11 +69,20 @@ public abstract class AbstractRequest implements Request {
   protected abstract CruiseControlResponse getResponse(HttpServletRequest request, HttpServletResponse response)
           throws Exception;
 
+  protected abstract CruiseControlResponse getResponse(RoutingContext context)
+          throws Exception;
+
   public abstract CruiseControlParameters parameters();
 
   @Override
   public void configure(Map<String, ?> configs) {
-    _servlet = (KafkaCruiseControlServlet) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG),
-            "Kafka Cruise Control servlet configuration is missing from the request.");
+    if (configs.get(KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG).getClass().equals(KafkaCruiseControlServlet.class)) {
+      _servlet = (KafkaCruiseControlServlet) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG),
+              "Kafka Cruise Control vertx configuration is missing from the request.");
+    }
+    if (configs.get(KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG).getClass().equals(EndPoints.class)) {
+      _endPoints = (EndPoints) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG),
+              "Kafka Cruise Control vertx configuration is missing from the request.");
+    }
   }
 }

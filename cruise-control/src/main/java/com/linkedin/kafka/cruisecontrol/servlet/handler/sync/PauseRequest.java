@@ -40,7 +40,11 @@ public class PauseRequest extends AbstractSyncRequest {
   @Override
   public void configure(Map<String, ?> configs) {
     super.configure(configs);
-    _kafkaCruiseControl = _servlet.asyncKafkaCruiseControl();
+    if (_servlet != null) {
+      _kafkaCruiseControl = _servlet.asyncKafkaCruiseControl();
+    } else {
+      _kafkaCruiseControl = _endPoints.asyncKafkaCruiseControl();
+    }
     _parameters = (PauseResumeParameters) validateNotNull(configs.get(PAUSE_RESUME_PARAMETER_OBJECT_CONFIG),
             "Parameter configuration is missing from the request.");
   }

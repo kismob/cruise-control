@@ -5,11 +5,13 @@
 package com.linkedin.kafka.cruisecontrol.servlet.parameters;
 
 import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
+import io.vertx.ext.web.RoutingContext;
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.THROTTLE_ADDED_BROKER_PARAM;
 
@@ -34,6 +36,7 @@ import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils
  */
 public class AddBrokerParameters extends AddedOrRemovedBrokerParameters {
   protected static final SortedSet<String> CASE_INSENSITIVE_PARAMETER_NAMES;
+  protected static final String ADD_BROKER = "ADD_BROKER";
   static {
     SortedSet<String> validParameterNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     validParameterNames.add(THROTTLE_ADDED_BROKER_PARAM);
@@ -50,6 +53,26 @@ public class AddBrokerParameters extends AddedOrRemovedBrokerParameters {
   protected void initParameters() throws UnsupportedEncodingException {
     super.initParameters();
     _throttleAddedBrokers = ParameterUtils.throttleAddedOrRemovedBrokers(_request, _endPoint);
+  }
+
+  /**
+   * Initializes the parameters
+   */
+  public void initParameters(boolean throttleAddedBrokers, String brokerIdString, RoutingContext context, boolean dryRun,
+                             Integer concurrentInterBrokerPartitionMovements, Integer concurrentLeaderMovements,
+                             Long executionProgressCheckIntervalMs, Long replicationThrottle, boolean skipHardGoalCheck,
+                             String replicaMovementStrategyString, String reviewId, String reasonString, String ipString,
+                             boolean stopOngoingExecution, String dataFrom, String inGoals, boolean kafkaAssigner,
+                             boolean rebalanceDisk, boolean allowCapacityEstimation, Pattern excludedTopics,
+                             boolean useReadyDefaultGoals, boolean excludeRecentlyDemotedBrokers,
+                             boolean excludeRecentlyRemovedBrokers, boolean json, boolean verbose, boolean fastMode)
+          throws UnsupportedEncodingException {
+    super.initParameters(brokerIdString, context, dryRun, concurrentInterBrokerPartitionMovements, concurrentLeaderMovements,
+            executionProgressCheckIntervalMs, replicationThrottle, skipHardGoalCheck, replicaMovementStrategyString,
+            reviewId, reasonString, ipString, stopOngoingExecution, dataFrom, inGoals, kafkaAssigner, rebalanceDisk,
+            allowCapacityEstimation, excludedTopics, useReadyDefaultGoals, excludeRecentlyDemotedBrokers,
+            excludeRecentlyRemovedBrokers, json, verbose, fastMode, ADD_BROKER);
+    _throttleAddedBrokers = throttleAddedBrokers;
   }
 
   public boolean throttleAddedBrokers() {

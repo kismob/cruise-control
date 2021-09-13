@@ -10,6 +10,8 @@ import com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils;
 import com.linkedin.kafka.cruisecontrol.servlet.parameters.UserTasksParameters;
 import com.linkedin.cruisecontrol.servlet.response.CruiseControlResponse;
 import com.linkedin.kafka.cruisecontrol.servlet.response.UserTaskState;
+
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,6 +25,8 @@ import java.util.function.Function;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
+import io.vertx.ext.web.RoutingContext;
 import kafka.utils.MockTime;
 import org.apache.kafka.common.utils.Time;
 import org.easymock.EasyMock;
@@ -78,6 +82,11 @@ public class KafkaCruiseControlServletEndpointTest {
   }
 
   private static class MockResult implements CruiseControlResponse {
+    @Override
+    public void writeSuccessResponse(CruiseControlParameters parameters, RoutingContext context) throws IOException {
+
+    }
+
     public void discardIrrelevantResponse(CruiseControlParameters parameters) { }
     public void writeSuccessResponse(CruiseControlParameters parameters, HttpServletResponse response) { }
     public String cachedResponse() {

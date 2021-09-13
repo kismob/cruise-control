@@ -25,6 +25,8 @@ import com.linkedin.kafka.cruisecontrol.servlet.UserRequestException;
 import com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager;
 import com.linkedin.kafka.cruisecontrol.servlet.purgatory.ReviewStatus;
 import com.linkedin.kafka.cruisecontrol.servlet.response.CruiseControlState;
+import io.vertx.core.MultiMap;
+import io.vertx.ext.web.RoutingContext;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -172,7 +174,6 @@ public final class ParameterUtils {
    */
   public static CruiseControlEndPoint endPoint(HttpServletRequest request) {
     List<CruiseControlEndPoint> supportedEndpoints;
-    System.out.println(request.getMethod());
     switch (request.getMethod()) {
       case GET_METHOD:
         supportedEndpoints = CruiseControlEndPoint.getEndpoints();
@@ -218,7 +219,7 @@ public final class ParameterUtils {
       return null;
     }
     // Skip the first character '/'
-    String path = pathInfo.substring(1);
+    String path = pathInfo.split("/")[2];
     for (CruiseControlEndPoint endPoint : supportedEndpoints) {
       if (endPoint.toString().equalsIgnoreCase(path)) {
         return endPoint;
@@ -234,6 +235,15 @@ public final class ParameterUtils {
                                             boolean wantJsonSchema,
                                             KafkaCruiseControlConfig config) throws IOException {
     writeErrorResponse(response, e, errorMessage, SC_BAD_REQUEST, json, wantJsonSchema, config);
+  }
+
+  static void handleParameterParseException(Exception e,
+                                            RoutingContext context,
+                                            String errorMessage,
+                                            boolean json,
+                                            boolean wantJsonSchema,
+                                            KafkaCruiseControlConfig config) throws IOException {
+    writeErrorResponse(context, e, errorMessage, SC_BAD_REQUEST, json, wantJsonSchema, config);
   }
 
   /**
@@ -268,6 +278,27 @@ public final class ParameterUtils {
     return true;
   }
 
+  public static boolean hasValidParameterNames(RoutingContext context,
+                                               KafkaCruiseControlConfig config,
+                                               CruiseControlParameters parameters) throws IOException {
+    CruiseControlEndPoint endPoint = endPoint(new CommonApi(context));
+    Set<String> validParamNames = parameters.caseInsensitiveParameterNames();
+    Set<String> userParams = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    userParams.addAll(context.request().params().names());
+    if (validParamNames != null) {
+      userParams.removeAll(validParamNames);
+    }
+
+    if (!userParams.isEmpty()) {
+      // User request specifies parameters that are not a subset of the valid parameters.
+      String errorMessage = String.format("Unrecognized endpoint parameters in %s %s request: %s.",
+              endPoint, context.request().method().toString(), userParams);
+      writeErrorResponse(context, null, errorMessage, SC_BAD_REQUEST, wantJSON(context), wantResponseSchema(context), config);
+      return false;
+    }
+    return true;
+  }
+
   /**
    * @param parameterMap Parameter map
    * @param parameter Parameter to parse from the parameter map.
@@ -275,6 +306,10 @@ public final class ParameterUtils {
    */
   public static String caseSensitiveParameterName(Map<String, String[]> parameterMap, String parameter) {
     return parameterMap.keySet().stream().filter(parameter::equalsIgnoreCase).findFirst().orElse(null);
+  }
+
+  public static String caseSensitiveParameterName(MultiMap parameterMap, String parameter) {
+    return parameterMap.names().stream().filter(parameter::equalsIgnoreCase).findFirst().orElse(null);
   }
 
   /**
@@ -290,6 +325,11 @@ public final class ParameterUtils {
     return parameterString == null ? defaultIfMissing : Boolean.parseBoolean(request.getParameter(parameterString));
   }
 
+  public static boolean getBooleanParam(RoutingContext context, String parameter, boolean defaultIfMissing) {
+    String parameterString = caseSensitiveParameterName(context.request().params(), parameter);
+    return parameterString == null ? defaultIfMissing : Boolean.parseBoolean(context.request().params().get(parameterString));
+  }
+
   /**
    * Get the long parameter parameter.
    *
@@ -301,6 +341,11 @@ public final class ParameterUtils {
   public static Long getLongParam(HttpServletRequest request, String parameter, @Nullable Long defaultIfMissing) {
     String parameterString = caseSensitiveParameterName(request.getParameterMap(), parameter);
     return parameterString == null ? defaultIfMissing : Long.valueOf(request.getParameter(parameterString));
+  }
+
+  public static Long getLongParam(RoutingContext context, String parameter, @Nullable Long defaultIfMissing) {
+    String parameterString = caseSensitiveParameterName(context.queryParams(), parameter);
+    return parameterString == null ? defaultIfMissing : Long.valueOf(context.queryParams().get(parameterString));
   }
 
   /**
@@ -333,8 +378,16 @@ public final class ParameterUtils {
     return getBooleanParam(request, JSON_PARAM, false);
   }
 
+  public static boolean wantJSON(RoutingContext context) {
+    return getBooleanParam(context, JSON_PARAM, false);
+  }
+
   public static boolean wantResponseSchema(HttpServletRequest request) {
     return getBooleanParam(request, GET_RESPONSE_SCHEMA, false);
+  }
+
+  public static boolean wantResponseSchema(RoutingContext context) {
+    return getBooleanParam(context, GET_RESPONSE_SCHEMA, false);
   }
 
   static boolean allowCapacityEstimation(HttpServletRequest request) {
@@ -506,6 +559,11 @@ public final class ParameterUtils {
     return parameterString == null ? null : Pattern.compile(request.getParameter(parameterString));
   }
 
+  static Pattern topic(RoutingContext context) {
+    String parameterString = caseSensitiveParameterName(context.queryParams(), TOPIC_PARAM);
+    return parameterString == null ? null : Pattern.compile(context.queryParams().get(TOPIC_PARAM));
+  }
+
   @SuppressWarnings("unchecked")
   private static Map<Short, Pattern> topicPatternByReplicationFactorFromBody(HttpServletRequest request) {
     Map<Short, Pattern> topicPatternByReplicationFactor;
@@ -536,6 +594,31 @@ public final class ParameterUtils {
     return topicPatternByReplicationFactor;
   }
 
+  @SuppressWarnings("unchecked")
+  private static Map<Short, Pattern> topicPatternByReplicationFactorFromBody(RoutingContext context) {
+    Map<Short, Pattern> topicPatternByReplicationFactor;
+    Gson gson = new Gson();
+    Map<String, Object> json = gson.fromJson(context.getBodyAsString(), Map.class);
+    if (json == null) {
+      return null;
+    }
+    String replicationFactorKey = REPLICATION_FACTOR.name().toLowerCase();
+    if (!json.containsKey(replicationFactorKey)) {
+      return null;
+    }
+    Map<String, Object> replicationFactorParams = (Map<String, Object>) json.get(replicationFactorKey);
+    if (!replicationFactorParams.containsKey(TOPIC_BY_REPLICATION_FACTOR)) {
+      return null;
+    }
+    topicPatternByReplicationFactor = new HashMap<>();
+    for (Map.Entry<String, String> entry : ((Map<String, String>) replicationFactorParams.get(TOPIC_BY_REPLICATION_FACTOR)).entrySet()) {
+      short replicationFactor = Short.parseShort(entry.getKey().trim());
+      Pattern topicPattern = Pattern.compile(entry.getValue().trim());
+      topicPatternByReplicationFactor.putIfAbsent(replicationFactor, topicPattern);
+    }
+    return topicPatternByReplicationFactor;
+  }
+
     static Map<Short, Pattern> topicPatternByReplicationFactor(HttpServletRequest request) {
     Pattern topic = topic(request);
     Short replicationFactor = replicationFactor(request);
@@ -544,6 +627,30 @@ public final class ParameterUtils {
       if (topic != null || replicationFactor != null) {
         throw new UserRequestException("Requesting topic replication factor change from both HTTP request parameter and body"
                                        + " is forbidden.");
+      }
+      return topicPatternByReplicationFactorFromBody;
+    } else {
+      if (topic == null && replicationFactor != null) {
+        throw new UserRequestException("Topic is not specified in URL while target replication factor is specified.");
+      }
+      if ((topic != null && replicationFactor == null)) {
+        throw new UserRequestException("Topic's replication factor is not specified in URL while subject topic is specified.");
+      }
+      if (topic != null) {
+        return Collections.singletonMap(replicationFactor, topic);
+      }
+    }
+    return Collections.emptyMap();
+  }
+
+  static Map<Short, Pattern> topicPatternByReplicationFactor(RoutingContext context) {
+    Pattern topic = topic(context);
+    Short replicationFactor = replicationFactor(context);
+    Map<Short, Pattern> topicPatternByReplicationFactorFromBody = topicPatternByReplicationFactorFromBody(context);
+    if (topicPatternByReplicationFactorFromBody != null) {
+      if (topic != null || replicationFactor != null) {
+        throw new UserRequestException("Requesting topic replication factor change from both HTTP request parameter and body"
+                + " is forbidden.");
       }
       return topicPatternByReplicationFactorFromBody;
     } else {
@@ -612,6 +719,18 @@ public final class ParameterUtils {
                                                                               : request.getParameter(parameterString), ip, currentUtcDate());
   }
 
+  public static String reason(String parameterString, boolean reasonRequired, String ip) {
+    if (parameterString != null && parameterString.length() > MAX_REASON_LENGTH) {
+      throw new UserRequestException(String.format("Reason cannot be longer than %d characters (attempted: %d).",
+              MAX_REASON_LENGTH, parameterString.length()));
+    }
+    if (parameterString == null && reasonRequired) {
+      throw new UserRequestException("Reason is missing in request.");
+    }
+    return String.format("%s (Client: %s, Date: %s)", parameterString == null ? NO_REASON_PROVIDED
+            : parameterString, ip, currentUtcDate());
+  }
+
   /**
    * Parse the given parameter to a Set of String.
    *
@@ -624,6 +743,15 @@ public final class ParameterUtils {
     Set<String> paramsString = parameterString == null
                                ? new HashSet<>(0)
                                : new HashSet<>(Arrays.asList(urlDecode(request.getParameter(parameterString)).split(",")));
+    paramsString.removeIf(String::isEmpty);
+    return paramsString;
+  }
+
+  public static Set<String> parseParamToStringSet(RoutingContext context, String param) throws UnsupportedEncodingException {
+    String parameterString = caseSensitiveParameterName(context.queryParams(), param);
+    Set<String> paramsString = parameterString == null
+            ? new HashSet<>(0)
+            : new HashSet<>(Arrays.asList(urlDecode(context.queryParams().get(parameterString)).split(",")));
     paramsString.removeIf(String::isEmpty);
     return paramsString;
   }
@@ -691,6 +819,23 @@ public final class ParameterUtils {
     return Collections.unmodifiableSet(anomalyTypes);
   }
 
+  private static Set<AnomalyType> anomalyTypes(RoutingContext context, boolean isEnable) throws UnsupportedEncodingException {
+    Set<String> selfHealingForString = parseParamToStringSet(context, isEnable ? ENABLE_SELF_HEALING_FOR_PARAM
+            : DISABLE_SELF_HEALING_FOR_PARAM);
+
+    Set<AnomalyType> anomalyTypes = new HashSet<>(selfHealingForString.size());
+    try {
+      for (String shfString : selfHealingForString) {
+        anomalyTypes.add(KafkaAnomalyType.valueOf(shfString.toUpperCase()));
+      }
+    } catch (IllegalArgumentException iae) {
+      throw new UserRequestException(String.format("Unsupported anomaly types in %s. Supported: %s",
+              selfHealingForString, KafkaAnomalyType.cachedValues()));
+    }
+
+    return Collections.unmodifiableSet(anomalyTypes);
+  }
+
   private static Set<ConcurrencyType> concurrencyTypes(HttpServletRequest request, boolean isEnable) throws UnsupportedEncodingException {
     Set<String> concurrencyForStringSet = parseParamToStringSet(request, isEnable ? ENABLE_CONCURRENCY_ADJUSTER_FOR_PARAM
                                                                                   : DISABLE_CONCURRENCY_ADJUSTER_FOR_PARAM);
@@ -703,6 +848,23 @@ public final class ParameterUtils {
     } catch (IllegalArgumentException iae) {
       throw new UserRequestException(String.format("Unsupported concurrency types in %s. Supported: %s",
                                                    concurrencyForStringSet, ConcurrencyType.cachedValues()));
+    }
+
+    return Collections.unmodifiableSet(concurrencyTypes);
+  }
+
+  private static Set<ConcurrencyType> concurrencyTypes(RoutingContext context, boolean isEnable) throws UnsupportedEncodingException {
+    Set<String> concurrencyForStringSet = parseParamToStringSet(context, isEnable ? ENABLE_CONCURRENCY_ADJUSTER_FOR_PARAM
+            : DISABLE_CONCURRENCY_ADJUSTER_FOR_PARAM);
+
+    Set<ConcurrencyType> concurrencyTypes = new HashSet<>(concurrencyForStringSet.size());
+    try {
+      for (String concurrencyForString : concurrencyForStringSet) {
+        concurrencyTypes.add(ConcurrencyType.valueOf(concurrencyForString.toUpperCase()));
+      }
+    } catch (IllegalArgumentException iae) {
+      throw new UserRequestException(String.format("Unsupported concurrency types in %s. Supported: %s",
+              concurrencyForStringSet, ConcurrencyType.cachedValues()));
     }
 
     return Collections.unmodifiableSet(concurrencyTypes);
@@ -727,6 +889,21 @@ public final class ParameterUtils {
     return selfHealingFor;
   }
 
+  static Map<Boolean, Set<AnomalyType>> selfHealingFor(RoutingContext context) throws UnsupportedEncodingException {
+    Set<AnomalyType> enableSelfHealingFor = anomalyTypes(context, true);
+    Set<AnomalyType> disableSelfHealingFor = anomalyTypes(context, false);
+
+    // Sanity check: Ensure that the same anomaly is not specified in both configs at the same request.
+    ensureDisjoint(enableSelfHealingFor, disableSelfHealingFor,
+            "The same anomaly cannot be specified in both disable and enable parameters");
+
+    Map<Boolean, Set<AnomalyType>> selfHealingFor = new HashMap<>(2);
+    selfHealingFor.put(true, enableSelfHealingFor);
+    selfHealingFor.put(false, disableSelfHealingFor);
+
+    return selfHealingFor;
+  }
+
   /**
    * Get concurrency adjuster types for {@link #ENABLE_CONCURRENCY_ADJUSTER_FOR_PARAM} and {@link #DISABLE_CONCURRENCY_ADJUSTER_FOR_PARAM}.
    *
@@ -747,6 +924,21 @@ public final class ParameterUtils {
     return concurrencyAdjusterFor;
   }
 
+  static Map<Boolean, Set<ConcurrencyType>> concurrencyAdjusterFor(RoutingContext context) throws UnsupportedEncodingException {
+    Set<ConcurrencyType> enableConcurrencyAdjusterFor = concurrencyTypes(context, true);
+    Set<ConcurrencyType> disableConcurrencyAdjusterFor = concurrencyTypes(context, false);
+
+    // Sanity check: Ensure that the same concurrency type is not specified in both configs at the same request.
+    ensureDisjoint(enableConcurrencyAdjusterFor, disableConcurrencyAdjusterFor,
+            "The same concurrency type cannot be specified in both disable and enable parameters");
+
+    Map<Boolean, Set<ConcurrencyType>> concurrencyAdjusterFor = new HashMap<>(2);
+    concurrencyAdjusterFor.put(true, enableConcurrencyAdjusterFor);
+    concurrencyAdjusterFor.put(false, disableConcurrencyAdjusterFor);
+
+    return concurrencyAdjusterFor;
+  }
+
   /**
    * @param request The http request.
    * @return {@code true}: enable or {@code false}: disable MinISR-based concurrency adjustment, {@code null} if the request parameter is unset.
@@ -758,6 +950,15 @@ public final class ParameterUtils {
       return null;
     }
     return Boolean.parseBoolean(request.getParameter(parameterString));
+  }
+
+  @Nullable
+  static Boolean minIsrBasedConcurrencyAdjustment(RoutingContext context) {
+    String parameterString = caseSensitiveParameterName(context.queryParams(), MIN_ISR_BASED_CONCURRENCY_ADJUSTMENT_PARAM);
+    if (parameterString == null) {
+      return null;
+    }
+    return Boolean.parseBoolean(context.queryParams().get(parameterString));
   }
 
   /**
@@ -781,13 +982,38 @@ public final class ParameterUtils {
 
   /**
    * Get a composite replica movement strategy for {@link com.linkedin.kafka.cruisecontrol.executor.ExecutionTaskPlanner}.
-   *
-   * @param request The http request.
-   * @param config The configuration of Cruise Control.
    * @return A composite strategy generated by chaining all the strategies specified by the http request.
    */
-  static ReplicaMovementStrategy getReplicaMovementStrategy(HttpServletRequest request, KafkaCruiseControlConfig config)
+  static ReplicaMovementStrategy getReplicaMovementStrategy(boolean dryRun, String parameterString, KafkaCruiseControlConfig config)
       throws UnsupportedEncodingException {
+    if (dryRun) {
+      return null;
+    }
+    List<String> strategies = getListParam(parameterString, REPLICA_MOVEMENT_STRATEGIES_PARAM);
+    if (strategies.isEmpty()) {
+      return null;
+    }
+    List<ReplicaMovementStrategy> supportedStrategies = config.getConfiguredInstances(ExecutorConfig.REPLICA_MOVEMENT_STRATEGIES_CONFIG,
+                                                                                      ReplicaMovementStrategy.class);
+    Map<String, ReplicaMovementStrategy> supportedStrategiesByName = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    for (ReplicaMovementStrategy strategy : supportedStrategies) {
+      supportedStrategiesByName.put(strategy.name(), strategy);
+    }
+    ReplicaMovementStrategy strategy = null;
+    for (String strategyName : strategies) {
+      if (supportedStrategiesByName.containsKey(strategyName)) {
+        strategy = strategy == null ? supportedStrategiesByName.get(strategyName) : strategy.chain(supportedStrategiesByName.get(strategyName));
+      } else {
+        throw new UserRequestException("Strategy " + strategyName + " is not supported. Supported: " + supportedStrategiesByName.keySet());
+      }
+    }
+    // Chain the generated composite strategy with BaseReplicaMovementStrategy in the end to ensure the returned strategy can always
+    // determine the order of two tasks.
+    return strategy.chain(new BaseReplicaMovementStrategy());
+  }
+
+  static ReplicaMovementStrategy getReplicaMovementStrategy(HttpServletRequest request, KafkaCruiseControlConfig config)
+          throws UnsupportedEncodingException {
     if (getDryRun(request)) {
       return null;
     }
@@ -795,9 +1021,8 @@ public final class ParameterUtils {
     if (strategies.isEmpty()) {
       return null;
     }
-
     List<ReplicaMovementStrategy> supportedStrategies = config.getConfiguredInstances(ExecutorConfig.REPLICA_MOVEMENT_STRATEGIES_CONFIG,
-                                                                                      ReplicaMovementStrategy.class);
+            ReplicaMovementStrategy.class);
     Map<String, ReplicaMovementStrategy> supportedStrategiesByName = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     for (ReplicaMovementStrategy strategy : supportedStrategies) {
       supportedStrategiesByName.put(strategy.name(), strategy);
@@ -947,6 +1172,53 @@ public final class ParameterUtils {
     return reviewId;
   }
 
+  public static Integer reviewId(RoutingContext context, boolean twoStepVerificationEnabled) {
+    String parameterString = caseSensitiveParameterName(context.request().params(), REVIEW_ID_PARAM);
+    if (parameterString == null) {
+      return null;
+    } else if (!twoStepVerificationEnabled) {
+      throw new UserRequestException(
+              String.format("%s parameter is not relevant when two-step verification is disabled.", REVIEW_ID_PARAM));
+    }
+
+    Integer reviewId = Integer.parseInt(context.request().params().get(parameterString));
+    // Sanity check: Ensure that if a review id is provided, no other parameter is in the request.
+    if (context.request().params().size() != 1) {
+      throw new UserRequestException(
+              String.format("%s parameter must be mutually exclusive with other parameters (Request parameters: %s).",
+                      REVIEW_ID_PARAM, context.request().params()));
+    } else if (reviewId < 0) {
+      throw new UserRequestException(String.format("%s cannot be negative (requested: %d).", REVIEW_ID_PARAM, reviewId));
+    }
+
+    return reviewId;
+  }
+
+  /**
+   * Mutually exclusive with the other parameters and can only be used if two step verification is enabled.
+   * @return Review Id.
+   */
+  public static Integer reviewId(String parameterString, boolean twoStepVerificationEnabled, MultiMap parameterMap) {
+    if (parameterString == null) {
+      return null;
+    } else if (!twoStepVerificationEnabled) {
+      throw new UserRequestException(
+              String.format("%s parameter is not relevant when two-step verification is disabled.", REVIEW_ID_PARAM));
+    }
+
+    Integer reviewId = Integer.parseInt(parameterString);
+    // Sanity check: Ensure that if a review id is provided, no other parameter is in the request.
+    if (parameterMap.size() != 1) {
+      throw new UserRequestException(
+              String.format("%s parameter must be mutually exclusive with other parameters (Request parameters: %s).",
+                      REVIEW_ID_PARAM, parameterMap));
+    } else if (reviewId < 0) {
+      throw new UserRequestException(String.format("%s cannot be negative (requested: %d).", REVIEW_ID_PARAM, reviewId));
+    }
+
+    return reviewId;
+  }
+
   /**
    * Get the execution progress check interval in milliseconds. Default: {@code null}.
    *
@@ -959,6 +1231,10 @@ public final class ParameterUtils {
    */
   static Long executionProgressCheckIntervalMs(HttpServletRequest request) {
     return getLongParam(request, EXECUTION_PROGRESS_CHECK_INTERVAL_MS_PARAM, null);
+  }
+
+  static Long executionProgressCheckIntervalMs(RoutingContext context) {
+    return getLongParam(context, EXECUTION_PROGRESS_CHECK_INTERVAL_MS_PARAM, null);
   }
 
   /**
@@ -988,6 +1264,24 @@ public final class ParameterUtils {
       return null;
     }
     int concurrentMovementsPerBroker = Integer.parseInt(request.getParameter(parameterString));
+    if (concurrentMovementsPerBroker <= 0) {
+      throw new UserRequestException("The requested movement concurrency must be positive (Requested: " + concurrentMovementsPerBroker + ").");
+    }
+
+    return concurrentMovementsPerBroker;
+  }
+
+  static Integer concurrentMovements(RoutingContext context,
+                                     boolean isInterBrokerPartitionMovement,
+                                     boolean isIntraBrokerPartitionMovement) {
+    String parameter = isInterBrokerPartitionMovement
+            ? CONCURRENT_PARTITION_MOVEMENTS_PER_BROKER_PARAM
+            : isIntraBrokerPartitionMovement ? CONCURRENT_INTRA_BROKER_PARTITION_MOVEMENTS_PARAM : CONCURRENT_LEADER_MOVEMENTS_PARAM;
+    String parameterString = caseSensitiveParameterName(context.queryParams(), parameter);
+    if (parameterString == null) {
+      return null;
+    }
+    int concurrentMovementsPerBroker = Integer.parseInt(context.queryParams().get(parameterString));
     if (concurrentMovementsPerBroker <= 0) {
       throw new UserRequestException("The requested movement concurrency must be positive (Requested: " + concurrentMovementsPerBroker + ").");
     }
@@ -1058,6 +1352,17 @@ public final class ParameterUtils {
     return numBrokersToAdd;
   }
 
+  static int numBrokersToAdd(String parameterString) {
+    if (parameterString == null) {
+      return ProvisionRecommendation.DEFAULT_OPTIONAL_INT;
+    }
+    int numBrokersToAdd = Integer.parseInt(parameterString);
+    if (numBrokersToAdd <= 0) {
+      throw new UserRequestException("The requested number of brokers to add must be positive (Requested: " + numBrokersToAdd + ").");
+    }
+    return numBrokersToAdd;
+  }
+
   /**
    * Get the {@link #PARTITION_COUNT} from the request.
    *
@@ -1072,6 +1377,17 @@ public final class ParameterUtils {
       return ProvisionRecommendation.DEFAULT_OPTIONAL_INT;
     }
     int targetPartitionCount = Integer.parseInt(request.getParameter(parameterString));
+    if (targetPartitionCount <= 0) {
+      throw new UserRequestException("The requested targeted partition count must be positive (Requested: " + targetPartitionCount + ").");
+    }
+    return targetPartitionCount;
+  }
+
+  static int partitionCount(String parameterString) {
+    if (parameterString == null) {
+      return ProvisionRecommendation.DEFAULT_OPTIONAL_INT;
+    }
+    int targetPartitionCount = Integer.parseInt(parameterString);
     if (targetPartitionCount <= 0) {
       throw new UserRequestException("The requested targeted partition count must be positive (Requested: " + targetPartitionCount + ").");
     }
@@ -1094,12 +1410,36 @@ public final class ParameterUtils {
     return Collections.unmodifiableSet(brokerIds);
   }
 
+  static Set<Integer> brokerIds(String parameterString, boolean isOptional, RoutingContext context) throws UnsupportedEncodingException {
+    Set<Integer> brokerIds = parseParamToIntegerSet(parameterString);
+    if (!isOptional && brokerIds.isEmpty()) {
+      EndPoint endpoint = endPoint(new CommonApi(context));
+      if (endpoint == DEMOTE_BROKER) {
+        // If it is a demote_broker request, either target broker or target disk should be specified in request.
+        if (brokerIdAndLogdirs(parameterString).isEmpty()) {
+          throw new UserRequestException("No target broker ID or target disk logdir is specified to demote.");
+        }
+      } else if (endpoint != FIX_OFFLINE_REPLICAS) {
+        throw new UserRequestException(String.format("Target broker ID is not provided for %s request", endpoint));
+      }
+    }
+    return Collections.unmodifiableSet(brokerIds);
+  }
+
   static Set<Integer> dropRecentlyRemovedBrokers(HttpServletRequest request) throws UnsupportedEncodingException {
     return Collections.unmodifiableSet(parseParamToIntegerSet(request, DROP_RECENTLY_REMOVED_BROKERS_PARAM));
   }
 
+  static Set<Integer> dropRecentlyRemovedBrokers(RoutingContext context) throws UnsupportedEncodingException {
+    return Collections.unmodifiableSet(parseParamToIntegerSet(context.pathParams().get(DROP_RECENTLY_REMOVED_BROKERS_PARAM)));
+  }
+
   static Set<Integer> dropRecentlyDemotedBrokers(HttpServletRequest request) throws UnsupportedEncodingException {
     return Collections.unmodifiableSet(parseParamToIntegerSet(request, DROP_RECENTLY_DEMOTED_BROKERS_PARAM));
+  }
+
+  static Set<Integer> dropRecentlyDemotedBrokers(RoutingContext context) throws UnsupportedEncodingException {
+    return Collections.unmodifiableSet(parseParamToIntegerSet(context.pathParams().get(DROP_RECENTLY_DEMOTED_BROKERS_PARAM)));
   }
 
   /**
@@ -1181,6 +1521,19 @@ public final class ParameterUtils {
     String parameterString = caseSensitiveParameterName(request.getParameterMap(), BROKER_ID_AND_LOGDIRS_PARAM);
     if (parameterString != null) {
       Arrays.stream(urlDecode(request.getParameter(parameterString)).split(",")).forEach(e -> {
+        int index = e.indexOf(DELIMITER_BETWEEN_BROKER_ID_AND_LOGDIR);
+        int brokerId = Integer.parseInt(e.substring(0, index));
+        brokerIdAndLogdirs.putIfAbsent(brokerId, new HashSet<>());
+        brokerIdAndLogdirs.get(brokerId).add(e.substring(index + 1));
+      });
+    }
+    return Collections.unmodifiableMap(brokerIdAndLogdirs);
+  }
+
+  static Map<Integer, Set<String>> brokerIdAndLogdirs(String parameterString) throws UnsupportedEncodingException {
+    final Map<Integer, Set<String>> brokerIdAndLogdirs = new HashMap<>();
+    if (parameterString != null) {
+      Arrays.stream(parameterString.split(",")).forEach(e -> {
         int index = e.indexOf(DELIMITER_BETWEEN_BROKER_ID_AND_LOGDIR);
         int brokerId = Integer.parseInt(e.substring(0, index));
         brokerIdAndLogdirs.putIfAbsent(brokerId, new HashSet<>());
@@ -1360,6 +1713,14 @@ public final class ParameterUtils {
     return Short.parseShort(request.getParameter(parameterString));
   }
 
+  static Short replicationFactor(RoutingContext context) {
+    String parameterString = caseSensitiveParameterName(context.queryParams(), REPLICATION_FACTOR_PARAM);
+    if (parameterString == null) {
+      return null;
+    }
+    return Short.parseShort((context.queryParams().get(parameterString)));
+  }
+
   static boolean fetchCompletedTask(HttpServletRequest request) {
     return getBooleanParam(request, FETCH_COMPLETED_TASK_PARAM, false);
   }
@@ -1377,4 +1738,5 @@ public final class ParameterUtils {
   public enum DataFrom {
     VALID_WINDOWS, VALID_PARTITIONS
   }
+
 }
