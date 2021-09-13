@@ -103,7 +103,7 @@ public class PartitionLoadParameters extends AbstractParameters {
                                 Long start, Long end, String resourceString) throws UnsupportedEncodingException {
     super.initParameters(json, PARTITION_LOAD);
     try {
-      _resource = Resource.valueOf(resourceString.toUpperCase());
+      _resource = Resource.valueOf(ParameterUtils.resourceString(resourceString).toUpperCase());
     } catch (IllegalArgumentException iae) {
       throw new UserRequestException(String.format("Invalid resource type %s. The resource type must be one of the "
               + "following: CPU, DISK, NW_IN, NW_OUT", resourceString));

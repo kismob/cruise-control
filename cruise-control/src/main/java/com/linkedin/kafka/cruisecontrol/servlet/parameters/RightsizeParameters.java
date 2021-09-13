@@ -4,6 +4,7 @@
 
 package com.linkedin.kafka.cruisecontrol.servlet.parameters;
 
+import io.vertx.ext.web.RoutingContext;
 import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
@@ -30,6 +31,7 @@ import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils
  */
 public class RightsizeParameters extends AbstractParameters {
   protected static final SortedSet<String> CASE_INSENSITIVE_PARAMETER_NAMES;
+  protected static final String RIGHTSIZE = "RIGHTSIZE";
   static {
     SortedSet<String> validParameterNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     validParameterNames.add(NUM_BROKERS_TO_ADD);
@@ -52,6 +54,17 @@ public class RightsizeParameters extends AbstractParameters {
     _numBrokersToAdd = ParameterUtils.numBrokersToAdd(_request);
     _partitionCount = ParameterUtils.partitionCount(_request);
     _topic = ParameterUtils.topic(_request);
+  }
+
+  /**
+   * Initializes the parameters
+   */
+  public void initParameters(String numBrokersString, String partitionCountString, RoutingContext context,
+                             boolean json) throws UnsupportedEncodingException {
+    super.initParameters(json, RIGHTSIZE);
+    _numBrokersToAdd = ParameterUtils.numBrokersToAdd(numBrokersString);
+    _partitionCount = ParameterUtils.partitionCount(partitionCountString);
+    _topic = ParameterUtils.topic(context);
   }
 
   public int numBrokersToAdd() {

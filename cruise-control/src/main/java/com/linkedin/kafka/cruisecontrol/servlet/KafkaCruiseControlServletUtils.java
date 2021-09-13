@@ -10,6 +10,7 @@ import com.linkedin.kafka.cruisecontrol.commonapi.CommonApi;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.config.RequestParameterWrapper;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
+import io.vertx.ext.web.RoutingContext;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -209,6 +210,28 @@ public final class KafkaCruiseControlServletUtils {
   }
 
   /**
+   * Returns the GET or POST endpoint if the request contains a valid one, otherwise (1) writes the error response to
+   * the given HTTP response and (2) returns null.
+   *
+   * @return The endpoint if the request contains a valid one, otherwise (1) writes the error response to the given HTTP
+   * response and (2) returns null.
+   */
+  public static CruiseControlEndPoint getValidEndpoint(RoutingContext context, KafkaCruiseControlConfig config)
+          throws IOException {
+    CruiseControlEndPoint endPoint = endPoint(new CommonApi(context));
+    if (endPoint == null) {
+      String method = context.request().method().toString();
+      String errorMessage = String.format("Unrecognized endpoint in request '%s'%nSupported %s endpoints: %s",
+              context.request().path(), method, method.equals(GET_METHOD)
+                      ? CruiseControlEndPoint.getEndpoints()
+                      : CruiseControlEndPoint.postEndpoints());
+      writeErrorResponse(context, null, errorMessage, SC_NOT_FOUND, wantJSON(context), wantResponseSchema(context), config);
+      return null;
+    }
+    return endPoint;
+  }
+
+  /**
    * Creates a {@link HttpServletResponse#SC_BAD_REQUEST} Http servlet response.
    * @param ure User request exception to be handled.
    * @param request HTTP request received by Cruise Control.
@@ -223,6 +246,20 @@ public final class KafkaCruiseControlServletUtils {
       throws IOException {
     String errorMessage = String.format("Bad %s request '%s' due to '%s'.", request.getMethod(), request.getPathInfo(), ure.getMessage());
     writeErrorResponse(response, ure, errorMessage, SC_BAD_REQUEST, wantJSON(request), wantResponseSchema(request), config);
+    return errorMessage;
+  }
+
+  /**
+   * Creates a {@link HttpServletResponse#SC_BAD_REQUEST} Http servlet response.
+   * @return The error message.
+   */
+  public static String handleUserRequestException(UserRequestException ure,
+                                                  RoutingContext context,
+                                                  KafkaCruiseControlConfig config)
+          throws IOException {
+    String errorMessage = String.format("Bad %s request '%s' due to '%s'.", context.request().method().toString(),
+            context.request().path(), ure.getMessage());
+    writeErrorResponse(context, ure, errorMessage, SC_BAD_REQUEST, wantJSON(context), wantResponseSchema(context), config);
     return errorMessage;
   }
 
@@ -246,6 +283,19 @@ public final class KafkaCruiseControlServletUtils {
   }
 
   /**
+   * @return The error message.
+   */
+  public static String handleConfigException(ConfigException ce,
+                                             RoutingContext context,
+                                             KafkaCruiseControlConfig config)
+          throws IOException {
+    String errorMessage = String.format("Cannot process %s request '%s' due to: '%s'.",
+            context.request().method().toString(), context.request().path(), ce.getMessage());
+    writeErrorResponse(context, ce, errorMessage, SC_FORBIDDEN, wantJSON(context), wantResponseSchema(context), config);
+    return errorMessage;
+  }
+
+  /**
    * Creates a {@link HttpServletResponse#SC_INTERNAL_SERVER_ERROR} Http servlet response.
    * @param e Exception to be handled
    * @param request HTTP request received by Cruise Control.
@@ -261,6 +311,20 @@ public final class KafkaCruiseControlServletUtils {
     String errorMessage = String.format("Error processing %s request '%s' due to: '%s'.",
                                         request.getMethod(), request.getPathInfo(), e.getMessage());
     writeErrorResponse(response, e, errorMessage, SC_INTERNAL_SERVER_ERROR, wantJSON(request), wantResponseSchema(request), config);
+    return errorMessage;
+  }
+
+  /**
+   * Creates a {@link HttpServletResponse#SC_INTERNAL_SERVER_ERROR} Http servlet response.
+   * @return The error message.
+   */
+  public static String handleException(Exception e,
+                                       RoutingContext context,
+                                       KafkaCruiseControlConfig config)
+          throws IOException {
+    String errorMessage = String.format("Error processing %s request '%s' due to: '%s'.",
+            context.request().method().toString(), context.request().path(), e.getMessage());
+    writeErrorResponse(context, e, errorMessage, SC_INTERNAL_SERVER_ERROR, wantJSON(context), wantResponseSchema(context), config);
     return errorMessage;
   }
 
@@ -306,6 +370,10 @@ public final class KafkaCruiseControlServletUtils {
 
   public static String httpServletRequestToString(HttpServletRequest request) {
     return String.format("%s %s", request.getMethod(), request.getRequestURI());
+  }
+
+  public static String httpServletRequestToString(RoutingContext context) {
+    return String.format("%s %s", context.request().method().toString(), context.request().uri());
   }
 
   /**

@@ -32,7 +32,11 @@ public class ProgressResult extends AbstractCruiseControlResponse {
     _futures = futures;
   }
 
-  protected String getJsonString() {
+  /**
+   * Return the response in JSON string
+   * @return String
+   */
+  public String getJsonString() {
     Map<String, Object> jsonResponse = new HashMap<>();
     jsonResponse.put(VERSION, JSON_VERSION);
     List<Object> progress = new ArrayList<>(_futures.size());
@@ -45,7 +49,11 @@ public class ProgressResult extends AbstractCruiseControlResponse {
     return gson.toJson(jsonResponse);
   }
 
-  protected String getPlaintext() {
+  /**
+   * Return the response in Plaintext string
+   * @return String
+   */
+  public String getPlaintext() {
     StringBuilder sb = new StringBuilder();
     for (OperationFuture operationFuture: _futures) {
       sb.append(String.format("%s:%n%s", operationFuture.operation(), operationFuture.progressString()));

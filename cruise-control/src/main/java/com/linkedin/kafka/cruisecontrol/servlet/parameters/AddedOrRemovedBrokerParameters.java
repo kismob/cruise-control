@@ -8,25 +8,16 @@ import com.linkedin.kafka.cruisecontrol.config.constants.ExecutorConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import com.linkedin.kafka.cruisecontrol.executor.strategy.ReplicaMovementStrategy;
 import com.linkedin.kafka.cruisecontrol.servlet.UserRequestException;
+import io.vertx.ext.web.RoutingContext;
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
+import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.KAFKA_ASSIGNER_MODE_PARAM;
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.BROKER_ID_PARAM;
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.CONCURRENT_PARTITION_MOVEMENTS_PER_BROKER_PARAM;
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.CONCURRENT_LEADER_MOVEMENTS_PARAM;
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.EXECUTION_PROGRESS_CHECK_INTERVAL_MS_PARAM;
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.DRY_RUN_PARAM;
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.REPLICATION_THROTTLE_PARAM;
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.SKIP_HARD_GOAL_CHECK_PARAM;
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.REPLICA_MOVEMENT_STRATEGIES_PARAM;
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.REVIEW_ID_PARAM;
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.REASON_PARAM;
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.STOP_ONGOING_EXECUTION_PARAM;
+import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.*;
 
 public abstract class AddedOrRemovedBrokerParameters extends GoalBasedOptimizationParameters {
   protected static final SortedSet<String> CASE_INSENSITIVE_PARAMETER_NAMES;
@@ -79,6 +70,33 @@ public abstract class AddedOrRemovedBrokerParameters extends GoalBasedOptimizati
     boolean requestReasonRequired = _config.getBoolean(ExecutorConfig.REQUEST_REASON_REQUIRED_CONFIG);
     _reason = ParameterUtils.reason(_request, requestReasonRequired && !_dryRun);
     _stopOngoingExecution = ParameterUtils.stopOngoingExecution(_request);
+    if (_stopOngoingExecution && _dryRun) {
+      throw new UserRequestException(String.format("%s and %s cannot both be set to true.", STOP_ONGOING_EXECUTION_PARAM, DRY_RUN_PARAM));
+    }
+  }
+
+  protected void initParameters(String brokerIdsString, RoutingContext context, boolean dryRun, Integer concurrentInterBrokerPartitionMovements,
+                                Integer concurrentLeaderMovements, Long executionProgressCheckIntervalMs, Long replicationThrottle,
+                                boolean skipHardGoalCheck, String replicaMovementStrategyString, String reviewIdString, String reasonString,
+                                String ipString, boolean stopOngoingExecution, String dataFrom, String inGoals, boolean kafkaAssigner,
+                                boolean rebalanceDisk, boolean allowCapacityEstimation, Pattern excludedTopics, boolean useReadyDefaultGoals,
+                                boolean excludeRecentlyDemotedBrokers, boolean excludeRecentlyRemovedBrokers,
+                                boolean json, boolean verbose, boolean fastMode, String endpointName) throws UnsupportedEncodingException {
+    super.initParameters(dataFrom, inGoals, kafkaAssigner, rebalanceDisk, allowCapacityEstimation, excludedTopics, useReadyDefaultGoals,
+            excludeRecentlyDemotedBrokers, excludeRecentlyRemovedBrokers, json, verbose, fastMode, endpointName);
+    _brokerIds = ParameterUtils.brokerIds(brokerIdsString, false, context);
+    _dryRun = dryRun;
+    _concurrentInterBrokerPartitionMovements = concurrentInterBrokerPartitionMovements;
+    _concurrentLeaderMovements = concurrentLeaderMovements;
+    _executionProgressCheckIntervalMs = executionProgressCheckIntervalMs;
+    _replicationThrottle = replicationThrottle;
+    _skipHardGoalCheck = skipHardGoalCheck;
+    _replicaMovementStrategy = ParameterUtils.getReplicaMovementStrategy(dryRun, replicaMovementStrategyString, _config);
+    boolean twoStepVerificationEnabled = false;
+    _reviewId = ParameterUtils.reviewId(reviewIdString, twoStepVerificationEnabled, context.queryParams());
+    boolean requestReasonRequired = false;
+    _reason = ParameterUtils.reason(reasonString, requestReasonRequired && !_dryRun, ipString);
+    _stopOngoingExecution = stopOngoingExecution;
     if (_stopOngoingExecution && _dryRun) {
       throw new UserRequestException(String.format("%s and %s cannot both be set to true.", STOP_ONGOING_EXECUTION_PARAM, DRY_RUN_PARAM));
     }

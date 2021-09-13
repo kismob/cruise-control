@@ -65,8 +65,8 @@ public abstract class GoalBasedOptimizationParameters extends KafkaOptimizationP
   protected void initParameters(String dataFrom, String inGoals, boolean kafkaAssigner, boolean rebalanceDisk, boolean allowCapacityEstimation,
                                 Pattern excludedTopics, boolean useReadyDefaultGoals, boolean excludeRecentlyDemotedBrokers,
                                 boolean excludeRecentlyRemovedBrokers, boolean json, boolean verbose,
-                                boolean fastMode)throws UnsupportedEncodingException {
-    super.initParameters(allowCapacityEstimation, excludeRecentlyDemotedBrokers, json, verbose);
+                                boolean fastMode, String endpointName)throws UnsupportedEncodingException {
+    super.initParameters(allowCapacityEstimation, excludeRecentlyDemotedBrokers, json, verbose, endpointName);
     _dataFrom = ParameterUtils.getDataFrom(dataFrom);
     _useReadyDefaultGoals = useReadyDefaultGoals;
     _excludedTopics = excludedTopics;

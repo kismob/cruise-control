@@ -8,16 +8,16 @@ import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import com.linkedin.kafka.cruisecontrol.detector.notifier.KafkaAnomalyType;
 import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
 import com.linkedin.kafka.cruisecontrol.servlet.UserRequestException;
+import io.vertx.ext.web.RoutingContext;
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.areAllParametersNull;
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.REVIEW_ID_PARAM;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ChangeExecutionConcurrencyParameters.maybeBuildChangeExecutionConcurrencyParameters;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.DropRecentBrokersParameters.maybeBuildDropRecentBrokersParameters;
+import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.*;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.UpdateConcurrencyAdjusterParameters.maybeBuildUpdateConcurrencyAdjusterParameters;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.UpdateSelfHealingParameters.maybeBuildUpdateSelfHealingParameters;
 
@@ -42,6 +42,7 @@ import static com.linkedin.kafka.cruisecontrol.servlet.parameters.UpdateSelfHeal
  */
 public class AdminParameters extends AbstractParameters {
   protected static final SortedSet<String> CASE_INSENSITIVE_PARAMETER_NAMES;
+  protected static final String ADMIN = "ADMIN";
   static {
     SortedSet<String> validParameterNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     validParameterNames.add(REVIEW_ID_PARAM);
@@ -74,6 +75,24 @@ public class AdminParameters extends AbstractParameters {
     _updateConcurrencyAdjusterParameters = maybeBuildUpdateConcurrencyAdjusterParameters(_configs);
     if (areAllParametersNull(_dropBrokersParameters, _updateSelfHealingParameters, _changeExecutionConcurrencyParameters,
                              _updateConcurrencyAdjusterParameters)) {
+      throw new UserRequestException("Nothing executable found in request.");
+    }
+  }
+
+  /**
+   * Initializes the parameters
+   */
+  public void initParameters(RoutingContext context) throws UnsupportedEncodingException {
+    boolean json = Boolean.parseBoolean(context.queryParams().get(JSON_PARAM));
+    super.initParameters(json, ADMIN);
+    boolean twoStepVerificationEnabled = false;
+    _reviewId = ParameterUtils.reviewId(context, twoStepVerificationEnabled);
+    _dropBrokersParameters = maybeBuildDropRecentBrokersParameters(context);
+    _updateSelfHealingParameters = maybeBuildUpdateSelfHealingParameters(context);
+    _changeExecutionConcurrencyParameters = maybeBuildChangeExecutionConcurrencyParameters(context);
+    _updateConcurrencyAdjusterParameters = maybeBuildUpdateConcurrencyAdjusterParameters(context);
+    if (areAllParametersNull(_dropBrokersParameters, _updateSelfHealingParameters, _changeExecutionConcurrencyParameters,
+            _updateConcurrencyAdjusterParameters)) {
       throw new UserRequestException("Nothing executable found in request.");
     }
   }
