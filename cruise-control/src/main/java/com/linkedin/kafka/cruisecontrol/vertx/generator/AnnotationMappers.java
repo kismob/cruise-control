@@ -181,21 +181,7 @@ final class AnnotationMappers {
     }
 
     private static Boolean isPrimitiveOrWrapper(Type type) {
-        return type.equals(Double.class)
-                || type.equals(Float.class)
-                || type.equals(Long.class)
-                || type.equals(Integer.class)
-                || type.equals(Short.class)
-                || type.equals(Character.class)
-                || type.equals(Byte.class)
-                || type.equals(Boolean.class)
-                || type.equals(String.class)
-                || type.equals(ArrayList.class)
-                || type.equals(Map.class)
-                || type.equals(Properties.class)
-                || type.equals(AdminClient.class)
-                || type.equals(Class.class)
-                || type.equals(Cluster.class);
+        return type.equals(Class.class);
     }
 
     private static Object clean(final String in) {

@@ -116,23 +116,23 @@ public class MainVerticle extends AbstractVerticle {
     router.route().failureHandler(ErrorHandler.create(true));
 
     // Routing section - this is where we declare which end points we want to use
-    router.get("/kafkacruisecontrol/kafka_cluster_state").handler(_endPoints::kafkaClusterState);
-    router.get("/kafkacruisecontrol/state").handler(_endPoints::cruiseControlState);
-    router.get("/kafkacruisecontrol/load").handler(_endPoints::load);
-    router.get("/kafkacruisecontrol/user_tasks").handler(_endPoints::userTasks);
-    router.get("/kafkacruisecontrol/partition_load").handler(_endPoints::partitionLoad);
-    router.get("/kafkacruisecontrol/proposals").handler(_endPoints::proposals);
-    router.post("/kafkacruisecontrol/rebalance").handler(_endPoints::rebalance);
-    router.post("/kafkacruisecontrol/add_broker").handler(_endPoints::addBroker);
-    router.post("/kafkacruisecontrol/remove_broker").handler(_endPoints::removeBroker);
-    router.post("/kafkacruisecontrol/fix_offline_replicas").handler(_endPoints::fixOfflineReplicas);
-    router.post("/kafkacruisecontrol/demote_broker").handler(_endPoints::demoteBroker);
-    router.post("/kafkacruisecontrol/stop_proposal_execution").handler(_endPoints::stopProposalExecution);
-    router.post("/kafkacruisecontrol/pause_sampling").handler(_endPoints::pauseSampling);
-    router.post("/kafkacruisecontrol/resume_sampling").handler(_endPoints::resumeSampling);
-    router.post("/kafkacruisecontrol/topic_configuration").handler(_endPoints::topicConfiguration);
-    router.post("/kafkacruisecontrol/admin").handler(_endPoints::admin);
-    router.post("/kafkacruisecontrol/rightsize").handler(_endPoints::rightsize);
+    router.get("/kafka_cluster_state").handler(_endPoints::kafkaClusterState);
+    router.get("/state").handler(_endPoints::cruiseControlState);
+    router.get("/load").handler(_endPoints::load);
+    router.get("/user_tasks").handler(_endPoints::userTasks);
+    router.get("/partition_load").handler(_endPoints::partitionLoad);
+    router.get("/proposals").handler(_endPoints::proposals);
+    router.post("/rebalance").handler(_endPoints::rebalance);
+    router.post("/add_broker").handler(_endPoints::addBroker);
+    router.post("//remove_broker").handler(_endPoints::removeBroker);
+    router.post("/fix_offline_replicas").handler(_endPoints::fixOfflineReplicas);
+    router.post("/demote_broker").handler(_endPoints::demoteBroker);
+    router.post("/stop_proposal_execution").handler(_endPoints::stopProposalExecution);
+    router.post("/pause_sampling").handler(_endPoints::pauseSampling);
+    router.post("/resume_sampling").handler(_endPoints::resumeSampling);
+    router.post("/topic_configuration").handler(_endPoints::topicConfiguration);
+    router.post("/admin").handler(_endPoints::admin);
+    router.post("/rightsize").handler(_endPoints::rightsize);
 
     OpenAPI openAPIDoc = OpenApiRoutePublisher.publishOpenApiSpec(
       router,

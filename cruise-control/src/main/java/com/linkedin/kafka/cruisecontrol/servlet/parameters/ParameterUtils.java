@@ -219,7 +219,7 @@ public final class ParameterUtils {
       return null;
     }
     // Skip the first character '/'
-    String path = pathInfo.split("/")[2];
+    String path = pathInfo.substring(1);
     for (CruiseControlEndPoint endPoint : supportedEndpoints) {
       if (endPoint.toString().equalsIgnoreCase(path)) {
         return endPoint;
