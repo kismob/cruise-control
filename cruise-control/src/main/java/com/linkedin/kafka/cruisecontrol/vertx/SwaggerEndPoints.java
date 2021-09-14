@@ -15,7 +15,7 @@ import io.vertx.ext.web.RoutingContext;
 
 public interface SwaggerEndPoints {
 
-    @Operation(summary = "Gives partition healthiness on the cluster.", method = "GET", operationId = "kafkacruisecontrol/kafka_cluster_state",
+    @Operation(summary = "Gives partition healthiness on the cluster.", method = "GET", operationId = "kafka_cluster_state",
             tags = {
                     "GET"
             },
@@ -47,7 +47,7 @@ public interface SwaggerEndPoints {
     )
     void kafkaClusterState(RoutingContext context);
 
-    @Operation(summary = "Returns Cruise Control State", method = "GET", operationId = "kafkacruisecontrol/state",
+    @Operation(summary = "Returns Cruise Control State", method = "GET", operationId = "state",
             tags = {
                     "GET"
             },
@@ -80,7 +80,7 @@ public interface SwaggerEndPoints {
     )
     void cruiseControlState(RoutingContext context);
 
-    @Operation(summary = "Once Cruise Control load Monitor shows it is in the RUNNING state, Users can use the following HTTP GET to get the cluster load.", method = "GET", operationId = "kafkacruisecontrol/load",
+    @Operation(summary = "Once Cruise Control load Monitor shows it is in the RUNNING state, Users can use the following HTTP GET to get the cluster load.", method = "GET", operationId = "load",
             tags = {
                     "GET"
             },
@@ -121,7 +121,7 @@ public interface SwaggerEndPoints {
     )
     void load(RoutingContext context);
 
-    @Operation(summary = "Returns a full list of all the active/completed(and not recycled) tasks inside Cruise Control.", method = "GET", operationId = "kafkacruisecontrol/user_tasks",
+    @Operation(summary = "Returns a full list of all the active/completed(and not recycled) tasks inside Cruise Control.", method = "GET", operationId = "user_tasks",
             tags = {
                     "GET"
             },
@@ -162,7 +162,7 @@ public interface SwaggerEndPoints {
     )
     void userTasks(RoutingContext context);
 
-    @Operation(summary = "Gives the partition load sorted by the utilization of a given resource.", method = "GET", operationId = "kafkacruisecontrol/partition_load",
+    @Operation(summary = "Gives the partition load sorted by the utilization of a given resource.", method = "GET", operationId = "partition_load",
             tags = {
                     "GET"
             },
@@ -211,7 +211,7 @@ public interface SwaggerEndPoints {
     )
     void partitionLoad(RoutingContext context);
 
-    @Operation(summary = "Returns the optimization proposals generated based on the workload model of the given timestamp. The workload summary before and after the optimization will also be returned.", method = "GET", operationId = "kafkacruisecontrol/proposals",
+    @Operation(summary = "Returns the optimization proposals generated based on the workload model of the given timestamp. The workload summary before and after the optimization will also be returned.", method = "GET", operationId = "proposals",
             tags = {
                     "GET"
             },
@@ -264,7 +264,7 @@ public interface SwaggerEndPoints {
     )
     void proposals(RoutingContext context);
 
-    @Operation(summary = "The following POST request will let Kafka Cruise Control rebalance a Kafka cluster.", method = "POST", operationId = "kafkacruisecontrol/rebalance",
+    @Operation(summary = "The following POST request will let Kafka Cruise Control rebalance a Kafka cluster.", method = "POST", operationId = "rebalance",
             tags = {
                     "POST"
             },
@@ -333,7 +333,7 @@ public interface SwaggerEndPoints {
     )
     void rebalance(RoutingContext context);
 
-    @Operation(summary = "The following POST request adds the given brokers to the Kafka cluster.", method = "POST", operationId = "kafkacruisecontrol/add_broker",
+    @Operation(summary = "The following POST request adds the given brokers to the Kafka cluster.", method = "POST", operationId = "add_broker",
             tags = {
                     "POST"
             },
@@ -397,7 +397,7 @@ public interface SwaggerEndPoints {
     )
     void addBroker(RoutingContext context);
 
-    @Operation(summary = "The following POST request removes a list of brokers from the Kafka cluster.", method = "POST", operationId = "kafkacruisecontrol/remove_broker",
+    @Operation(summary = "The following POST request removes a list of brokers from the Kafka cluster.", method = "POST", operationId = "remove_broker",
             tags = {
                     "POST"
             },
@@ -463,7 +463,7 @@ public interface SwaggerEndPoints {
     )
     void removeBroker(RoutingContext context);
 
-    @Operation(summary = "The following POST request moves all the offline replicas from dead disks/brokers.", method = "POST", operationId = "kafkacruisecontrol/fix_offline_replicas",
+    @Operation(summary = "The following POST request moves all the offline replicas from dead disks/brokers.", method = "POST", operationId = "fix_offline_replicas",
             tags = {
                     "POST"
             },
@@ -523,7 +523,7 @@ public interface SwaggerEndPoints {
     )
     void fixOfflineReplicas(RoutingContext context);
 
-    @Operation(summary = "The following POST request moves all the leader replicas away from a list of brokers.", method = "POST", operationId = "kafkacruisecontrol/demote_broker",
+    @Operation(summary = "The following POST request moves all the leader replicas away from a list of brokers.", method = "POST", operationId = "demote_broker",
             tags = {
                     "POST"
             },
@@ -573,7 +573,7 @@ public interface SwaggerEndPoints {
     )
     void demoteBroker(RoutingContext context);
 
-    @Operation(summary = "The following POST request will let Kafka Cruise Control stop an ongoing rebalance, add_broker, remove_broker, fix_offline_replica, topic_configuration or demote_broker operation.", method = "POST", operationId = "kafkacruisecontrol/stop_proposal_execution",
+    @Operation(summary = "The following POST request will let Kafka Cruise Control stop an ongoing rebalance, add_broker, remove_broker, fix_offline_replica, topic_configuration or demote_broker operation.", method = "POST", operationId = "stop_proposal_execution",
             tags = {
                     "POST"
             },
@@ -607,7 +607,7 @@ public interface SwaggerEndPoints {
     )
     void stopProposalExecution(RoutingContext context);
 
-    @Operation(summary = "The following POST request will let Kafka Cruise Control pause an ongoing metrics sampling process.", method = "POST", operationId = "kafkacruisecontrol/pause_sampling",
+    @Operation(summary = "The following POST request will let Kafka Cruise Control pause an ongoing metrics sampling process.", method = "POST", operationId = "pause_sampling",
             tags = {
                     "POST"
             },
@@ -635,7 +635,7 @@ public interface SwaggerEndPoints {
     )
     void pauseSampling(RoutingContext context);
 
-    @Operation(summary = "The following POST request will let Kafka Cruise Control resume a paused metrics sampling process.", method = "POST", operationId = "kafkacruisecontrol/resume_sampling",
+    @Operation(summary = "The following POST request will let Kafka Cruise Control resume a paused metrics sampling process.", method = "POST", operationId = "resume_sampling",
             tags = {
                     "POST"
             },
@@ -663,7 +663,7 @@ public interface SwaggerEndPoints {
     )
     void resumeSampling(RoutingContext context);
 
-    @Operation(summary = "The following POST request can change topic's replication factor.", method = "POST", operationId = "kafkacruisecontrol/topic_configuration",
+    @Operation(summary = "The following POST request can change topic's replication factor.", method = "POST", operationId = "topic_configuration",
             tags = {
                     "POST"
             },
@@ -723,7 +723,7 @@ public interface SwaggerEndPoints {
     )
     void topicConfiguration(RoutingContext context);
 
-    @Operation(summary = "Some Cruise Control configs can be changed dynamically via admin endpoint.", method = "POST", operationId = "kafkacruisecontrol/admin",
+    @Operation(summary = "Some Cruise Control configs can be changed dynamically via admin endpoint.", method = "POST", operationId = "admin",
             tags = {
                     "POST"
             },
@@ -775,7 +775,7 @@ public interface SwaggerEndPoints {
     )
     void admin(RoutingContext context);
 
-    @Operation(summary = "The following POST request can create a request to the provisioner to rightsize the broker or partition of a cluster.", method = "POST", operationId = "kafkacruisecontrol/rightsize",
+    @Operation(summary = "The following POST request can create a request to the provisioner to rightsize the broker or partition of a cluster.", method = "POST", operationId = "karightsize",
             tags = {
                     "POST"
             },
