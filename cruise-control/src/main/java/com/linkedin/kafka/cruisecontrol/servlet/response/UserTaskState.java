@@ -40,7 +40,7 @@ public class UserTaskState extends AbstractCruiseControlResponse {
   }
 
   /**
-   *
+   * @param parameters cruise control parameters
    * @return JSON string
    */
   public String getJsonString(UserTasksParameters parameters) {
@@ -118,6 +118,7 @@ public class UserTaskState extends AbstractCruiseControlResponse {
 
   /**
    *
+   * @param parameters cruise control parameters
    * @return Plain text
    */
   public String getPlaintext(UserTasksParameters parameters) {

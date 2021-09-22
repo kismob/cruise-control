@@ -28,7 +28,6 @@ import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils
  */
 public class KafkaClusterStateParameters extends AbstractParameters {
   protected static final SortedSet<String> CASE_INSENSITIVE_PARAMETER_NAMES;
-  protected static final String KAFKA_CLUSTER_STATE = "KAFKA_CLUSTER_STATE";
   static {
     SortedSet<String> validParameterNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     validParameterNames.add(VERBOSE_PARAM);
@@ -47,17 +46,8 @@ public class KafkaClusterStateParameters extends AbstractParameters {
   @Override
   protected void initParameters() throws UnsupportedEncodingException {
     super.initParameters();
-    _isVerbose = ParameterUtils.isVerbose(_request);
-    _topic = ParameterUtils.topic(_request);
-  }
-
-  /**
-   * Initializes the parameters
-   */
-  public void initParameters(boolean verbose, String topic, boolean json) throws UnsupportedEncodingException {
-    super.initParameters(json, KAFKA_CLUSTER_STATE);
-    _isVerbose = verbose;
-    _topic = Pattern.compile(topic);
+    _isVerbose = ParameterUtils.isVerbose(_handler);
+    _topic = ParameterUtils.topic(_handler);
   }
 
   public boolean isVerbose() {

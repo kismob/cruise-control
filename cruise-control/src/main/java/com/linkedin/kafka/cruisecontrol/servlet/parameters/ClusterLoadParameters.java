@@ -65,29 +65,14 @@ public class ClusterLoadParameters extends AbstractParameters {
   @Override
   protected void initParameters() throws UnsupportedEncodingException {
     super.initParameters();
-    Long time = ParameterUtils.time(_request);
-    _endMs = time == null ? ParameterUtils.endMsOrDefault(_request, System.currentTimeMillis()) : time;
-    _startMs = ParameterUtils.startMsOrDefault(_request, ParameterUtils.DEFAULT_START_TIME_FOR_CLUSTER_MODEL);
+    Long time = ParameterUtils.time(_handler);
+    _endMs = time == null ? ParameterUtils.endMsOrDefault(_handler, System.currentTimeMillis()) : time;
+    _startMs = ParameterUtils.startMsOrDefault(_handler, ParameterUtils.DEFAULT_START_TIME_FOR_CLUSTER_MODEL);
     ParameterUtils.validateTimeRange(_startMs, _endMs);
     _requirements = new ModelCompletenessRequirements(1, 0.0, true);
-    _allowCapacityEstimation = ParameterUtils.allowCapacityEstimation(_request);
-    _populateDiskInfo = ParameterUtils.populateDiskInfo(_request);
-    _capacityOnly = ParameterUtils.capacityOnly(_request);
-  }
-
-  /**
-   * Initializes the parameters
-   */
-  public void initParameters(boolean json, Long end, Long start, boolean allowCapacityEstimation,
-                             boolean populateDiskInfo, boolean capacityOnly) throws UnsupportedEncodingException {
-    super.initParameters(json, LOAD);
-    _endMs = end;
-    _startMs = start;
-    ParameterUtils.validateTimeRange(_startMs, _endMs);
-    _requirements = new ModelCompletenessRequirements(1, 0.0, true);
-    _allowCapacityEstimation = allowCapacityEstimation;
-    _populateDiskInfo = populateDiskInfo;
-    _capacityOnly = capacityOnly;
+    _allowCapacityEstimation = ParameterUtils.allowCapacityEstimation(_handler);
+    _populateDiskInfo = ParameterUtils.populateDiskInfo(_handler);
+    _capacityOnly = ParameterUtils.capacityOnly(_handler);
   }
 
   public long startMs() {

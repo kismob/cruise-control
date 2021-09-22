@@ -43,7 +43,7 @@ public class KafkaClusterState extends AbstractCruiseControlResponse {
   }
 
   /**
-   *
+   * @param parameters the cruise control parameters
    * @return JSON string
    */
   public String getJsonString(CruiseControlParameters parameters) {
@@ -79,7 +79,7 @@ public class KafkaClusterState extends AbstractCruiseControlResponse {
   }
 
   /**
-   *
+   * @param parameters the cruise control parameters
    * @return Plain text
    */
   public String getPlaintext(CruiseControlParameters parameters) {

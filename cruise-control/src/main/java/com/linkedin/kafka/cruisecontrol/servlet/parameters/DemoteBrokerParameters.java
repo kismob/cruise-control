@@ -9,7 +9,6 @@ import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import com.linkedin.kafka.cruisecontrol.executor.strategy.ReplicaMovementStrategy;
 import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
 import com.linkedin.kafka.cruisecontrol.servlet.UserRequestException;
-import io.vertx.ext.web.RoutingContext;
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.Map;
@@ -54,7 +53,6 @@ import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils
  */
 public class DemoteBrokerParameters extends KafkaOptimizationParameters {
   protected static final SortedSet<String> CASE_INSENSITIVE_PARAMETER_NAMES;
-  protected static final String DEMOTE_BROKER = "DEMOTE_BROKER";
   static {
     SortedSet<String> validParameterNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     validParameterNames.add(DRY_RUN_PARAM);
@@ -92,52 +90,21 @@ public class DemoteBrokerParameters extends KafkaOptimizationParameters {
   @Override
   protected void initParameters() throws UnsupportedEncodingException {
     super.initParameters();
-    _brokerIds = ParameterUtils.brokerIds(_request, false);
-    _dryRun = ParameterUtils.getDryRun(_request);
-    _concurrentLeaderMovements = ParameterUtils.concurrentMovements(_request, false, false);
-    _executionProgressCheckIntervalMs = ParameterUtils.executionProgressCheckIntervalMs(_request);
-    _allowCapacityEstimation = ParameterUtils.allowCapacityEstimation(_request);
-    _skipUrpDemotion = ParameterUtils.skipUrpDemotion(_request);
-    _excludeFollowerDemotion = ParameterUtils.excludeFollowerDemotion(_request);
-    _replicaMovementStrategy = ParameterUtils.getReplicaMovementStrategy(_request, _config);
-    _replicationThrottle = ParameterUtils.replicationThrottle(_request, _config);
+    _brokerIds = ParameterUtils.brokerIds(_handler, false);
+    _dryRun = ParameterUtils.getDryRun(_handler);
+    _concurrentLeaderMovements = ParameterUtils.concurrentMovements(_handler, false, false);
+    _executionProgressCheckIntervalMs = ParameterUtils.executionProgressCheckIntervalMs(_handler);
+    _allowCapacityEstimation = ParameterUtils.allowCapacityEstimation(_handler);
+    _skipUrpDemotion = ParameterUtils.skipUrpDemotion(_handler);
+    _excludeFollowerDemotion = ParameterUtils.excludeFollowerDemotion(_handler);
+    _replicaMovementStrategy = ParameterUtils.getReplicaMovementStrategy(_handler, _config);
+    _replicationThrottle = ParameterUtils.replicationThrottle(_handler, _config);
     boolean twoStepVerificationEnabled = _config.getBoolean(WebServerConfig.TWO_STEP_VERIFICATION_ENABLED_CONFIG);
-    _reviewId = ParameterUtils.reviewId(_request, twoStepVerificationEnabled);
-    _logdirByBrokerId = ParameterUtils.brokerIdAndLogdirs(_request);
+    _reviewId = ParameterUtils.reviewId(_handler, twoStepVerificationEnabled);
+    _logdirByBrokerId = ParameterUtils.brokerIdAndLogdirs(_handler);
     boolean requestReasonRequired = _config.getBoolean(ExecutorConfig.REQUEST_REASON_REQUIRED_CONFIG);
-    _reason = ParameterUtils.reason(_request, requestReasonRequired && !_dryRun);
-    _stopOngoingExecution = ParameterUtils.stopOngoingExecution(_request);
-    if (_stopOngoingExecution && _dryRun) {
-      throw new UserRequestException(String.format("%s and %s cannot both be set to true.", STOP_ONGOING_EXECUTION_PARAM, DRY_RUN_PARAM));
-    }
-  }
-
-  /**
-   * Initializes the parameters
-   */
-  public void initParameters(RoutingContext context, String brokerIdsString, boolean dryRun, Integer concurrentLeaderMovements,
-                             Long executionProgressCheckIntervalMs, boolean allowCapacityEstimation, boolean skipUrpDemotion,
-                             boolean excludeFollowerDemotion, String replicaMovementStrategyString, Long replicationThrottle,
-                             String reviewIdString, String logdirByBrokerIdString, String reasonString, String ipString,
-                             boolean stopOngoingExecution, boolean excludeRecentlyDemotedBrokers,
-                             boolean json, boolean verbose) throws UnsupportedEncodingException {
-    super.initParameters(allowCapacityEstimation, excludeRecentlyDemotedBrokers,
-    json, verbose, DEMOTE_BROKER);
-    _brokerIds = ParameterUtils.brokerIds(brokerIdsString, false, context);
-    _dryRun = dryRun;
-    _concurrentLeaderMovements = concurrentLeaderMovements;
-    _executionProgressCheckIntervalMs = executionProgressCheckIntervalMs;
-    _allowCapacityEstimation = allowCapacityEstimation;
-    _skipUrpDemotion = skipUrpDemotion;
-    _excludeFollowerDemotion = excludeFollowerDemotion;
-    _replicaMovementStrategy = ParameterUtils.getReplicaMovementStrategy(dryRun, replicaMovementStrategyString, _config);
-    _replicationThrottle = replicationThrottle;
-    boolean twoStepVerificationEnabled = false;
-    _reviewId = ParameterUtils.reviewId(reviewIdString, twoStepVerificationEnabled, context.queryParams());
-    _logdirByBrokerId = ParameterUtils.brokerIdAndLogdirs(logdirByBrokerIdString);
-    boolean requestReasonRequired = false;
-    _reason = ParameterUtils.reason(reasonString, requestReasonRequired && !_dryRun, ipString);
-    _stopOngoingExecution = stopOngoingExecution;
+    _reason = ParameterUtils.reason(_handler, requestReasonRequired && !_dryRun);
+    _stopOngoingExecution = ParameterUtils.stopOngoingExecution(_handler);
     if (_stopOngoingExecution && _dryRun) {
       throw new UserRequestException(String.format("%s and %s cannot both be set to true.", STOP_ONGOING_EXECUTION_PARAM, DRY_RUN_PARAM));
     }

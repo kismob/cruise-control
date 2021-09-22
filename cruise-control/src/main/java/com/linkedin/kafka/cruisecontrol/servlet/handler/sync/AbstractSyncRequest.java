@@ -5,7 +5,7 @@
 package com.linkedin.kafka.cruisecontrol.servlet.handler.sync;
 
 import com.codahale.metrics.Timer;
-import com.linkedin.kafka.cruisecontrol.commonapi.CommonApi;
+import com.linkedin.cruisecontrol.httframeworkhandler.HttpFrameworkHandler;
 import com.linkedin.kafka.cruisecontrol.servlet.handler.async.runnable.OperationFuture;
 import com.linkedin.cruisecontrol.servlet.EndPoint;
 import com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager;
@@ -15,9 +15,6 @@ import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
 import com.linkedin.cruisecontrol.servlet.response.CruiseControlResponse;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,29 +34,12 @@ public abstract class AbstractSyncRequest extends AbstractRequest {
   protected abstract CruiseControlResponse handle();
 
   @Override
-  public CruiseControlResponse getResponse(HttpServletRequest request, HttpServletResponse response)
+  public CruiseControlResponse getResponse(HttpFrameworkHandler handler)
           throws Exception {
     LOG.info("Processing sync request {}.", name());
     long requestExecutionStartTime = System.nanoTime();
     int step = 0;
-    OperationFuture resultFuture = _userTaskManager.getOrCreateUserTask(new CommonApi(request, response), uuid -> {
-      OperationFuture future = new OperationFuture(String.format("%s request", parameters().endPoint().toString()));
-      future.complete(handle());
-      return future;
-    }, step, false, parameters()).get(step);
-
-    CruiseControlResponse ccResponse = resultFuture.get();
-    _successfulRequestExecutionTimer.get(parameters().endPoint()).update(System.nanoTime() - requestExecutionStartTime, TimeUnit.NANOSECONDS);
-    return ccResponse;
-  }
-
-  @Override
-  public CruiseControlResponse getResponse(RoutingContext context)
-          throws Exception {
-    LOG.info("Processing sync request {}.", name());
-    long requestExecutionStartTime = System.nanoTime();
-    int step = 0;
-    OperationFuture resultFuture = _userTaskManager.getOrCreateUserTask(new CommonApi(context), uuid -> {
+    OperationFuture resultFuture = _userTaskManager.getOrCreateUserTask(handler, uuid -> {
       OperationFuture future = new OperationFuture(String.format("%s request", parameters().endPoint().toString()));
       future.complete(handle());
       return future;

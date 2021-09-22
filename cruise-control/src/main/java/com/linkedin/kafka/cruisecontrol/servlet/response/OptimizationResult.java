@@ -69,6 +69,7 @@ public class OptimizationResult extends AbstractCruiseControlResponse {
   }
 
   /**
+   * @param parameters the cruise control parameters
    * @return Plaintext pretext
    */
   public String getPlaintextPretext(CruiseControlParameters parameters) {
@@ -95,7 +96,8 @@ public class OptimizationResult extends AbstractCruiseControlResponse {
   }
 
   /**
-   *
+   * @param isVerbose Verbose parameter of the request
+   * @param pretext the pretext of the response
    * @return Plain text
    */
   public String getPlaintext(boolean isVerbose, String pretext) {
@@ -140,7 +142,7 @@ public class OptimizationResult extends AbstractCruiseControlResponse {
   }
 
   /**
-   *
+   * @param isVerbose Verbose parameter of the request
    * @return JSON string
    */
   public String getJsonString(boolean isVerbose) {

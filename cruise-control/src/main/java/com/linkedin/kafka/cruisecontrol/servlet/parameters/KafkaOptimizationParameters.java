@@ -36,17 +36,9 @@ public abstract class KafkaOptimizationParameters extends AbstractParameters {
   @Override
   protected void initParameters() throws UnsupportedEncodingException {
     super.initParameters();
-    _allowCapacityEstimation = ParameterUtils.allowCapacityEstimation(_request);
-    _isVerbose = ParameterUtils.isVerbose(_request);
-    _excludeRecentlyDemotedBrokers = ParameterUtils.excludeRecentlyDemotedBrokers(_request);
-  }
-
-  protected void initParameters(boolean allowCapacityEstimation, boolean excludeRecentlyDemotedBrokers,
-                                boolean json, boolean verbose, String endpointName) throws UnsupportedEncodingException {
-    super.initParameters(json, endpointName);
-    _allowCapacityEstimation = allowCapacityEstimation;
-    _isVerbose = verbose;
-    _excludeRecentlyDemotedBrokers = excludeRecentlyDemotedBrokers;
+    _allowCapacityEstimation = ParameterUtils.allowCapacityEstimation(_handler);
+    _isVerbose = ParameterUtils.isVerbose(_handler);
+    _excludeRecentlyDemotedBrokers = ParameterUtils.excludeRecentlyDemotedBrokers(_handler);
   }
 
   public boolean allowCapacityEstimation() {
