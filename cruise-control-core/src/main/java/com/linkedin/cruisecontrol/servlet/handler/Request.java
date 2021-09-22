@@ -5,9 +5,7 @@
 package com.linkedin.cruisecontrol.servlet.handler;
 
 import com.linkedin.cruisecontrol.common.CruiseControlConfigurable;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import io.vertx.ext.web.RoutingContext;
+import com.linkedin.cruisecontrol.httframeworkhandler.HttpFrameworkHandler;
 
 
 /**
@@ -18,14 +16,9 @@ import io.vertx.ext.web.RoutingContext;
 public interface Request extends CruiseControlConfigurable {
 
   /**
+   * @param handler The request handler
    * Handle the request and populate the response.
-   *
-   * @param request Http servlet request.
-   * @param response Http servlet response.
    */
-  void handle(HttpServletRequest request, HttpServletResponse response)
-          throws Exception;
-
-  void handle(RoutingContext context)
+  void handle(HttpFrameworkHandler handler)
           throws Exception;
 }

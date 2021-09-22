@@ -6,7 +6,6 @@ package com.linkedin.kafka.cruisecontrol.servlet.parameters;
 
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
-import io.vertx.ext.web.RoutingContext;
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.Map;
@@ -34,7 +33,6 @@ import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils
  */
 public class StopProposalParameters extends AbstractParameters {
   protected static final SortedSet<String> CASE_INSENSITIVE_PARAMETER_NAMES;
-  protected static final String STOP_PROPOSAL_EXECUTION = "STOP_PROPOSAL_EXECUTION";
   static {
     SortedSet<String> validParameterNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     validParameterNames.add(REVIEW_ID_PARAM);
@@ -55,21 +53,9 @@ public class StopProposalParameters extends AbstractParameters {
   protected void initParameters() throws UnsupportedEncodingException {
     super.initParameters();
     boolean twoStepVerificationEnabled = _config.getBoolean(WebServerConfig.TWO_STEP_VERIFICATION_ENABLED_CONFIG);
-    _reviewId = ParameterUtils.reviewId(_request, twoStepVerificationEnabled);
-    _forceExecutionStop = ParameterUtils.forceExecutionStop(_request);
-    _stopExternalAgent = ParameterUtils.stopExternalAgent(_request);
-  }
-
-  /**
-   * Initializes the parameters
-   */
-  public void initParameters(boolean forceExecutionStop, boolean stopExternalAgent, boolean json,
-                             RoutingContext context) throws UnsupportedEncodingException {
-    super.initParameters(json, STOP_PROPOSAL_EXECUTION);
-    boolean twoStepVerificationEnabled = false;
-    _reviewId = ParameterUtils.reviewId(context, twoStepVerificationEnabled);
-    _forceExecutionStop = forceExecutionStop;
-    _stopExternalAgent = stopExternalAgent;
+    _reviewId = ParameterUtils.reviewId(_handler, twoStepVerificationEnabled);
+    _forceExecutionStop = ParameterUtils.forceExecutionStop(_handler);
+    _stopExternalAgent = ParameterUtils.stopExternalAgent(_handler);
   }
 
   @Override

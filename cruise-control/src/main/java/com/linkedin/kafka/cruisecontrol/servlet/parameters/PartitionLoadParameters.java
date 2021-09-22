@@ -33,7 +33,6 @@ import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils
  */
 public class PartitionLoadParameters extends AbstractParameters {
   protected static final SortedSet<String> CASE_INSENSITIVE_PARAMETER_NAMES;
-  protected static final String PARTITION_LOAD = "PARTITION_LOAD";
   static {
     SortedSet<String> validParameterNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     validParameterNames.add(RESOURCE_PARAM);
@@ -70,7 +69,7 @@ public class PartitionLoadParameters extends AbstractParameters {
   @Override
   protected void initParameters() throws UnsupportedEncodingException {
     super.initParameters();
-    String resourceString = ParameterUtils.resourceString(_request);
+    String resourceString = ParameterUtils.resourceString(_handler);
     try {
       _resource = Resource.valueOf(resourceString.toUpperCase());
     } catch (IllegalArgumentException iae) {
@@ -78,50 +77,20 @@ public class PartitionLoadParameters extends AbstractParameters {
                                                    + "following: CPU, DISK, NW_IN, NW_OUT", resourceString));
     }
 
-    _wantMaxLoad = ParameterUtils.wantMaxLoad(_request);
-    _wantAvgLoad = ParameterUtils.wantAvgLoad(_request);
+    _wantMaxLoad = ParameterUtils.wantMaxLoad(_handler);
+    _wantAvgLoad = ParameterUtils.wantAvgLoad(_handler);
     if (_wantMaxLoad && _wantAvgLoad) {
       throw new UserRequestException("Parameters to ask for max and avg load are mutually exclusive to each other.");
     }
-    _topic = ParameterUtils.topic(_request);
-    _partitionLowerBoundary = ParameterUtils.partitionBoundary(_request, false);
-    _partitionUpperBoundary = ParameterUtils.partitionBoundary(_request, true);
-    _entries = ParameterUtils.entries(_request);
-    _minValidPartitionRatio = ParameterUtils.minValidPartitionRatio(_request);
-    _allowCapacityEstimation = ParameterUtils.allowCapacityEstimation(_request);
-    _brokerIds = ParameterUtils.brokerIds(_request, true);
-    _startMs = ParameterUtils.startMsOrDefault(_request, ParameterUtils.DEFAULT_START_TIME_FOR_CLUSTER_MODEL);
-    _endMs = ParameterUtils.endMsOrDefault(_request, System.currentTimeMillis());
-    ParameterUtils.validateTimeRange(_startMs, _endMs);
-  }
-
-  /**
-   * Initializes the parameters
-   */
-  public void initParameters(boolean json, boolean maxLoad, boolean avgLoad, Pattern topic, String partitionString, Integer entries,
-                                Double minValidPartitionRatio, boolean allowCapacityEstimation, String brokerId,
-                                Long start, Long end, String resourceString) throws UnsupportedEncodingException {
-    super.initParameters(json, PARTITION_LOAD);
-    try {
-      _resource = Resource.valueOf(ParameterUtils.resourceString(resourceString).toUpperCase());
-    } catch (IllegalArgumentException iae) {
-      throw new UserRequestException(String.format("Invalid resource type %s. The resource type must be one of the "
-              + "following: CPU, DISK, NW_IN, NW_OUT", resourceString));
-    }
-    _wantMaxLoad = maxLoad;
-    _wantAvgLoad = avgLoad;
-    if (_wantMaxLoad && _wantAvgLoad) {
-      throw new UserRequestException("Parameters to ask for max and avg load are mutually exclusive to each other.");
-    }
-    _topic = topic;
-    _partitionLowerBoundary = ParameterUtils.partitionBoundary(partitionString, false);
-    _partitionUpperBoundary = ParameterUtils.partitionBoundary(partitionString, true);
-    _entries = entries;
-    _minValidPartitionRatio = minValidPartitionRatio;
-    _allowCapacityEstimation = allowCapacityEstimation;
-    _brokerIds = ParameterUtils.parseParamToIntegerSet(brokerId);
-    _startMs = start;
-    _endMs = end;
+    _topic = ParameterUtils.topic(_handler);
+    _partitionLowerBoundary = ParameterUtils.partitionBoundary(_handler, false);
+    _partitionUpperBoundary = ParameterUtils.partitionBoundary(_handler, true);
+    _entries = ParameterUtils.entries(_handler);
+    _minValidPartitionRatio = ParameterUtils.minValidPartitionRatio(_handler);
+    _allowCapacityEstimation = ParameterUtils.allowCapacityEstimation(_handler);
+    _brokerIds = ParameterUtils.brokerIds(_handler, true);
+    _startMs = ParameterUtils.startMsOrDefault(_handler, ParameterUtils.DEFAULT_START_TIME_FOR_CLUSTER_MODEL);
+    _endMs = ParameterUtils.endMsOrDefault(_handler, System.currentTimeMillis());
     ParameterUtils.validateTimeRange(_startMs, _endMs);
   }
 

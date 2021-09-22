@@ -6,7 +6,6 @@ package com.linkedin.kafka.cruisecontrol.servlet.parameters;
 
 import com.linkedin.kafka.cruisecontrol.executor.ConcurrencyType;
 import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
-import io.vertx.ext.web.RoutingContext;
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.Map;
@@ -23,7 +22,6 @@ import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils
  */
 public class UpdateConcurrencyAdjusterParameters extends AbstractParameters {
   protected static final SortedSet<String> CASE_INSENSITIVE_PARAMETER_NAMES;
-  protected static final String ADMIN = "ADMIN";
   static {
     SortedSet<String> validParameterNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     validParameterNames.add(DISABLE_CONCURRENCY_ADJUSTER_FOR_PARAM);
@@ -43,19 +41,10 @@ public class UpdateConcurrencyAdjusterParameters extends AbstractParameters {
   @Override
   protected void initParameters() throws UnsupportedEncodingException {
     super.initParameters();
-    Map<Boolean, Set<ConcurrencyType>> concurrencyAdjusterFor = ParameterUtils.concurrencyAdjusterFor(_request);
+    Map<Boolean, Set<ConcurrencyType>> concurrencyAdjusterFor = ParameterUtils.concurrencyAdjusterFor(_handler);
     _enableConcurrencyAdjusterFor = concurrencyAdjusterFor.get(true);
     _disableConcurrencyAdjusterFor = concurrencyAdjusterFor.get(false);
-    _minIsrBasedConcurrencyAdjustment = ParameterUtils.minIsrBasedConcurrencyAdjustment(_request);
-  }
-
-  protected void initParameters(RoutingContext context) throws UnsupportedEncodingException {
-    boolean json = Boolean.parseBoolean(context.queryParams().get(JSON_PARAM));
-    super.initParameters(json, ADMIN);
-    Map<Boolean, Set<ConcurrencyType>> concurrencyAdjusterFor = ParameterUtils.concurrencyAdjusterFor(context);
-    _enableConcurrencyAdjusterFor = concurrencyAdjusterFor.get(true);
-    _disableConcurrencyAdjusterFor = concurrencyAdjusterFor.get(false);
-    _minIsrBasedConcurrencyAdjustment = ParameterUtils.minIsrBasedConcurrencyAdjustment(context);
+    _minIsrBasedConcurrencyAdjustment = ParameterUtils.minIsrBasedConcurrencyAdjustment(_handler);
   }
 
   /**
@@ -74,24 +63,6 @@ public class UpdateConcurrencyAdjusterParameters extends AbstractParameters {
     if (updateConcurrencyAdjusterParameters.enableConcurrencyAdjusterFor().isEmpty()
         && updateConcurrencyAdjusterParameters.disableConcurrencyAdjusterFor().isEmpty()
         && updateConcurrencyAdjusterParameters.minIsrBasedConcurrencyAdjustment() == null) {
-      return null;
-    }
-    return updateConcurrencyAdjusterParameters;
-  }
-
-  /**
-   * Create a {@link UpdateConcurrencyAdjusterParameters} object from the request.
-   * @return A {@link UpdateConcurrencyAdjusterParameters} object; or {@code null} if any required parameter is not
-   * specified in the request.
-   */
-  public static UpdateConcurrencyAdjusterParameters maybeBuildUpdateConcurrencyAdjusterParameters(RoutingContext context)
-          throws UnsupportedEncodingException {
-    UpdateConcurrencyAdjusterParameters updateConcurrencyAdjusterParameters = new UpdateConcurrencyAdjusterParameters();
-    updateConcurrencyAdjusterParameters.initParameters(context);
-    // If no concurrency adjuster is enabled/disabled in the request and there is no MinISR-based concurrency adjustment, return null.
-    if (updateConcurrencyAdjusterParameters.enableConcurrencyAdjusterFor().isEmpty()
-            && updateConcurrencyAdjusterParameters.disableConcurrencyAdjusterFor().isEmpty()
-            && updateConcurrencyAdjusterParameters.minIsrBasedConcurrencyAdjustment() == null) {
       return null;
     }
     return updateConcurrencyAdjusterParameters;

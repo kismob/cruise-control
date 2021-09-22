@@ -5,10 +5,9 @@
 package com.linkedin.cruisecontrol.servlet.parameters;
 
 import com.linkedin.cruisecontrol.common.CruiseControlConfigurable;
+import com.linkedin.cruisecontrol.httframeworkhandler.HttpFrameworkHandler;
 import com.linkedin.cruisecontrol.servlet.EndPoint;
-import io.vertx.ext.web.RoutingContext;
 import java.util.SortedSet;
-import javax.servlet.http.HttpServletResponse;
 
 
 /**
@@ -20,15 +19,12 @@ public interface CruiseControlParameters extends CruiseControlConfigurable {
 
   /**
    * Parse the parameters set in HTTP request to initialize object.
+   * @param handler The request handler
    *
-   * @param response HTTP response of Cruise Control. Populated in case of a parameter parse exception.
    * @return {@code true} if there has been a failure to parse parameters, {@code false} otherwise. If the object is already initialized,
    *         directly return false.
    */
-  boolean parseParameters(HttpServletResponse response);
-
-  boolean parseParameters(RoutingContext context);
-
+  boolean parseParameters(HttpFrameworkHandler handler);
   /**
    * @return Endpoint for which the parameters are parsed.
    */

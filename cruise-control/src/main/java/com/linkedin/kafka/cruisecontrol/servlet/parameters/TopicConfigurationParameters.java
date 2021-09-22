@@ -8,13 +8,11 @@ import com.linkedin.kafka.cruisecontrol.config.constants.ExecutorConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
 import com.linkedin.kafka.cruisecontrol.servlet.UserRequestException;
-import io.vertx.ext.web.RoutingContext;
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.regex.Pattern;
 
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.areAllParametersNull;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.REVIEW_ID_PARAM;
@@ -59,7 +57,6 @@ import static com.linkedin.kafka.cruisecontrol.servlet.parameters.TopicReplicati
  */
 public class TopicConfigurationParameters extends GoalBasedOptimizationParameters {
   protected static final SortedSet<String> CASE_INSENSITIVE_PARAMETER_NAMES;
-  protected static final String TOPIC_CONFIGURATION = "TOPIC_CONFIGURATION";
   static {
     SortedSet<String> validParameterNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     validParameterNames.add(REVIEW_ID_PARAM);
@@ -85,45 +82,15 @@ public class TopicConfigurationParameters extends GoalBasedOptimizationParameter
   protected void initParameters() throws UnsupportedEncodingException {
     super.initParameters();
     boolean twoStepVerificationEnabled = _config.getBoolean(WebServerConfig.TWO_STEP_VERIFICATION_ENABLED_CONFIG);
-    _reviewId = ParameterUtils.reviewId(_request, twoStepVerificationEnabled);
-    _dryRun = ParameterUtils.getDryRun(_request);
+    _reviewId = ParameterUtils.reviewId(_handler, twoStepVerificationEnabled);
+    _dryRun = ParameterUtils.getDryRun(_handler);
     boolean requestReasonRequired = _config.getBoolean(ExecutorConfig.REQUEST_REASON_REQUIRED_CONFIG);
-    _reason = ParameterUtils.reason(_request, requestReasonRequired && !_dryRun);
-    _stopOngoingExecution = ParameterUtils.stopOngoingExecution(_request);
+    _reason = ParameterUtils.reason(_handler, requestReasonRequired && !_dryRun);
+    _stopOngoingExecution = ParameterUtils.stopOngoingExecution(_handler);
     if (_stopOngoingExecution && _dryRun) {
       throw new UserRequestException(String.format("%s and %s cannot both be set to true.", STOP_ONGOING_EXECUTION_PARAM, DRY_RUN_PARAM));
     }
     _topicReplicationFactorChangeParameters = maybeBuildTopicReplicationFactorChangeParameters(_configs);
-    if (areAllParametersNull(_topicReplicationFactorChangeParameters)) {
-      throw new UserRequestException("Nothing executable found in request.");
-    }
-  }
-
-  /**
-   * Initializes the parameters
-   */
-  public void initParameters(RoutingContext context, boolean dryRun, String reasonString, String ipString, boolean stopOngoingExecution,
-                             boolean skipRackAwarenessCheck, Integer concurrentLeaderMovements, Long executionProgressCheckIntervalMs,
-                             boolean skipHardGoalCheck, String strategyString, Long replicationThrottle, boolean json,
-                             String dataFrom, String inGoals, boolean kafkaAssigner, boolean rebalanceDisk, boolean allowCapacityEstimation,
-                             Pattern excludedTopics, boolean useReadyDefaultGoals, boolean excludeRecentlyDemotedBrokers,
-                             boolean excludeRecentlyRemovedBrokers, boolean verbose,
-                             boolean fastMode) throws UnsupportedEncodingException {
-    super.initParameters(dataFrom, inGoals, kafkaAssigner, rebalanceDisk, allowCapacityEstimation, excludedTopics,
-            useReadyDefaultGoals, excludeRecentlyDemotedBrokers,
-            excludeRecentlyRemovedBrokers, json, verbose, fastMode, TOPIC_CONFIGURATION);
-    boolean twoStepVerificationEnabled = false;
-    _reviewId = ParameterUtils.reviewId(context, twoStepVerificationEnabled);
-    _dryRun = dryRun;
-    boolean requestReasonRequired = false;
-    _reason = ParameterUtils.reason(reasonString, requestReasonRequired && !_dryRun, ipString);
-    _stopOngoingExecution = stopOngoingExecution;
-    if (_stopOngoingExecution && _dryRun) {
-      throw new UserRequestException(String.format("%s and %s cannot both be set to true.", STOP_ONGOING_EXECUTION_PARAM, DRY_RUN_PARAM));
-    }
-    _topicReplicationFactorChangeParameters = maybeBuildTopicReplicationFactorChangeParameters(context,
-            skipRackAwarenessCheck, concurrentLeaderMovements, executionProgressCheckIntervalMs,
-            skipHardGoalCheck, dryRun, strategyString, replicationThrottle, json);
     if (areAllParametersNull(_topicReplicationFactorChangeParameters)) {
       throw new UserRequestException("Nothing executable found in request.");
     }

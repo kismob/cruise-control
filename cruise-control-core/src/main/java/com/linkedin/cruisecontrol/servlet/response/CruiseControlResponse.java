@@ -4,10 +4,9 @@
 
 package com.linkedin.cruisecontrol.servlet.response;
 
+import com.linkedin.cruisecontrol.httframeworkhandler.HttpFrameworkHandler;
 import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
-import io.vertx.ext.web.RoutingContext;
 import java.io.IOException;
-import javax.servlet.http.HttpServletResponse;
 
 
 /**
@@ -21,11 +20,10 @@ public interface CruiseControlResponse {
      * Write success response with the given parameters to the provided HTTP response.
      *
      * @param parameters Parameters of the HTTP request of user.
-     * @param response HTTP response to return to user.
+     * @param handler The request handler
      */
-    void writeSuccessResponse(CruiseControlParameters parameters, HttpServletResponse response) throws IOException;
 
-    void writeSuccessResponse(CruiseControlParameters parameters, RoutingContext context) throws IOException;
+    void writeSuccessResponse(CruiseControlParameters parameters, HttpFrameworkHandler<?> handler) throws IOException;
 
     /**
     * Based on the given parameters, keep the relevant response to be returned to the user and discard the remaining.

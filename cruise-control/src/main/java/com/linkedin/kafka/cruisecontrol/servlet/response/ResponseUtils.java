@@ -8,12 +8,13 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.linkedin.cruisecontrol.httframeworkhandler.HttpFrameworkHandler;
 import com.linkedin.kafka.cruisecontrol.KafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import io.vertx.ext.web.RoutingContext;
+import org.apache.kafka.common.config.AbstractConfig;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
@@ -34,7 +35,14 @@ public final class ResponseUtils {
   private ResponseUtils() {
   }
 
-  static void setResponseCode(HttpServletResponse response, int code, boolean json, KafkaCruiseControlConfig config) {
+  /**
+   *
+   * @param response The servlet response.
+   * @param code Status code
+   * @param json Write the response in JSON or not
+   * @param config CruiseControlConfig
+   */
+  public static void setResponseCode(HttpServletResponse response, int code, boolean json, AbstractConfig config) {
     response.setStatus(code);
     response.setContentType(json ? "application/json" : "text/plain");
     response.setCharacterEncoding(StandardCharsets.UTF_8.name());
@@ -49,7 +57,13 @@ public final class ResponseUtils {
     }
   }
 
-  static void setResponseCode(RoutingContext context, int code, KafkaCruiseControlConfig config) {
+  /**
+   *
+   * @param context The routing context
+   * @param code Status code
+   * @param config CruiseControlConfig
+   */
+  public static void setResponseCode(RoutingContext context, int code, AbstractConfig config) {
     context.response().setStatusCode(code);
     boolean corsEnabled = config != null && config.getBoolean(WebServerConfig.WEBSERVER_HTTP_CORS_ENABLED_CONFIG);
     if (corsEnabled) {
@@ -67,31 +81,12 @@ public final class ResponseUtils {
     return new Gson().toJson(jsonResponse);
   }
 
-  static void writeResponseToOutputStream(HttpServletResponse response,
-                                          int responseCode,
-                                          boolean json,
-                                          boolean wantJsonSchema,
-                                          String responseMessage,
-                                          KafkaCruiseControlConfig config)
-      throws IOException {
-    OutputStream out = response.getOutputStream();
-    setResponseCode(response, responseCode, json, config);
-    response.addHeader("Cruise-Control-Version", KafkaCruiseControl.cruiseControlVersion());
-    response.addHeader("Cruise-Control-Commit_Id", KafkaCruiseControl.cruiseControlCommitId());
-    if (json && wantJsonSchema) {
-      response.addHeader("Cruise-Control-JSON-Schema", getJsonSchema(responseMessage));
-    }
-    response.setContentLength(responseMessage.length());
-    out.write(responseMessage.getBytes(StandardCharsets.UTF_8));
-    out.flush();
-  }
-
   static void writeResponseToOutputStream(RoutingContext context,
                                           int responseCode,
                                           boolean json,
                                           boolean wantJsonSchema,
                                           String responseMessage,
-                                          KafkaCruiseControlConfig config) {
+                                          AbstractConfig config) {
     setResponseCode(context, responseCode, config);
     context.response().putHeader("Cruise-Control-Version", KafkaCruiseControl.cruiseControlVersion());
     context.response().putHeader("Cruise-Control-Commit_Id", KafkaCruiseControl.cruiseControlCommitId());
@@ -121,7 +116,7 @@ public final class ResponseUtils {
   /**
    * Write error response to the output stream.
    *
-   * @param response HTTP response to return to user.
+   * @param handler The request handler
    * @param e Exception (if any) corresponding to the error, {@code null} otherwise.
    * @param errorMessage Error message to return in the response message.
    * @param responseCode HTTP Status code to indicate the error.
@@ -129,7 +124,7 @@ public final class ResponseUtils {
    * @param wantJsonSchema {@code true} for json error response, {@code false} otherwise.
    * @param config The configurations for Cruise Control.
    */
-  public static void writeErrorResponse(HttpServletResponse response,
+  public static void writeErrorResponse(HttpFrameworkHandler<KafkaCruiseControlConfig> handler,
                                         Exception e,
                                         String errorMessage,
                                         int responseCode,
@@ -146,33 +141,15 @@ public final class ResponseUtils {
       responseMessage = errorResponse.toString();
     }
     // Send the CORS Task ID header as part of this error response if 2-step verification is enabled.
-    writeResponseToOutputStream(response, responseCode, json, wantJsonSchema, responseMessage, config);
+    handler.writeResponseToOutputStream(responseCode, json, wantJsonSchema, responseMessage, config);
   }
 
   /**
-   * Write error response to the output stream.
+   *
+   * @param responseMessage The response message string
+   * @return the JSON schema of the response
    */
-  public static void writeErrorResponse(RoutingContext context,
-                                        Exception e,
-                                        String errorMessage,
-                                        int responseCode,
-                                        boolean json,
-                                        boolean wantJsonSchema,
-                                        KafkaCruiseControlConfig config)
-          throws IOException {
-    String responseMessage;
-    ErrorResponse errorResponse = new ErrorResponse(e, errorMessage);
-    if (json) {
-      Gson gson = new Gson();
-      responseMessage = gson.toJson(errorResponse.getJsonStructure());
-    } else {
-      responseMessage = errorResponse.toString();
-    }
-    // Send the CORS Task ID header as part of this error response if 2-step verification is enabled.
-    writeResponseToOutputStream(context, responseCode, json, wantJsonSchema, responseMessage, config);
-  }
-
-  private static String getJsonSchema(String responseMessage) {
+  public static String getJsonSchema(String responseMessage) {
     JsonElement response = new JsonParser().parse(responseMessage);
     return convertNodeToStringSchemaNode(response, null);
   }

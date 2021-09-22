@@ -13,16 +13,17 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
+import com.linkedin.cruisecontrol.httframeworkhandler.HttpFrameworkHandler;
+import com.linkedin.kafka.cruisecontrol.httpframeworkhandler.ServletHttpFrameworkHandler;
+import com.linkedin.kafka.cruisecontrol.httpframeworkhandler.VertxHttpFrameworkHandler;
 import io.vertx.ext.web.RoutingContext;
-import org.eclipse.jetty.server.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import javax.servlet.http.HttpServletRequest;
 
 import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.KAFKA_CRUISE_CONTROL_CONFIG_OBJECT_CONFIG;
 import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.KAFKA_CRUISE_CONTROL_HTTP_SERVLET_REQUEST_OBJECT_CONFIG;
+import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.ROUTING_CONTEXT_OBJECT_CONFIG;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.DO_AS;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.handleParameterParseException;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.JSON_PARAM;
@@ -45,7 +46,7 @@ public abstract class AbstractParameters implements CruiseControlParameters {
     CASE_INSENSITIVE_PARAMETER_NAMES = Collections.unmodifiableSortedSet(validParameterNames);
 
   }
-  protected HttpServletRequest _request;
+  protected HttpFrameworkHandler _handler;
   protected boolean _initialized = false;
   protected KafkaCruiseControlConfig _config;
   // Common to all parameters, expected to be populated via initParameters.
@@ -57,24 +58,17 @@ public abstract class AbstractParameters implements CruiseControlParameters {
 
   }
 
-  protected void initParameters(boolean json, String endpointName) throws UnsupportedEncodingException {
-    _initialized = true;
-    _endPoint = CruiseControlEndPoint.valueOf(endpointName);
-    _json = json;
-    _wantResponseSchema = false;
-  }
-
   protected void initParameters() throws UnsupportedEncodingException {
     _initialized = true;
-    _endPoint = ParameterUtils.endPoint(_request);
-    _json = ParameterUtils.wantJSON(_request);
-    _wantResponseSchema = ParameterUtils.wantResponseSchema(_request);
+    _endPoint = ParameterUtils.endPoint(_handler);
+    _json = ParameterUtils.wantJSON(_handler);
+    _wantResponseSchema = ParameterUtils.wantResponseSchema(_handler);
   }
 
   @Override
-  public boolean parseParameters(HttpServletResponse response) {
+  public boolean parseParameters(HttpFrameworkHandler handler) {
     if (_initialized) {
-      LOG.trace("Attempt to parse an already parsed request {}.", _request);
+      LOG.trace("Attempt to parse an already parsed request {}.", _handler);
       return false;
     }
     try {
@@ -82,26 +76,7 @@ public abstract class AbstractParameters implements CruiseControlParameters {
       return false;
     } catch (Exception e) {
       try {
-        handleParameterParseException(e, response, e.getMessage(), _json, _wantResponseSchema, _config);
-      } catch (IOException ioe) {
-        LOG.error(String.format("Failed to write parse parameter exception to output stream. Endpoint: %s.", _endPoint), ioe);
-      }
-      return true;
-    }
-  }
-
-  @Override
-  public boolean parseParameters(RoutingContext context) {
-    if (_initialized) {
-      LOG.trace("Attempt to parse an already parsed request {}.", _request);
-      return false;
-    }
-    try {
-      initParameters();
-      return false;
-    } catch (Exception e) {
-      try {
-        handleParameterParseException(e, context, e.getMessage(), _json, _wantResponseSchema, _config);
+        handleParameterParseException(e, handler, e.getMessage(), _json, _wantResponseSchema, _config);
       } catch (IOException ioe) {
         LOG.error(String.format("Failed to write parse parameter exception to output stream. Endpoint: %s.", _endPoint), ioe);
       }
@@ -131,15 +106,13 @@ public abstract class AbstractParameters implements CruiseControlParameters {
 
   @Override
   public void configure(Map<String, ?> configs) {
-    if (validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_HTTP_SERVLET_REQUEST_OBJECT_CONFIG),
-            "HttpServletRequest configuration is missing from the request.").getClass().equals(Request.class)) {
-      _request = (HttpServletRequest) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_HTTP_SERVLET_REQUEST_OBJECT_CONFIG),
-              "HttpServletRequest configuration is missing from the request.");
-      _endPoint = null;
+    if (configs.get(ROUTING_CONTEXT_OBJECT_CONFIG) == null) {
+      _handler = new ServletHttpFrameworkHandler(
+              (HttpServletRequest) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_HTTP_SERVLET_REQUEST_OBJECT_CONFIG),
+              "HttpServletRequest configuration is missing from the request."), null);
     } else {
-      _endPoint = (EndPoint) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_HTTP_SERVLET_REQUEST_OBJECT_CONFIG),
-              "HttpServletRequest configuration is missing from the request.");
-      _request = null;
+      _handler = new VertxHttpFrameworkHandler((RoutingContext) validateNotNull(configs.get(ROUTING_CONTEXT_OBJECT_CONFIG),
+              "HttpServletRequest configuration is missing from the request."));
     }
     _config = (KafkaCruiseControlConfig) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_CONFIG_OBJECT_CONFIG),
                                                          "KafkaCruiseControlConfig configuration is missing from the request.");

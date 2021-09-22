@@ -124,7 +124,7 @@ public class MainVerticle extends AbstractVerticle {
     router.get("/proposals").handler(_endPoints::proposals);
     router.post("/rebalance").handler(_endPoints::rebalance);
     router.post("/add_broker").handler(_endPoints::addBroker);
-    router.post("//remove_broker").handler(_endPoints::removeBroker);
+    router.post("/remove_broker").handler(_endPoints::removeBroker);
     router.post("/fix_offline_replicas").handler(_endPoints::fixOfflineReplicas);
     router.post("/demote_broker").handler(_endPoints::demoteBroker);
     router.post("/stop_proposal_execution").handler(_endPoints::stopProposalExecution);

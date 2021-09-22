@@ -6,7 +6,6 @@ package com.linkedin.kafka.cruisecontrol.servlet.parameters;
 
 import com.linkedin.cruisecontrol.detector.AnomalyType;
 import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
-import io.vertx.ext.web.RoutingContext;
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.Map;
@@ -41,15 +40,7 @@ public class UpdateSelfHealingParameters extends AbstractParameters {
   @Override
   protected void initParameters() throws UnsupportedEncodingException {
     super.initParameters();
-    Map<Boolean, Set<AnomalyType>> selfHealingFor = ParameterUtils.selfHealingFor(_request);
-    _enableSelfHealingFor = selfHealingFor.get(true);
-    _disableSelfHealingFor = selfHealingFor.get(false);
-  }
-
-  protected void initParameters(RoutingContext context) throws UnsupportedEncodingException {
-    boolean json = Boolean.parseBoolean(context.queryParams().get(JSON_PARAM));
-    super.initParameters(json, ADMIN);
-    Map<Boolean, Set<AnomalyType>> selfHealingFor = ParameterUtils.selfHealingFor(context);
+    Map<Boolean, Set<AnomalyType>> selfHealingFor = ParameterUtils.selfHealingFor(_handler);
     _enableSelfHealingFor = selfHealingFor.get(true);
     _disableSelfHealingFor = selfHealingFor.get(false);
   }
@@ -68,22 +59,6 @@ public class UpdateSelfHealingParameters extends AbstractParameters {
     // At least self-healing for one anomaly type should requested to enable/disable; otherwise, return null.
     if (selfHealingUpdateParameters.enableSelfHealingFor().isEmpty()
         && selfHealingUpdateParameters.disableSelfHealingFor().isEmpty()) {
-      return null;
-    }
-    return selfHealingUpdateParameters;
-  }
-
-  /**
-   * Create a {@link UpdateSelfHealingParameters} object from the request.
-   * @return A UpdateSelfHealingParameters object; or null if any required parameter is not specified in the request.
-   */
-  public static UpdateSelfHealingParameters maybeBuildUpdateSelfHealingParameters(RoutingContext context)
-          throws UnsupportedEncodingException {
-    UpdateSelfHealingParameters selfHealingUpdateParameters = new UpdateSelfHealingParameters();
-    selfHealingUpdateParameters.initParameters(context);
-    // At least self-healing for one anomaly type should requested to enable/disable; otherwise, return null.
-    if (selfHealingUpdateParameters.enableSelfHealingFor().isEmpty()
-            && selfHealingUpdateParameters.disableSelfHealingFor().isEmpty()) {
       return null;
     }
     return selfHealingUpdateParameters;

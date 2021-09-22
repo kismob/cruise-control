@@ -166,12 +166,12 @@ project(':cruise-control-core') {
     api "org.eclipse.jetty:jetty-servlet:${jettyVersion}"
 
 
-    implementation 'io.vertx:vertx-core:3.5.3'
-    implementation 'io.vertx:vertx-web:3.5.3'
+    api 'io.vertx:vertx-core:3.5.3'
+    api 'io.vertx:vertx-web:3.5.3'
 
     testImplementation 'junit:junit:4.13.2'
 
-    implementation group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.2'
+    api group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.2'
     testOutput sourceSets.test.output
   }
 

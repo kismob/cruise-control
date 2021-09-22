@@ -56,26 +56,12 @@ public class UserTasksParameters extends AbstractParameters {
   @Override
   protected void initParameters() throws UnsupportedEncodingException {
     super.initParameters();
-    _userTaskIds = ParameterUtils.userTaskIds(_request);
-    _clientIds = ParameterUtils.clientIds(_request);
-    _endPoints = ParameterUtils.endPoints(_request);
-    _types = ParameterUtils.types(_request);
-    _entries = ParameterUtils.entries(_request);
-    _fetchCompletedTask = ParameterUtils.fetchCompletedTask(_request);
-  }
-
-  /**
-   * Initializes the parameters
-   */
-  public void initParameters(boolean json, String userTaskIdsString, String clientIdsString, String endPointsString,
-                                     String typesString, String entriesString, boolean fetchCompletedTask) throws UnsupportedEncodingException {
-    super.initParameters(json, USER_TASKS);
-    _userTaskIds = ParameterUtils.userTaskIds(userTaskIdsString);
-    _clientIds = ParameterUtils.clientIds(clientIdsString);
-    _endPoints = ParameterUtils.endPoints(endPointsString);
-    _types = ParameterUtils.types(typesString);
-    _entries = ParameterUtils.entries(entriesString);
-    _fetchCompletedTask = fetchCompletedTask;
+    _userTaskIds = ParameterUtils.userTaskIds(_handler);
+    _clientIds = ParameterUtils.clientIds(_handler);
+    _endPoints = ParameterUtils.endPoints(_handler);
+    _types = ParameterUtils.types(_handler);
+    _entries = ParameterUtils.entries(_handler);
+    _fetchCompletedTask = ParameterUtils.fetchCompletedTask(_handler);
   }
 
   public Set<UUID> userTaskIds() {

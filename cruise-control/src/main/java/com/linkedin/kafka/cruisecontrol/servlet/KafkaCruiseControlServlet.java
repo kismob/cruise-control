@@ -15,6 +15,7 @@ import com.linkedin.kafka.cruisecontrol.async.AsyncKafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.config.RequestParameterWrapper;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
+import com.linkedin.kafka.cruisecontrol.httpframeworkhandler.ServletHttpFrameworkHandler;
 import com.linkedin.kafka.cruisecontrol.servlet.purgatory.Purgatory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -106,9 +107,10 @@ public class KafkaCruiseControlServlet extends HttpServlet {
   }
 
   private void doGetOrPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    ServletHttpFrameworkHandler handler = new ServletHttpFrameworkHandler(request, response);
     try {
       _asyncOperationStep.set(0);
-      CruiseControlEndPoint endPoint = getValidEndpoint(request, response, _config);
+      CruiseControlEndPoint endPoint = getValidEndpoint(handler, _config);
       if (endPoint != null) {
         _requestMeter.get(endPoint).mark();
         Map<String, Object> requestConfigOverrides = new HashMap<>();
@@ -130,13 +132,13 @@ public class KafkaCruiseControlServlet extends HttpServlet {
         }
       }
     } catch (UserRequestException ure) {
-      String errorMessage = handleUserRequestException(ure, request, response, _config);
+      String errorMessage = handleUserRequestException(ure, handler, _config);
       LOG.error(errorMessage, ure);
     } catch (ConfigException ce) {
-      String errorMessage = handleConfigException(ce, request, response, _config);
+      String errorMessage = handleConfigException(ce, handler, _config);
       LOG.error(errorMessage, ce);
     } catch (Exception e) {
-      String errorMessage = handleException(e, request, response, _config);
+      String errorMessage = handleException(e, handler, _config);
       LOG.error(errorMessage, e);
     } finally {
       try {
@@ -161,21 +163,21 @@ public class KafkaCruiseControlServlet extends HttpServlet {
                          Map<String, Object> requestConfigOverrides,
                          Map<String, Object> parameterConfigOverrides)
           throws Exception {
+    ServletHttpFrameworkHandler handler = new ServletHttpFrameworkHandler(request, response);
     // Sanity check: if the request is for REVIEW_BOARD, two step verification must be enabled.
     if (endPoint == REVIEW_BOARD && !_twoStepVerification) {
       throw new ConfigException(String.format("Attempt to access %s endpoint without enabling '%s' config.",
                                               endPoint, WebServerConfig.TWO_STEP_VERIFICATION_ENABLED_CONFIG));
     }
-
     RequestParameterWrapper requestParameter = requestParameterFor(endPoint);
     CruiseControlParameters parameters = _config.getConfiguredInstance(requestParameter.parametersClass(),
                                                                        CruiseControlParameters.class,
                                                                        parameterConfigOverrides);
-    if (hasValidParameterNames(request, response, _config, parameters)) {
+    if (hasValidParameterNames(handler, _config, parameters)) {
       requestConfigOverrides.put(requestParameter.parameterObject(), parameters);
       Request ccRequest = _config.getConfiguredInstance(requestParameter.requestClass(), Request.class, requestConfigOverrides);
 
-      ccRequest.handle(request, response);
+      ccRequest.handle(handler);
     }
   }
 
@@ -193,6 +195,7 @@ public class KafkaCruiseControlServlet extends HttpServlet {
                           Map<String, Object> requestConfigOverrides,
                           Map<String, Object> parameterConfigOverrides)
           throws Exception {
+    ServletHttpFrameworkHandler handler = new ServletHttpFrameworkHandler(request, response);
     CruiseControlParameters parameters;
     RequestParameterWrapper requestParameter = requestParameterFor(endPoint);
     if (endPoint == REVIEW) {
@@ -203,18 +206,18 @@ public class KafkaCruiseControlServlet extends HttpServlet {
       }
 
       parameters = _config.getConfiguredInstance(requestParameter.parametersClass(), CruiseControlParameters.class, parameterConfigOverrides);
-      if (!hasValidParameterNames(request, response, _config, parameters)) {
+      if (!hasValidParameterNames(handler, _config, parameters)) {
         return;
       }
     } else if (!_twoStepVerification) {
       // Do not add to the purgatory if the two-step verification is disabled.
       parameters = _config.getConfiguredInstance(requestParameter.parametersClass(), CruiseControlParameters.class, parameterConfigOverrides);
-      if (!hasValidParameterNames(request, response, _config, parameters)) {
+      if (!hasValidParameterNames(handler, _config, parameters)) {
         return;
       }
     } else {
       // Add to the purgatory if the two-step verification is enabled.
-      parameters = _purgatory.maybeAddToPurgatory(request, response, requestParameter.parametersClass(), parameterConfigOverrides, _userTaskManager);
+      parameters = _purgatory.maybeAddToPurgatory(handler, requestParameter.parametersClass(), parameterConfigOverrides, _userTaskManager);
     }
 
     Request ccRequest = null;
@@ -225,7 +228,7 @@ public class KafkaCruiseControlServlet extends HttpServlet {
 
     if (ccRequest != null) {
       // ccRequest would be null if request is added to Purgatory.
-      ccRequest.handle(request, response);
+      ccRequest.handle(handler);
     }
   }
 

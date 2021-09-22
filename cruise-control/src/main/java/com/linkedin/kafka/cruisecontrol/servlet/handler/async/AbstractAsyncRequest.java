@@ -7,7 +7,7 @@ package com.linkedin.kafka.cruisecontrol.servlet.handler.async;
 import com.linkedin.kafka.cruisecontrol.async.AsyncKafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.async.progress.OperationProgress;
 import com.linkedin.kafka.cruisecontrol.async.progress.Pending;
-import com.linkedin.kafka.cruisecontrol.commonapi.CommonApi;
+import com.linkedin.cruisecontrol.httframeworkhandler.HttpFrameworkHandler;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager;
 import com.linkedin.kafka.cruisecontrol.servlet.handler.AbstractRequest;
@@ -19,9 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,39 +43,20 @@ public abstract class AbstractAsyncRequest extends AbstractRequest {
   public abstract OperationFuture handle(String uuid);
 
   @Override
-  public CruiseControlResponse getResponse(HttpServletRequest request, HttpServletResponse response)
+  public CruiseControlResponse getResponse(HttpFrameworkHandler handler)
           throws Exception {
     LOG.info("Processing async request {}.", name());
     int step = _asyncOperationStep.get();
     List<OperationFuture>
-        futures = _userTaskManager.getOrCreateUserTask(new CommonApi(request, response), this::handle, step, true, parameters());
+        futures = _userTaskManager.getOrCreateUserTask(handler, this::handle, step, true, parameters());
     _asyncOperationStep.set(step + 1);
     CruiseControlResponse ccResponse;
     try {
       ccResponse = futures.get(step).get(_maxBlockMs, TimeUnit.MILLISECONDS);
-      LOG.info("Computation is completed for async request: {}.", request.getPathInfo());
+      LOG.info("Computation is completed for async request: {}.", handler.getPathInfo());
     } catch (TimeoutException te) {
       ccResponse = new ProgressResult(futures, _asyncKafkaCruiseControl.config());
-      LOG.info("Computation is in progress for async request: {}.", request.getPathInfo());
-    }
-    return ccResponse;
-  }
-
-  @Override
-  public CruiseControlResponse getResponse(RoutingContext context)
-          throws Exception {
-    LOG.info("Processing async request {}.", name());
-    int step = _asyncOperationStep.get();
-    List<OperationFuture>
-            futures = _userTaskManager.getOrCreateUserTask(new CommonApi(context), this::handle, step, true, parameters());
-    _asyncOperationStep.set(step + 1);
-    CruiseControlResponse ccResponse;
-    try {
-      ccResponse = futures.get(step).get(_maxBlockMs, TimeUnit.MILLISECONDS);
-      LOG.info("Computation is completed for async request: {}.", context.request().path());
-    } catch (TimeoutException te) {
-      ccResponse = new ProgressResult(futures, _asyncKafkaCruiseControl.config());
-      LOG.info("Computation is in progress for async request: {}.", context.request().path());
+      LOG.info("Computation is in progress for async request: {}.", handler.getPathInfo());
     }
     return ccResponse;
   }
