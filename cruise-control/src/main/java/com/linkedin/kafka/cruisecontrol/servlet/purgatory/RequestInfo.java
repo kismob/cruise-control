@@ -6,18 +6,14 @@ package com.linkedin.kafka.cruisecontrol.servlet.purgatory;
 
 import com.linkedin.cruisecontrol.servlet.EndPoint;
 import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
-import com.linkedin.kafka.cruisecontrol.commonapi.CommonApi;
+import com.linkedin.cruisecontrol.httframeworkhandler.HttpFrameworkHandler;
 import com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils;
 import com.linkedin.kafka.cruisecontrol.servlet.response.JsonResponseClass;
 import com.linkedin.kafka.cruisecontrol.servlet.response.JsonResponseField;
-import io.vertx.ext.web.RoutingContext;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import javax.servlet.http.HttpServletRequest;
 
-import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.getClientIpAddress;
 import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.queryWithParameters;
 import static com.linkedin.kafka.cruisecontrol.servlet.purgatory.ReviewStatus.*;
 
@@ -57,32 +53,16 @@ public class RequestInfo {
   private volatile String _reason;
   private volatile boolean _accessToAlreadySubmittedRequest;
 
-  public <P extends CruiseControlParameters> RequestInfo(HttpServletRequest request, P parameters) {
-    if (request == null) {
+  public <P extends CruiseControlParameters> RequestInfo(HttpFrameworkHandler handler, P parameters) {
+    if (handler == null) {
       throw new IllegalArgumentException("Request is missing from the request info.");
     } else if (parameters == null) {
       throw new IllegalArgumentException("Parameter is missing from the request info.");
     }
-    _submitterAddress = getClientIpAddress(request);
+    _submitterAddress = handler.getClientIdentity();
     _submissionTimeMs = System.currentTimeMillis();
-    _parameterMap = request.getParameterMap();
-    _endPoint = ParameterUtils.endPoint(request);
-    _parameters = parameters;
-    _status = PENDING_REVIEW;
-    _reason = INIT_REASON;
-    _accessToAlreadySubmittedRequest = false;
-  }
-
-  public <P extends CruiseControlParameters> RequestInfo(RoutingContext context, P parameters) {
-    if (context == null) {
-      throw new IllegalArgumentException("Request is missing from the request info.");
-    } else if (parameters == null) {
-      throw new IllegalArgumentException("Parameter is missing from the request info.");
-    }
-    _submitterAddress = CommonApi.getVertxClientIpAddress(context);
-    _submissionTimeMs = System.currentTimeMillis();
-    _parameterMap = CommonApi.getVertxQueryParamsMap(context);
-    _endPoint = ParameterUtils.endPoint(new CommonApi(context));
+    _parameterMap = handler.getParameterMap();
+    _endPoint = ParameterUtils.endPoint(handler);
     _parameters = parameters;
     _status = PENDING_REVIEW;
     _reason = INIT_REASON;

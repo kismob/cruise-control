@@ -9,13 +9,11 @@ import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import com.linkedin.kafka.cruisecontrol.executor.strategy.ReplicaMovementStrategy;
 import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
 import com.linkedin.kafka.cruisecontrol.servlet.UserRequestException;
-import io.vertx.core.MultiMap;
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.regex.Pattern;
 
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.DRY_RUN_PARAM;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.CONCURRENT_PARTITION_MOVEMENTS_PER_BROKER_PARAM;
@@ -54,7 +52,6 @@ import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils
  */
 public class RebalanceParameters extends ProposalsParameters {
   protected static final SortedSet<String> CASE_INSENSITIVE_PARAMETER_NAMES;
-  protected static final String REBALANCE = "REBALANCE";
   static {
     SortedSet<String> validParameterNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     validParameterNames.add(DRY_RUN_PARAM);
@@ -90,58 +87,22 @@ public class RebalanceParameters extends ProposalsParameters {
   @Override
   protected void initParameters() throws UnsupportedEncodingException {
     super.initParameters();
-    _dryRun = ParameterUtils.getDryRun(_request);
-    _concurrentInterBrokerPartitionMovements = ParameterUtils.concurrentMovements(_request, true, false);
-    _concurrentIntraBrokerPartitionMovements = ParameterUtils.concurrentMovements(_request, false, true);
-    _concurrentLeaderMovements = ParameterUtils.concurrentMovements(_request, false, false);
-    _executionProgressCheckIntervalMs = ParameterUtils.executionProgressCheckIntervalMs(_request);
-    _skipHardGoalCheck = ParameterUtils.skipHardGoalCheck(_request);
-    _replicaMovementStrategy = ParameterUtils.getReplicaMovementStrategy(_request, _config);
-    _ignoreProposalCache = ParameterUtils.ignoreProposalCache(_request);
-    _destinationBrokerIds = ParameterUtils.destinationBrokerIds(_request);
+    _dryRun = ParameterUtils.getDryRun(_handler);
+    _concurrentInterBrokerPartitionMovements = ParameterUtils.concurrentMovements(_handler, true, false);
+    _concurrentIntraBrokerPartitionMovements = ParameterUtils.concurrentMovements(_handler, false, true);
+    _concurrentLeaderMovements = ParameterUtils.concurrentMovements(_handler, false, false);
+    _executionProgressCheckIntervalMs = ParameterUtils.executionProgressCheckIntervalMs(_handler);
+    _skipHardGoalCheck = ParameterUtils.skipHardGoalCheck(_handler);
+    _replicaMovementStrategy = ParameterUtils.getReplicaMovementStrategy(_handler, _config);
+    _ignoreProposalCache = ParameterUtils.ignoreProposalCache(_handler);
+    _destinationBrokerIds = ParameterUtils.destinationBrokerIds(_handler);
     boolean twoStepVerificationEnabled = _config.getBoolean(WebServerConfig.TWO_STEP_VERIFICATION_ENABLED_CONFIG);
-    _replicationThrottle = ParameterUtils.replicationThrottle(_request, _config);
-    _reviewId = ParameterUtils.reviewId(_request, twoStepVerificationEnabled);
-    _isRebalanceDiskMode = ParameterUtils.isRebalanceDiskMode(_request);
+    _replicationThrottle = ParameterUtils.replicationThrottle(_handler, _config);
+    _reviewId = ParameterUtils.reviewId(_handler, twoStepVerificationEnabled);
+    _isRebalanceDiskMode = ParameterUtils.isRebalanceDiskMode(_handler);
     boolean requestReasonRequired = _config.getBoolean(ExecutorConfig.REQUEST_REASON_REQUIRED_CONFIG);
-    _reason = ParameterUtils.reason(_request, requestReasonRequired && !_dryRun);
-    _stopOngoingExecution = ParameterUtils.stopOngoingExecution(_request);
-    if (_stopOngoingExecution && _dryRun) {
-      throw new UserRequestException(String.format("%s and %s cannot both be set to true.", STOP_ONGOING_EXECUTION_PARAM, DRY_RUN_PARAM));
-    }
-  }
-
-  /**
-   * Initializes the parameters
-   */
-  public void initParameters(boolean dryRun, Integer concurrentPartitionMovementsPerBroker, Integer concurrentIntraBrokerPartitionMovements,
-                             Integer concurrentLeaderMovements, Long executionProgressCheckIntervalMs, boolean skipHardGoalCheck,
-                             String replicaMovementStrategyString, boolean ignoreProposalCache,
-                             String destinationBrokerIds, boolean isKafkaAssigner, Long replicationThrottle,
-                             String reviewIdString, MultiMap parameterMap, boolean rebalanceDisk, String reasonString,
-                             String ipString, boolean stopOngoingExecution, String dataFrom, String inGoals,
-                             boolean allowCapacityEstimation, Pattern excludedTopics, boolean useReadyDefaultGoals,
-                             boolean excludeRecentlyDemotedBrokers, boolean excludeRecentlyRemovedBrokers,
-                             boolean json, boolean verbose, boolean fastMode) throws UnsupportedEncodingException {
-    super.initParameters(ignoreProposalCache, dataFrom, inGoals, isKafkaAssigner, rebalanceDisk, allowCapacityEstimation, excludedTopics,
-            useReadyDefaultGoals, excludeRecentlyDemotedBrokers, excludeRecentlyRemovedBrokers, destinationBrokerIds, rebalanceDisk, json,
-            verbose, fastMode, REBALANCE);
-    _dryRun = dryRun;
-    _concurrentInterBrokerPartitionMovements = concurrentPartitionMovementsPerBroker;
-    _concurrentIntraBrokerPartitionMovements = concurrentIntraBrokerPartitionMovements;
-    _concurrentLeaderMovements = concurrentLeaderMovements;
-    _executionProgressCheckIntervalMs = executionProgressCheckIntervalMs;
-    _skipHardGoalCheck = skipHardGoalCheck;
-    _replicaMovementStrategy = ParameterUtils.getReplicaMovementStrategy(_dryRun, replicaMovementStrategyString, _config);
-    _ignoreProposalCache = ignoreProposalCache;
-    _destinationBrokerIds = ParameterUtils.destinationBrokerIds(destinationBrokerIds, isKafkaAssigner);
-    boolean twoStepVerificationEnabled = false;
-    _replicationThrottle = replicationThrottle;
-    _reviewId = ParameterUtils.reviewId(reviewIdString, twoStepVerificationEnabled, parameterMap);
-    _isRebalanceDiskMode = rebalanceDisk;
-    boolean requestReasonRequired = false;
-    _reason = ParameterUtils.reason(reasonString, requestReasonRequired && !_dryRun, ipString);
-    _stopOngoingExecution = stopOngoingExecution;
+    _reason = ParameterUtils.reason(_handler, requestReasonRequired && !_dryRun);
+    _stopOngoingExecution = ParameterUtils.stopOngoingExecution(_handler);
     if (_stopOngoingExecution && _dryRun) {
       throw new UserRequestException(String.format("%s and %s cannot both be set to true.", STOP_ONGOING_EXECUTION_PARAM, DRY_RUN_PARAM));
     }

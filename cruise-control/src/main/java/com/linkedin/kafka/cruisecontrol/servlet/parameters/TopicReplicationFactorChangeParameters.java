@@ -6,7 +6,6 @@ package com.linkedin.kafka.cruisecontrol.servlet.parameters;
 
 import com.linkedin.kafka.cruisecontrol.executor.strategy.ReplicaMovementStrategy;
 import com.linkedin.kafka.cruisecontrol.servlet.UserRequestException;
-import io.vertx.ext.web.RoutingContext;
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.Map;
@@ -14,7 +13,6 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 
-import static com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint.TOPIC_CONFIGURATION;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.TOPIC_PARAM;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.REPLICATION_FACTOR_PARAM;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.SKIP_RACK_AWARENESS_CHECK_PARAM;
@@ -62,34 +60,17 @@ public class TopicReplicationFactorChangeParameters extends AbstractParameters {
   @Override
   protected void initParameters() throws UnsupportedEncodingException {
     super.initParameters();
-    _topicPatternByReplicationFactor = ParameterUtils.topicPatternByReplicationFactor(_request);
+    _topicPatternByReplicationFactor = ParameterUtils.topicPatternByReplicationFactor(_handler);
     if (_topicPatternByReplicationFactor.keySet().stream().anyMatch(rf -> rf < 1)) {
       throw new UserRequestException("Target replication factor cannot be set to smaller than 1.");
     }
-    _skipRackAwarenessCheck = ParameterUtils.skipRackAwarenessCheck(_request);
-    _concurrentInterBrokerPartitionMovements = ParameterUtils.concurrentMovements(_request, true, false);
-    _concurrentLeaderMovements = ParameterUtils.concurrentMovements(_request, false, false);
-    _executionProgressCheckIntervalMs = ParameterUtils.executionProgressCheckIntervalMs(_request);
-    _skipHardGoalCheck = ParameterUtils.skipHardGoalCheck(_request);
-    _replicaMovementStrategy = ParameterUtils.getReplicaMovementStrategy(_request, _config);
-    _replicationThrottle = ParameterUtils.replicationThrottle(_request, _config);
-  }
-
-  protected void initParameters(RoutingContext context, boolean skipRackAwarenessCheck, Integer concurrentLeaderMovements,
-                                Long executionProgressCheckIntervalMs, boolean skipHardGoalCheck, boolean dryRun, String strategyString,
-                                Long replicationThrottle, boolean json, String endpointName) throws UnsupportedEncodingException {
-    super.initParameters(json, endpointName);
-    _topicPatternByReplicationFactor = ParameterUtils.topicPatternByReplicationFactor(context);
-    if (_topicPatternByReplicationFactor.keySet().stream().anyMatch(rf -> rf < 1)) {
-      throw new UserRequestException("Target replication factor cannot be set to smaller than 1.");
-    }
-    _skipRackAwarenessCheck = skipRackAwarenessCheck;
-    _concurrentInterBrokerPartitionMovements = ParameterUtils.concurrentMovements(context, true, false);
-    _concurrentLeaderMovements = concurrentLeaderMovements;
-    _executionProgressCheckIntervalMs = executionProgressCheckIntervalMs;
-    _skipHardGoalCheck = skipHardGoalCheck;
-    _replicaMovementStrategy = ParameterUtils.getReplicaMovementStrategy(dryRun, strategyString, _config);
-    _replicationThrottle = replicationThrottle;
+    _skipRackAwarenessCheck = ParameterUtils.skipRackAwarenessCheck(_handler);
+    _concurrentInterBrokerPartitionMovements = ParameterUtils.concurrentMovements(_handler, true, false);
+    _concurrentLeaderMovements = ParameterUtils.concurrentMovements(_handler, false, false);
+    _executionProgressCheckIntervalMs = ParameterUtils.executionProgressCheckIntervalMs(_handler);
+    _skipHardGoalCheck = ParameterUtils.skipHardGoalCheck(_handler);
+    _replicaMovementStrategy = ParameterUtils.getReplicaMovementStrategy(_handler, _config);
+    _replicationThrottle = ParameterUtils.replicationThrottle(_handler, _config);
   }
 
   /**
@@ -103,29 +84,6 @@ public class TopicReplicationFactorChangeParameters extends AbstractParameters {
     TopicReplicationFactorChangeParameters topicReplicationFactorChangeParameters = new TopicReplicationFactorChangeParameters();
     topicReplicationFactorChangeParameters.configure(configs);
     topicReplicationFactorChangeParameters.initParameters();
-    // At least one pair of target topic pattern and target replication factor should be explicitly specified in the request;
-    // otherwise, return null.
-    if (topicReplicationFactorChangeParameters.topicPatternByReplicationFactor().isEmpty()) {
-      return null;
-    }
-    return topicReplicationFactorChangeParameters;
-  }
-
-  /**
-   * Create a {@link TopicReplicationFactorChangeParameters} object from the request.
-
-   * @return A TopicReplicationFactorChangeParameters object; or null if any required parameter is not specified in the request.
-   */
-  static TopicReplicationFactorChangeParameters maybeBuildTopicReplicationFactorChangeParameters(RoutingContext context,
-                                                   boolean skipRackAwarenessCheck, Integer concurrentLeaderMovements,
-                                                   Long executionProgressCheckIntervalMs, boolean skipHardGoalCheck,
-                                                   boolean dryRun, String strategyString,
-                                                   Long replicationThrottle, boolean json)
-          throws UnsupportedEncodingException {
-    TopicReplicationFactorChangeParameters topicReplicationFactorChangeParameters = new TopicReplicationFactorChangeParameters();
-    topicReplicationFactorChangeParameters.initParameters(context, skipRackAwarenessCheck, concurrentLeaderMovements,
-            executionProgressCheckIntervalMs, skipHardGoalCheck, dryRun, strategyString, replicationThrottle,
-            json, TOPIC_CONFIGURATION.name());
     // At least one pair of target topic pattern and target replication factor should be explicitly specified in the request;
     // otherwise, return null.
     if (topicReplicationFactorChangeParameters.topicPatternByReplicationFactor().isEmpty()) {

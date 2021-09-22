@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.regex.Pattern;
 
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.IGNORE_PROPOSAL_CACHE_PARAM;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.KAFKA_ASSIGNER_MODE_PARAM;
@@ -34,7 +33,6 @@ import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils
  */
 public class ProposalsParameters extends GoalBasedOptimizationParameters {
   protected static final SortedSet<String> CASE_INSENSITIVE_PARAMETER_NAMES;
-  protected static final String PROPOSALS = "PROPOSALS";
   static {
     SortedSet<String> validParameterNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     validParameterNames.add(KAFKA_ASSIGNER_MODE_PARAM);
@@ -56,24 +54,9 @@ public class ProposalsParameters extends GoalBasedOptimizationParameters {
   @Override
   protected void initParameters() throws UnsupportedEncodingException {
     super.initParameters();
-    _destinationBrokerIds = ParameterUtils.destinationBrokerIds(_request);
-    _ignoreProposalCache = ParameterUtils.ignoreProposalCache(_request);
-    _isRebalanceDiskMode = ParameterUtils.isRebalanceDiskMode(_request);
-  }
-
-  /**
-   * Initializes the parameters
-   */
-  public void initParameters(boolean ignoreProposalCache, String dataFrom, String inGoals, boolean kafkaAssigner, boolean rebalanceDisk,
-                             boolean allowCapacityEstimation, Pattern excludedTopics, boolean useReadyDefaultGoals,
-                             boolean excludeRecentlyDemotedBrokers, boolean excludeRecentlyRemovedBrokers,
-                             String destinationBrokerIds, boolean isRebalanceDiskMode,
-                             boolean json, boolean verbose, boolean fastMode, String endpointName) throws UnsupportedEncodingException {
-    super.initParameters(dataFrom, inGoals, kafkaAssigner, rebalanceDisk, allowCapacityEstimation, excludedTopics, useReadyDefaultGoals,
-            excludeRecentlyDemotedBrokers, excludeRecentlyRemovedBrokers, json, verbose, fastMode, endpointName);
-    _destinationBrokerIds = ParameterUtils.destinationBrokerIds(destinationBrokerIds, kafkaAssigner);
-    _ignoreProposalCache = ignoreProposalCache;
-    _isRebalanceDiskMode = isRebalanceDiskMode;
+    _destinationBrokerIds = ParameterUtils.destinationBrokerIds(_handler);
+    _ignoreProposalCache = ParameterUtils.ignoreProposalCache(_handler);
+    _isRebalanceDiskMode = ParameterUtils.isRebalanceDiskMode(_handler);
   }
 
   public Set<Integer> destinationBrokerIds() {

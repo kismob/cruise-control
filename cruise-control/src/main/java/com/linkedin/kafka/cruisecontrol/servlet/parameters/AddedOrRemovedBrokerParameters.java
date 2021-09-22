@@ -8,14 +8,12 @@ import com.linkedin.kafka.cruisecontrol.config.constants.ExecutorConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import com.linkedin.kafka.cruisecontrol.executor.strategy.ReplicaMovementStrategy;
 import com.linkedin.kafka.cruisecontrol.servlet.UserRequestException;
-import io.vertx.ext.web.RoutingContext;
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.Set;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.regex.Pattern;
 
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.*;
 
@@ -57,46 +55,19 @@ public abstract class AddedOrRemovedBrokerParameters extends GoalBasedOptimizati
   @Override
   protected void initParameters() throws UnsupportedEncodingException {
     super.initParameters();
-    _brokerIds = ParameterUtils.brokerIds(_request, false);
-    _dryRun = ParameterUtils.getDryRun(_request);
-    _concurrentInterBrokerPartitionMovements = ParameterUtils.concurrentMovements(_request, true, false);
-    _concurrentLeaderMovements = ParameterUtils.concurrentMovements(_request, false, false);
-    _executionProgressCheckIntervalMs = ParameterUtils.executionProgressCheckIntervalMs(_request);
-    _replicationThrottle = ParameterUtils.replicationThrottle(_request, _config);
-    _skipHardGoalCheck = ParameterUtils.skipHardGoalCheck(_request);
-    _replicaMovementStrategy = ParameterUtils.getReplicaMovementStrategy(_request, _config);
+    _brokerIds = ParameterUtils.brokerIds(_handler, false);
+    _dryRun = ParameterUtils.getDryRun(_handler);
+    _concurrentInterBrokerPartitionMovements = ParameterUtils.concurrentMovements(_handler, true, false);
+    _concurrentLeaderMovements = ParameterUtils.concurrentMovements(_handler, false, false);
+    _executionProgressCheckIntervalMs = ParameterUtils.executionProgressCheckIntervalMs(_handler);
+    _replicationThrottle = ParameterUtils.replicationThrottle(_handler, _config);
+    _skipHardGoalCheck = ParameterUtils.skipHardGoalCheck(_handler);
+    _replicaMovementStrategy = ParameterUtils.getReplicaMovementStrategy(_handler, _config);
     boolean twoStepVerificationEnabled = _config.getBoolean(WebServerConfig.TWO_STEP_VERIFICATION_ENABLED_CONFIG);
-    _reviewId = ParameterUtils.reviewId(_request, twoStepVerificationEnabled);
+    _reviewId = ParameterUtils.reviewId(_handler, twoStepVerificationEnabled);
     boolean requestReasonRequired = _config.getBoolean(ExecutorConfig.REQUEST_REASON_REQUIRED_CONFIG);
-    _reason = ParameterUtils.reason(_request, requestReasonRequired && !_dryRun);
-    _stopOngoingExecution = ParameterUtils.stopOngoingExecution(_request);
-    if (_stopOngoingExecution && _dryRun) {
-      throw new UserRequestException(String.format("%s and %s cannot both be set to true.", STOP_ONGOING_EXECUTION_PARAM, DRY_RUN_PARAM));
-    }
-  }
-
-  protected void initParameters(String brokerIdsString, RoutingContext context, boolean dryRun, Integer concurrentInterBrokerPartitionMovements,
-                                Integer concurrentLeaderMovements, Long executionProgressCheckIntervalMs, Long replicationThrottle,
-                                boolean skipHardGoalCheck, String replicaMovementStrategyString, String reviewIdString, String reasonString,
-                                String ipString, boolean stopOngoingExecution, String dataFrom, String inGoals, boolean kafkaAssigner,
-                                boolean rebalanceDisk, boolean allowCapacityEstimation, Pattern excludedTopics, boolean useReadyDefaultGoals,
-                                boolean excludeRecentlyDemotedBrokers, boolean excludeRecentlyRemovedBrokers,
-                                boolean json, boolean verbose, boolean fastMode, String endpointName) throws UnsupportedEncodingException {
-    super.initParameters(dataFrom, inGoals, kafkaAssigner, rebalanceDisk, allowCapacityEstimation, excludedTopics, useReadyDefaultGoals,
-            excludeRecentlyDemotedBrokers, excludeRecentlyRemovedBrokers, json, verbose, fastMode, endpointName);
-    _brokerIds = ParameterUtils.brokerIds(brokerIdsString, false, context);
-    _dryRun = dryRun;
-    _concurrentInterBrokerPartitionMovements = concurrentInterBrokerPartitionMovements;
-    _concurrentLeaderMovements = concurrentLeaderMovements;
-    _executionProgressCheckIntervalMs = executionProgressCheckIntervalMs;
-    _replicationThrottle = replicationThrottle;
-    _skipHardGoalCheck = skipHardGoalCheck;
-    _replicaMovementStrategy = ParameterUtils.getReplicaMovementStrategy(dryRun, replicaMovementStrategyString, _config);
-    boolean twoStepVerificationEnabled = false;
-    _reviewId = ParameterUtils.reviewId(reviewIdString, twoStepVerificationEnabled, context.queryParams());
-    boolean requestReasonRequired = false;
-    _reason = ParameterUtils.reason(reasonString, requestReasonRequired && !_dryRun, ipString);
-    _stopOngoingExecution = stopOngoingExecution;
+    _reason = ParameterUtils.reason(_handler, requestReasonRequired && !_dryRun);
+    _stopOngoingExecution = ParameterUtils.stopOngoingExecution(_handler);
     if (_stopOngoingExecution && _dryRun) {
       throw new UserRequestException(String.format("%s and %s cannot both be set to true.", STOP_ONGOING_EXECUTION_PARAM, DRY_RUN_PARAM));
     }

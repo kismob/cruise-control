@@ -53,27 +53,13 @@ public abstract class GoalBasedOptimizationParameters extends KafkaOptimizationP
   @Override
   protected void initParameters() throws UnsupportedEncodingException {
     super.initParameters();
-    _dataFrom = ParameterUtils.getDataFrom(_request);
-    _useReadyDefaultGoals = ParameterUtils.useReadyDefaultGoals(_request);
-    _excludedTopics = ParameterUtils.excludedTopics(_request);
-    _excludeRecentlyRemovedBrokers = ParameterUtils.excludeRecentlyRemovedBrokers(_request);
-    List<String> goals = ParameterUtils.getGoals(_request);
+    _dataFrom = ParameterUtils.getDataFrom(_handler);
+    _useReadyDefaultGoals = ParameterUtils.useReadyDefaultGoals(_handler);
+    _excludedTopics = ParameterUtils.excludedTopics(_handler);
+    _excludeRecentlyRemovedBrokers = ParameterUtils.excludeRecentlyRemovedBrokers(_handler);
+    List<String> goals = ParameterUtils.getGoals(_handler);
     _goalsAndRequirements = new GoalsAndRequirements(goals, getRequirements(_dataFrom));
-    _fastMode = ParameterUtils.fastMode(_request);
-  }
-
-  protected void initParameters(String dataFrom, String inGoals, boolean kafkaAssigner, boolean rebalanceDisk, boolean allowCapacityEstimation,
-                                Pattern excludedTopics, boolean useReadyDefaultGoals, boolean excludeRecentlyDemotedBrokers,
-                                boolean excludeRecentlyRemovedBrokers, boolean json, boolean verbose,
-                                boolean fastMode, String endpointName)throws UnsupportedEncodingException {
-    super.initParameters(allowCapacityEstimation, excludeRecentlyDemotedBrokers, json, verbose, endpointName);
-    _dataFrom = ParameterUtils.getDataFrom(dataFrom);
-    _useReadyDefaultGoals = useReadyDefaultGoals;
-    _excludedTopics = excludedTopics;
-    _excludeRecentlyRemovedBrokers = excludeRecentlyRemovedBrokers;
-    List<String> goals = ParameterUtils.getGoals(inGoals, kafkaAssigner, rebalanceDisk);
-    _goalsAndRequirements = new GoalsAndRequirements(goals, getRequirements(_dataFrom));
-    _fastMode = fastMode;
+    _fastMode = ParameterUtils.fastMode(_handler);
   }
 
   public ParameterUtils.DataFrom dataFrom() {
