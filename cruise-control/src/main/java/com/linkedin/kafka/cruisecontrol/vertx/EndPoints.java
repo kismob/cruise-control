@@ -350,4 +350,9 @@ public class EndPoints implements SwaggerEndPoints {
             e.printStackTrace();
         }
     }
+
+    @Override
+    public UserTaskManager getUserTaskManager() {
+        return _userTaskManager;
+    }
 }

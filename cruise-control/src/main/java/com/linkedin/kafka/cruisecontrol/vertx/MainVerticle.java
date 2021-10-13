@@ -40,7 +40,7 @@ public class MainVerticle extends AbstractVerticle {
   private int _port;
   private String _host;
   private HttpServer _server;
-  private SwaggerEndPoints _endPoints;
+  private static SwaggerEndPoints endPoints;
   private AsyncKafkaCruiseControl _asynckafkaCruiseControl;
   private MetricRegistry _dropwizardMetricRegistry;
 
@@ -59,7 +59,7 @@ public class MainVerticle extends AbstractVerticle {
   @Override
   public void start(Future<Void> startFuture) throws Exception {
 
-    _endPoints = new EndPoints(_asynckafkaCruiseControl, _dropwizardMetricRegistry);
+    endPoints = new EndPoints(_asynckafkaCruiseControl, _dropwizardMetricRegistry);
 
     _server = vertx.createHttpServer(createOptions());
     _server.requestHandler(configurationRouter()::accept);
@@ -116,23 +116,23 @@ public class MainVerticle extends AbstractVerticle {
     router.route().failureHandler(ErrorHandler.create(true));
 
     // Routing section - this is where we declare which end points we want to use
-    router.get("/kafka_cluster_state").handler(_endPoints::kafkaClusterState);
-    router.get("/state").handler(_endPoints::cruiseControlState);
-    router.get("/load").handler(_endPoints::load);
-    router.get("/user_tasks").handler(_endPoints::userTasks);
-    router.get("/partition_load").handler(_endPoints::partitionLoad);
-    router.get("/proposals").handler(_endPoints::proposals);
-    router.post("/rebalance").handler(_endPoints::rebalance);
-    router.post("/add_broker").handler(_endPoints::addBroker);
-    router.post("/remove_broker").handler(_endPoints::removeBroker);
-    router.post("/fix_offline_replicas").handler(_endPoints::fixOfflineReplicas);
-    router.post("/demote_broker").handler(_endPoints::demoteBroker);
-    router.post("/stop_proposal_execution").handler(_endPoints::stopProposalExecution);
-    router.post("/pause_sampling").handler(_endPoints::pauseSampling);
-    router.post("/resume_sampling").handler(_endPoints::resumeSampling);
-    router.post("/topic_configuration").handler(_endPoints::topicConfiguration);
-    router.post("/admin").handler(_endPoints::admin);
-    router.post("/rightsize").handler(_endPoints::rightsize);
+    router.get("/kafka_cluster_state").handler(endPoints::kafkaClusterState);
+    router.get("/state").handler(endPoints::cruiseControlState);
+    router.get("/load").handler(endPoints::load);
+    router.get("/user_tasks").handler(endPoints::userTasks);
+    router.get("/partition_load").handler(endPoints::partitionLoad);
+    router.get("/proposals").handler(endPoints::proposals);
+    router.post("/rebalance").handler(endPoints::rebalance);
+    router.post("/add_broker").handler(endPoints::addBroker);
+    router.post("/remove_broker").handler(endPoints::removeBroker);
+    router.post("/fix_offline_replicas").handler(endPoints::fixOfflineReplicas);
+    router.post("/demote_broker").handler(endPoints::demoteBroker);
+    router.post("/stop_proposal_execution").handler(endPoints::stopProposalExecution);
+    router.post("/pause_sampling").handler(endPoints::pauseSampling);
+    router.post("/resume_sampling").handler(endPoints::resumeSampling);
+    router.post("/topic_configuration").handler(endPoints::topicConfiguration);
+    router.post("/admin").handler(endPoints::admin);
+    router.post("/rightsize").handler(endPoints::rightsize);
 
     OpenAPI openAPIDoc = OpenApiRoutePublisher.publishOpenApiSpec(
       router,
@@ -235,4 +235,9 @@ public class MainVerticle extends AbstractVerticle {
       return null;
     }
   }
+
+  public static SwaggerEndPoints getEndPoints() {
+    return endPoints;
+  }
+
 }
