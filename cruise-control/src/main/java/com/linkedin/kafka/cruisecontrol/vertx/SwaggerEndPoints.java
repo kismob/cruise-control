@@ -4,6 +4,7 @@
 
 package com.linkedin.kafka.cruisecontrol.vertx;
 
+import com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -809,4 +810,6 @@ public interface SwaggerEndPoints {
             }
     )
     void rightsize(RoutingContext context);
+
+    UserTaskManager getUserTaskManager();
 }

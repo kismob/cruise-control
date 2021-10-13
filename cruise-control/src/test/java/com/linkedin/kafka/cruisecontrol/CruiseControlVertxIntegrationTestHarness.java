@@ -3,12 +3,18 @@
  */
 package com.linkedin.kafka.cruisecontrol;
 
+import com.codahale.metrics.MetricRegistry;
+import com.linkedin.kafka.cruisecontrol.async.AsyncKafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.ExecutorConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.MonitorConfig;
+import com.linkedin.kafka.cruisecontrol.metricsreporter.CruiseControlMetricsReporter;
 import com.linkedin.kafka.cruisecontrol.metricsreporter.utils.CCEmbeddedBroker;
 import com.linkedin.kafka.cruisecontrol.metricsreporter.utils.CCKafkaIntegrationTestHarness;
 import com.linkedin.kafka.cruisecontrol.monitor.sampling.KafkaSampleStore;
+import com.linkedin.kafka.cruisecontrol.servlet.response.ClusterBrokerState;
+import com.linkedin.kafka.cruisecontrol.vertx.SwaggerEndPoints;
+import kafka.server.KafkaConfig;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.admin.AdminClient;
 import java.io.BufferedReader;
@@ -50,7 +56,7 @@ public class CruiseControlVertxIntegrationTestHarness extends CCKafkaIntegration
         return servletContent.toString();
     }
 
-    public String getVertxResult(String endpoint, Integer port) throws IOException {
+    public String getVertxResult(String endpoint, Integer port) throws Exception {
         URL vertxUrl = new URL("http://localhost:" + port + "/" + endpoint);
         HttpURLConnection vertxCon = (HttpURLConnection) vertxUrl.openConnection();
         vertxCon.setRequestMethod("GET");
@@ -59,10 +65,12 @@ public class CruiseControlVertxIntegrationTestHarness extends CCKafkaIntegration
                 new InputStreamReader(vertxCon.getInputStream()));
         String vertxInputLine;
         StringBuffer vertxContent = new StringBuffer();
+        Thread.sleep(10000);
         while ((vertxInputLine = vertxIn.readLine()) != null) {
             vertxContent.append(vertxInputLine);
         }
         vertxIn.close();
+        vertxCon.disconnect();
         return vertxContent.toString();
     }
 
@@ -80,11 +88,25 @@ public class CruiseControlVertxIntegrationTestHarness extends CCKafkaIntegration
         super.setUp();
         _brokers.values().forEach(CCEmbeddedBroker::startup);
         setupConfig();
-        _vertxApp = new KafkaCruiseControlVertxApp(_config, new ServerSocket(0).getLocalPort(), LOCALHOST);
-        _vertxApp.start();
-        _servletApp = new KafkaCruiseControlServletApp(_config, new ServerSocket(0).getLocalPort(), LOCALHOST);
-        System.out.println(_servletApp.serverUrl());
-        _servletApp.start();
+        MetricRegistry metricRegistry = new MetricRegistry();
+        AsyncKafkaCruiseControl kafkaCruiseControl = new AsyncKafkaCruiseControl(_config, metricRegistry);
+        kafkaCruiseControl.startUp();
+        _vertxApp = new KafkaCruiseControlVertxApp(_config, new ServerSocket(0).getLocalPort(), LOCALHOST,
+                kafkaCruiseControl, metricRegistry);
+        SwaggerEndPoints endPoints = null;
+        ClusterBrokerState clusterBrokerState =
+                new ClusterBrokerState(kafkaCruiseControl.kafkaCluster(),
+                        kafkaCruiseControl.adminClient(), kafkaCruiseControl.config());
+        while (clusterBrokerState.getLeaderCountByBrokerId().get(0).equals(0)
+        && clusterBrokerState.getLeaderCountByBrokerId().get(1).equals(0)) {
+            Thread.sleep(1000);
+            clusterBrokerState =
+                    new ClusterBrokerState(kafkaCruiseControl.kafkaCluster(),
+                            kafkaCruiseControl.adminClient(), kafkaCruiseControl.config());
+        }
+        endPoints = _vertxApp.getVerticle().getEndPoints();
+        _servletApp = new KafkaCruiseControlServletApp(_config, new ServerSocket(0).getLocalPort(), LOCALHOST,
+                kafkaCruiseControl, metricRegistry, endPoints.getUserTaskManager());
         Properties properties = new Properties();
         properties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers());
         _adminClient = AdminClient.create(properties);
@@ -103,5 +125,10 @@ public class CruiseControlVertxIntegrationTestHarness extends CCKafkaIntegration
         _brokers.values().forEach(CCEmbeddedBroker::shutdown);
         _brokers.values().forEach(CCEmbeddedBroker::awaitShutdown);
         super.tearDown();
+    }
+
+    @Override
+    protected Map<Object, Object> overridingProps() {
+        return Collections.singletonMap(KafkaConfig.MetricReporterClassesProp(), CruiseControlMetricsReporter.class.getName());
     }
 }
