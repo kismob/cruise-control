@@ -135,7 +135,7 @@ public class VertxHttpFrameworkHandler implements HttpFrameworkHandler<KafkaCrui
 
     @Override
     public String getRequestURI() {
-        return _context.request().uri();
+        return _context.request().uri().split("\\?")[0];
     }
 
     @Override

@@ -32,6 +32,20 @@ abstract class KafkaCruiseControlApp {
 
   }
 
+  //only for tests
+  KafkaCruiseControlApp(KafkaCruiseControlConfig config, Integer port, String hostname,
+                        AsyncKafkaCruiseControl asyncKafkaCruiseControl, MetricRegistry metricRegistry) {
+    this._config = config;
+    _metricRegistry = metricRegistry;
+    _jmxReporter = JmxReporter.forRegistry(_metricRegistry).inDomain(METRIC_DOMAIN).build();
+    _jmxReporter.start();
+    _port = port;
+    _hostname = hostname;
+
+    _kafkaCruiseControl = asyncKafkaCruiseControl;
+
+  }
+
   public String getHostname() {
     return _hostname;
   }

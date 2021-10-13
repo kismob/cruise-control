@@ -67,6 +67,25 @@ public class KafkaCruiseControlServlet extends HttpServlet {
     }
   }
 
+  public KafkaCruiseControlServlet(AsyncKafkaCruiseControl asynckafkaCruiseControl,
+                                   MetricRegistry dropwizardMetricRegistry, UserTaskManager userTaskManager) {
+    _config = asynckafkaCruiseControl.config();
+    _asyncKafkaCruiseControl = asynckafkaCruiseControl;
+    _twoStepVerification = _config.getBoolean(WebServerConfig.TWO_STEP_VERIFICATION_ENABLED_CONFIG);
+    _purgatory = _twoStepVerification ? new Purgatory(_config) : null;
+    _userTaskManager = userTaskManager;
+    _asyncKafkaCruiseControl.setUserTaskManagerInExecutor(_userTaskManager);
+    _asyncOperationStep = new ThreadLocal<>();
+    _asyncOperationStep.set(0);
+
+    for (CruiseControlEndPoint endpoint : CruiseControlEndPoint.cachedValues()) {
+      _requestMeter.put(endpoint, dropwizardMetricRegistry.meter(
+              MetricRegistry.name(KAFKA_CRUISE_CONTROL_SERVLET_SENSOR, endpoint.name() + "-request-rate")));
+      _successfulRequestExecutionTimer.put(endpoint, dropwizardMetricRegistry.timer(
+              MetricRegistry.name(KAFKA_CRUISE_CONTROL_SERVLET_SENSOR, endpoint.name() + "-successful-request-execution-timer")));
+    }
+  }
+
   @Override
   public void destroy() {
     super.destroy();
