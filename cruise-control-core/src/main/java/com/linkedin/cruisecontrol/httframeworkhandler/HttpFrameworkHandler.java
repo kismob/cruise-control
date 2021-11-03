@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 LinkedIn Corp. Licensed under the BSD 2-Clause License (the "License"). See License in the project root for license information.
+ * Copyright 2021 LinkedIn Corp. Licensed under the BSD 2-Clause License (the "License"). See License in the project root for license information.
  */
 package com.linkedin.cruisecontrol.httframeworkhandler;
 
@@ -37,13 +37,7 @@ public interface HttpFrameworkHandler<T> {
                                      String responseMessage,
                                      T config) throws IOException;
 
-    void invalidateSession();
-
-    long getLastAccessed();
-
-    Object getSession();
-
-    String getSessionId();
+    CruiseControlHttpSession getSession();
 
     String getRequestURI();
 

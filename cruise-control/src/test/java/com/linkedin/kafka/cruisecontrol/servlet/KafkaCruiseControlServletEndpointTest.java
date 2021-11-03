@@ -26,6 +26,8 @@ import kafka.utils.MockTime;
 import org.apache.kafka.common.utils.Time;
 import org.easymock.EasyMock;
 import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import static com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint.LOAD;
 import static com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint.PROPOSALS;
@@ -148,6 +150,8 @@ public class KafkaCruiseControlServletEndpointTest {
     }
   }
 
+  @Ignore
+  @Test
   public void testUserTaskParameters() throws Exception {
 
     // Set up all mocked requests,  UserTaskManager, and start mocked objects.
@@ -259,7 +263,7 @@ public class KafkaCruiseControlServletEndpointTest {
                                             Map<String, String []> params, String method) {
     HttpFrameworkHandler request = EasyMock.mock(HttpFrameworkHandler.class);
 
-    EasyMock.expect(request.getSession()).andReturn(session).anyTimes();
+    EasyMock.expect(request.getSession()).andReturn(new ServletSession(session)).anyTimes();
     EasyMock.expect(request.getMethod()).andReturn(method).anyTimes();
     EasyMock.expect(request.getRequestURI()).andReturn(KafkaCruiseControlServletTestUtils.getDefaultWebServerApiUrlPrefix() + resource).anyTimes();
     EasyMock.expect(request.getParameterMap()).andReturn(params).anyTimes();
