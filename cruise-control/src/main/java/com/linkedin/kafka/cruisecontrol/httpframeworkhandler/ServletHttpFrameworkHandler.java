@@ -66,11 +66,6 @@ public class ServletHttpFrameworkHandler implements HttpFrameworkHandler<KafkaCr
     }
 
     @Override
-    public void setOrPutHeader(String name, String value) {
-
-    }
-
-    @Override
     public String getMethod() {
         return _request.getMethod();
     }
@@ -182,5 +177,9 @@ public class ServletHttpFrameworkHandler implements HttpFrameworkHandler<KafkaCr
 
     public HttpServletResponse getResponse() {
         return _response;
+    }
+
+    public String getRemoteHost() {
+        return _request.getRemoteHost();
     }
 }
