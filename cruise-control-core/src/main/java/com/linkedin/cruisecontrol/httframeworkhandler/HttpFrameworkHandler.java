@@ -13,8 +13,6 @@ public interface HttpFrameworkHandler<T> {
 
     String getUserTaskIdString();
 
-    void setOrPutHeader(String name, String value);
-
     String getMethod();
 
     String getPathInfo();

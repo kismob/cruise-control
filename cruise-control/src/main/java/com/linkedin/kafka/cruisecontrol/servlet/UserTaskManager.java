@@ -228,7 +228,7 @@ public class UserTaskManager implements Closeable {
 
     if (userTaskInfo != null) {
       LOG.info("Fetch an existing UserTask {}", userTaskId);
-      handler.setOrPutHeader(USER_TASK_HEADER_NAME, userTaskId.toString());
+      handler.setHeader(USER_TASK_HEADER_NAME, userTaskId.toString());
       if (step < userTaskInfo.futures().size()) {
         return Collections.unmodifiableList(userTaskInfo.futures());
       } else if (step == userTaskInfo.futures().size()) {
@@ -251,7 +251,7 @@ public class UserTaskManager implements Closeable {
         createSessionKeyMapping(userTaskId, handler);
       }
 
-      handler.setOrPutHeader(USER_TASK_HEADER_NAME, userTaskId.toString());
+      handler.setHeader(USER_TASK_HEADER_NAME, userTaskId.toString());
       return Collections.unmodifiableList(userTaskInfo.futures());
     }
   }

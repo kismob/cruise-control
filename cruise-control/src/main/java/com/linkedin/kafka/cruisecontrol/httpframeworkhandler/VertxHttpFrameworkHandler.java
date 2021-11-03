@@ -51,11 +51,6 @@ public class VertxHttpFrameworkHandler implements HttpFrameworkHandler<KafkaCrui
     }
 
     @Override
-    public void setOrPutHeader(String name, String value) {
-
-    }
-
-    @Override
     public String getMethod() {
         return _context.request().method().toString();
     }
