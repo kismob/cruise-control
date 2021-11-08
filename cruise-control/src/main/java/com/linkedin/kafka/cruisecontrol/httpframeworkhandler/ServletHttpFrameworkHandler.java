@@ -5,9 +5,11 @@
 package com.linkedin.kafka.cruisecontrol.httpframeworkhandler;
 
 import com.google.gson.Gson;
+import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlHttpSession;
 import com.linkedin.cruisecontrol.httframeworkhandler.HttpFrameworkHandler;
 import com.linkedin.kafka.cruisecontrol.KafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
+import com.linkedin.kafka.cruisecontrol.servlet.ServletSession;
 import com.linkedin.kafka.cruisecontrol.servlet.response.ResponseUtils;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.CaseInsensitiveHeaders;
@@ -39,10 +41,12 @@ public class ServletHttpFrameworkHandler implements HttpFrameworkHandler<KafkaCr
 
     protected HttpServletRequest _request;
     protected HttpServletResponse _response;
+    private final ServletSession _servletSession;
 
     public ServletHttpFrameworkHandler(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
         _request = httpServletRequest;
         _response = httpServletResponse;
+        _servletSession = new ServletSession(_request.getSession());
     }
 
     private MultiMap getServletHeaders(HttpServletRequest request) {
@@ -136,23 +140,8 @@ public class ServletHttpFrameworkHandler implements HttpFrameworkHandler<KafkaCr
     }
 
     @Override
-    public void invalidateSession() {
-        _request.getSession().invalidate();
-    }
-
-    @Override
-    public long getLastAccessed() {
-        return _request.getSession().getLastAccessedTime();
-    }
-
-    @Override
-    public Object getSession() {
-        return _request.getSession();
-    }
-
-    @Override
-    public String getSessionId() {
-        return _request.getSession().getId();
+    public CruiseControlHttpSession getSession() {
+        return _servletSession;
     }
 
     @Override

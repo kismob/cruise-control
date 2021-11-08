@@ -15,6 +15,7 @@ import org.apache.kafka.common.utils.Time;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Assert;
+import org.junit.Test;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -104,7 +105,7 @@ public class UserTaskManagerTest {
     userTaskManager.close();
   }
 
-  //@Test
+  @Test
   public void testSessionsShareUserTask() throws Exception {
     UUID testUserTaskId = UUID.randomUUID();
 
