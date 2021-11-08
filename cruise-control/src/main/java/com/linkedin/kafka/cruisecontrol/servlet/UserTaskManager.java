@@ -12,6 +12,7 @@ import com.linkedin.cruisecontrol.servlet.EndpointType;
 import com.linkedin.cruisecontrol.httframeworkhandler.HttpFrameworkHandler;
 import com.linkedin.kafka.cruisecontrol.config.constants.UserTaskManagerConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
+import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlHttpSession;
 import com.linkedin.kafka.cruisecontrol.servlet.handler.async.runnable.OperationFuture;
 import com.linkedin.kafka.cruisecontrol.common.KafkaCruiseControlThreadFactory;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
@@ -563,23 +564,23 @@ public class UserTaskManager implements Closeable {
   }
 
   public static class SessionKey {
-    private final HttpFrameworkHandler _handler;
+    private final CruiseControlHttpSession _session;
     private final String _requestUrl;
     private final Map<String, Set<String>> _queryParams;
 
     SessionKey(HttpFrameworkHandler<KafkaCruiseControlConfig> handler) {
-      _handler = handler;
+      _session = handler.getSession();
       _requestUrl = httpServletRequestToString(handler);
       _queryParams = new HashMap<>();
       handler.getParameterMap().forEach((k, v) -> _queryParams.put(k, new HashSet<>(Arrays.asList(v))));
     }
 
     protected void invalidateSession() {
-      _handler.invalidateSession();
+      _session.invalidateSession();
     }
 
     protected long getLastAccessed() {
-      return _handler.getLastAccessed();
+      return _session.getLastAccessed();
     }
 
     @Override
@@ -591,28 +592,24 @@ public class UserTaskManager implements Closeable {
         return false;
       }
       SessionKey that = (SessionKey) o;
-      return Objects.equals(_handler, that._handler)
+      return Objects.equals(_session, that._session)
              && Objects.equals(_requestUrl, that._requestUrl)
              && Objects.equals(_queryParams, that._queryParams);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(_handler, _requestUrl, _queryParams);
+      return Objects.hash(_session, _requestUrl, _queryParams);
     }
 
     @Override
     public String toString() {
-      return String.format("SessionKey{_handler=%s,_requestUrl=%s,_queryParams=%s}", _handler, _requestUrl,
+      return String.format("SessionKey{_handler=%s,_requestUrl=%s,_queryParams=%s}", _session, _requestUrl,
                            _queryParams);
     }
 
-    public Object getSession() {
-      return _handler.getSession();
-    }
-
     public Object getSessionId() {
-      return _handler.getSessionId();
+      return _session.getSessionId();
     }
   }
 

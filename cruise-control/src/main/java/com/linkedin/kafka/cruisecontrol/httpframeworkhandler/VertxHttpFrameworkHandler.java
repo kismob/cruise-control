@@ -5,10 +5,12 @@
 package com.linkedin.kafka.cruisecontrol.httpframeworkhandler;
 
 import com.google.gson.Gson;
+import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlHttpSession;
 import com.linkedin.cruisecontrol.httframeworkhandler.HttpFrameworkHandler;
 import com.linkedin.kafka.cruisecontrol.KafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.servlet.response.ResponseUtils;
+import com.linkedin.kafka.cruisecontrol.vertx.VertxSession;
 import io.vertx.core.MultiMap;
 import io.vertx.ext.web.RoutingContext;
 import java.io.IOException;
@@ -35,9 +37,13 @@ public class VertxHttpFrameworkHandler implements HttpFrameworkHandler<KafkaCrui
     };
 
     protected RoutingContext _context;
+
+    private final CruiseControlHttpSession _session;
+
     public VertxHttpFrameworkHandler(RoutingContext context) {
         super();
         _context = context;
+        _session = new VertxSession(context.session());
     }
 
     @Override
@@ -109,23 +115,8 @@ public class VertxHttpFrameworkHandler implements HttpFrameworkHandler<KafkaCrui
     }
 
     @Override
-    public void invalidateSession() {
-        _context.session().destroy();
-    }
-
-    @Override
-    public long getLastAccessed() {
-        return _context.session().lastAccessed();
-    }
-
-    @Override
-    public Object getSession() {
-        return _context.session();
-    }
-
-    @Override
-    public String getSessionId() {
-        return _context.session().id();
+    public CruiseControlHttpSession getSession() {
+        return _session;
     }
 
     @Override
