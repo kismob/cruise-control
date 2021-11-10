@@ -226,7 +226,6 @@ public class UserTaskManager implements Closeable {
                                                    CruiseControlParameters parameters) throws Exception {
     UUID userTaskId = getUserTaskId(handler);
     UserTaskInfo userTaskInfo = getUserTaskByUserTaskId(userTaskId, handler);
-
     if (userTaskInfo != null) {
       LOG.info("Fetch an existing UserTask {}", userTaskId);
       handler.setHeader(USER_TASK_HEADER_NAME, userTaskId.toString());
@@ -251,7 +250,6 @@ public class UserTaskManager implements Closeable {
       if (isAsyncRequest) {
         createSessionKeyMapping(userTaskId, handler);
       }
-
       handler.setHeader(USER_TASK_HEADER_NAME, userTaskId.toString());
       return Collections.unmodifiableList(userTaskInfo.futures());
     }
@@ -324,7 +322,6 @@ public class UserTaskManager implements Closeable {
    */
   public UUID getUserTaskId(HttpFrameworkHandler handler) {
     String userTaskIdString = handler.getHeader(USER_TASK_HEADER_NAME);
-
     UUID userTaskId;
     if (userTaskIdString != null && !userTaskIdString.isEmpty()) {
       // valid user task id

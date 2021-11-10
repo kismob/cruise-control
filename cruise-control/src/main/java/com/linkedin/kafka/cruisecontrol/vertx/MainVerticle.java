@@ -40,7 +40,7 @@ public class MainVerticle extends AbstractVerticle {
   private int _port;
   private String _host;
   private HttpServer _server;
-  private static SwaggerEndPoints endPoints;
+  private static EndPoints endPoints;
   private AsyncKafkaCruiseControl _asynckafkaCruiseControl;
   private MetricRegistry _dropwizardMetricRegistry;
 
@@ -74,6 +74,7 @@ public class MainVerticle extends AbstractVerticle {
 
   @Override
   public void stop(Future<Void> future) {
+    endPoints.destroy();
     if (_server == null) {
       future.complete();
       return;
@@ -236,7 +237,7 @@ public class MainVerticle extends AbstractVerticle {
     }
   }
 
-  public static SwaggerEndPoints getEndPoints() {
+  public static EndPoints getEndPoints() {
     return endPoints;
   }
 

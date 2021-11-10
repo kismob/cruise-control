@@ -40,14 +40,14 @@ import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils
  */
 public class KafkaCruiseControlServlet extends HttpServlet {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaCruiseControlServlet.class);
-  private final AsyncKafkaCruiseControl _asyncKafkaCruiseControl;
-  private final KafkaCruiseControlConfig _config;
-  private final UserTaskManager _userTaskManager;
-  private final ThreadLocal<Integer> _asyncOperationStep;
-  private final Map<EndPoint, Meter> _requestMeter = new HashMap<>();
-  private final Map<EndPoint, Timer> _successfulRequestExecutionTimer = new HashMap<>();
-  private final boolean _twoStepVerification;
-  private final Purgatory _purgatory;
+  protected final AsyncKafkaCruiseControl _asyncKafkaCruiseControl;
+  protected final KafkaCruiseControlConfig _config;
+  protected final UserTaskManager _userTaskManager;
+  protected final ThreadLocal<Integer> _asyncOperationStep;
+  protected final Map<EndPoint, Meter> _requestMeter = new HashMap<>();
+  protected final Map<EndPoint, Timer> _successfulRequestExecutionTimer = new HashMap<>();
+  protected final boolean _twoStepVerification;
+  protected final Purgatory _purgatory;
 
   public KafkaCruiseControlServlet(AsyncKafkaCruiseControl asynckafkaCruiseControl, MetricRegistry dropwizardMetricRegistry) {
     _config = asynckafkaCruiseControl.config();
@@ -58,7 +58,6 @@ public class KafkaCruiseControlServlet extends HttpServlet {
     _asyncKafkaCruiseControl.setUserTaskManagerInExecutor(_userTaskManager);
     _asyncOperationStep = new ThreadLocal<>();
     _asyncOperationStep.set(0);
-
     for (CruiseControlEndPoint endpoint : CruiseControlEndPoint.cachedValues()) {
       _requestMeter.put(endpoint, dropwizardMetricRegistry.meter(
           MetricRegistry.name(KAFKA_CRUISE_CONTROL_SERVLET_SENSOR, endpoint.name() + "-request-rate")));
