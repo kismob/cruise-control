@@ -279,11 +279,11 @@ public final class KafkaCruiseControlServletUtils {
   /**
    * Ensure that the given headerName does not exist in the given request header.
    *
-   * @param common HTTP request received by Cruise Control.
+   * @param handler HTTP request received by Cruise Control.
    * @param headerName a <code>String</code> specifying the header name
    */
-  static void ensureHeaderNotPresent(HttpFrameworkHandler common, String headerName) {
-    String value = common.getHeaders().get(headerName);
+  static void ensureHeaderNotPresent(HttpFrameworkHandler handler, String headerName) {
+    String value = handler.getHeaders().get(headerName);
     if (value != null) {
       throw new IllegalArgumentException(String.format("Unexpected header %s (value: %s) in the request.", value, headerName));
     }
