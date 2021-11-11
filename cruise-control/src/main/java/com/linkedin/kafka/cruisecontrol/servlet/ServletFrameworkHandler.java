@@ -2,14 +2,13 @@
  * Copyright 2018 LinkedIn Corp. Licensed under the BSD 2-Clause License (the "License"). See License in the project root for license information.
  */
 
-package com.linkedin.kafka.cruisecontrol.httpframeworkhandler;
+package com.linkedin.kafka.cruisecontrol.servlet;
 
 import com.google.gson.Gson;
 import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlHttpSession;
 import com.linkedin.cruisecontrol.httframeworkhandler.HttpFrameworkHandler;
 import com.linkedin.kafka.cruisecontrol.KafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
-import com.linkedin.kafka.cruisecontrol.servlet.ServletSession;
 import com.linkedin.kafka.cruisecontrol.servlet.response.ResponseUtils;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.CaseInsensitiveHeaders;
@@ -23,7 +22,7 @@ import java.util.Map;
 
 import static com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager.USER_TASK_HEADER_NAME;
 
-public class ServletHttpFrameworkHandler implements HttpFrameworkHandler<KafkaCruiseControlConfig> {
+public class ServletFrameworkHandler implements HttpFrameworkHandler<KafkaCruiseControlConfig> {
 
     static final String[] HEADERS_TO_TRY = {
             "X-Forwarded-For",
@@ -43,7 +42,7 @@ public class ServletHttpFrameworkHandler implements HttpFrameworkHandler<KafkaCr
     protected HttpServletResponse _response;
     private final ServletSession _servletSession;
 
-    public ServletHttpFrameworkHandler(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+    public ServletFrameworkHandler(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
         _request = httpServletRequest;
         _response = httpServletResponse;
         _servletSession = new ServletSession(_request.getSession());

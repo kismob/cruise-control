@@ -11,7 +11,6 @@ import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
 import com.linkedin.kafka.cruisecontrol.async.AsyncKafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.config.RequestParameterWrapper;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
-import com.linkedin.kafka.cruisecontrol.httpframeworkhandler.VertxHttpFrameworkHandler;
 import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
 import com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServlet;
 import com.linkedin.kafka.cruisecontrol.servlet.UserRequestException;
@@ -54,7 +53,7 @@ public class EndPoints extends KafkaCruiseControlServlet implements SwaggerEndPo
     }
 
     private void doGetOrPost(RoutingContext context) throws IOException {
-        VertxHttpFrameworkHandler handler = new VertxHttpFrameworkHandler(context);
+        VertxFrameworkHandler handler = new VertxFrameworkHandler(context);
         try {
             _asyncOperationStep.set(0);
             CruiseControlEndPoint endPoint = getValidEndpoint(handler, _config);
@@ -95,7 +94,7 @@ public class EndPoints extends KafkaCruiseControlServlet implements SwaggerEndPo
                            Map<String, Object> requestConfigOverrides,
                            Map<String, Object> parameterConfigOverrides)
             throws Exception {
-        VertxHttpFrameworkHandler handler = new VertxHttpFrameworkHandler(context);
+        VertxFrameworkHandler handler = new VertxFrameworkHandler(context);
         // Sanity check: if the request is for REVIEW_BOARD, two step verification must be enabled.
         if (endPoint == REVIEW_BOARD && !_twoStepVerification) {
             throw new ConfigException(String.format("Attempt to access %s endpoint without enabling '%s' config.",
@@ -118,7 +117,7 @@ public class EndPoints extends KafkaCruiseControlServlet implements SwaggerEndPo
                             Map<String, Object> requestConfigOverrides,
                             Map<String, Object> parameterConfigOverrides)
             throws Exception {
-        VertxHttpFrameworkHandler handler = new VertxHttpFrameworkHandler(context);
+        VertxFrameworkHandler handler = new VertxFrameworkHandler(context);
         CruiseControlParameters parameters;
         RequestParameterWrapper requestParameter = requestParameterFor(endPoint);
         if (endPoint == REVIEW) {

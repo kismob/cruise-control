@@ -2,7 +2,7 @@
  * Copyright 2018 LinkedIn Corp. Licensed under the BSD 2-Clause License (the "License"). See License in the project root for license information.
  */
 
-package com.linkedin.kafka.cruisecontrol.httpframeworkhandler;
+package com.linkedin.kafka.cruisecontrol.vertx;
 
 import com.google.gson.Gson;
 import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlHttpSession;
@@ -10,7 +10,6 @@ import com.linkedin.cruisecontrol.httframeworkhandler.HttpFrameworkHandler;
 import com.linkedin.kafka.cruisecontrol.KafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.servlet.response.ResponseUtils;
-import com.linkedin.kafka.cruisecontrol.vertx.VertxSession;
 import io.vertx.core.MultiMap;
 import io.vertx.ext.web.RoutingContext;
 import java.io.IOException;
@@ -20,7 +19,7 @@ import java.util.Map;
 import static com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager.USER_TASK_HEADER_NAME;
 import static com.linkedin.kafka.cruisecontrol.servlet.response.ResponseUtils.getJsonSchema;
 
-public class VertxHttpFrameworkHandler implements HttpFrameworkHandler<KafkaCruiseControlConfig> {
+public class VertxFrameworkHandler implements HttpFrameworkHandler<KafkaCruiseControlConfig> {
 
     static final String[] HEADERS_TO_TRY = {
             "X-Forwarded-For",
@@ -40,7 +39,7 @@ public class VertxHttpFrameworkHandler implements HttpFrameworkHandler<KafkaCrui
 
     private final CruiseControlHttpSession _session;
 
-    public VertxHttpFrameworkHandler(RoutingContext context) {
+    public VertxFrameworkHandler(RoutingContext context) {
         super();
         _context = context;
         _session = new VertxSession(context.session());

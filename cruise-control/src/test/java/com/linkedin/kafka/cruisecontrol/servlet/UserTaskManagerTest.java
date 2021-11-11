@@ -4,8 +4,7 @@
 
 package com.linkedin.kafka.cruisecontrol.servlet;
 
-import com.linkedin.kafka.cruisecontrol.httpframeworkhandler.ServletHttpFrameworkHandler;
-import com.linkedin.kafka.cruisecontrol.httpframeworkhandler.VertxHttpFrameworkHandler;
+import com.linkedin.kafka.cruisecontrol.vertx.VertxFrameworkHandler;
 import com.linkedin.kafka.cruisecontrol.servlet.handler.async.runnable.OperationFuture;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpMethod;
@@ -51,7 +50,7 @@ public class UserTaskManagerTest {
     HttpServletResponse mockHttpServletResponse = EasyMock.mock(HttpServletResponse.class);
     Capture<String> userTaskHeader = Capture.newInstance();
     Capture<String> userTaskHeaderValue = Capture.newInstance();
-    ServletHttpFrameworkHandler handler1 = new ServletHttpFrameworkHandler(mockHttpServletRequest1, mockHttpServletResponse);
+    ServletFrameworkHandler handler1 = new ServletFrameworkHandler(mockHttpServletRequest1, mockHttpServletResponse);
     handler1.setHeader(EasyMock.capture(userTaskHeader), EasyMock.capture(userTaskHeaderValue));
 
     EasyMock.replay(mockUuidGenerator, mockHttpSession, mockHttpServletResponse);
@@ -79,7 +78,7 @@ public class UserTaskManagerTest {
     HttpServletRequest mockHttpServletRequest2 = prepareServletRequest(mockHttpSession, testUserTaskId.toString());
     EasyMock.reset(mockHttpServletResponse);
     // test-case: get future back using user-task-id
-    ServletHttpFrameworkHandler handler2 = new ServletHttpFrameworkHandler(mockHttpServletRequest2, mockHttpServletResponse);
+    ServletFrameworkHandler handler2 = new ServletFrameworkHandler(mockHttpServletRequest2, mockHttpServletResponse);
     OperationFuture future3 =
             userTaskManager.getOrCreateUserTask(handler2, uuid -> future, 0, true, null).get(0);
 
@@ -91,7 +90,7 @@ public class UserTaskManagerTest {
 
     // test-case: for sync task, UserTaskManager does not create mapping between request URL and UUID.
     HttpServletRequest mockHttpServletRequest3 = prepareServletRequest(null, null, "test_sync_request", Collections.emptyMap());
-    ServletHttpFrameworkHandler handler3 = new ServletHttpFrameworkHandler(mockHttpServletRequest3, mockHttpServletResponse);
+    ServletFrameworkHandler handler3 = new ServletFrameworkHandler(mockHttpServletRequest3, mockHttpServletResponse);
     OperationFuture future4 =
             userTaskManager.getOrCreateUserTask(handler3, uuid -> future, 0, false, null).get(0);
 
@@ -128,21 +127,21 @@ public class UserTaskManagerTest {
     HttpServletResponse mockHttpServletResponse1 = EasyMock.mock(HttpServletResponse.class);
     Capture<String> userTaskHeader = Capture.newInstance();
     Capture<String> userTaskHeaderValue = Capture.newInstance();
-    ServletHttpFrameworkHandler handler1 = new ServletHttpFrameworkHandler(mockHttpServletRequest1, mockHttpServletResponse1);
+    ServletFrameworkHandler handler1 = new ServletFrameworkHandler(mockHttpServletRequest1, mockHttpServletResponse1);
     handler1.setHeader(EasyMock.capture(userTaskHeader), EasyMock.capture(userTaskHeaderValue));
 
     Map<String, String []> requestParams2 = new HashMap<>();
     requestParams2.put("param", new String[]{"true"});
     HttpServletRequest mockHttpServletRequest2 = prepareServletRequest(mockHttpSession, null, "test", requestParams2);
     HttpServletResponse mockHttpServletResponse2 = EasyMock.mock(HttpServletResponse.class);
-    ServletHttpFrameworkHandler handler2 = new ServletHttpFrameworkHandler(mockHttpServletRequest2, mockHttpServletResponse2);
+    ServletFrameworkHandler handler2 = new ServletFrameworkHandler(mockHttpServletRequest2, mockHttpServletResponse2);
     handler2.setHeader(EasyMock.capture(userTaskHeader), EasyMock.capture(userTaskHeaderValue));
 
     Map<String, String []> requestParams3 = new HashMap<>();
     requestParams3.put("param", new String[]{"true"});
     HttpServletRequest mockHttpServletRequest3 = prepareServletRequest(mockHttpSession, testUserTaskId.toString(), "test", requestParams3);
     HttpServletResponse mockHttpServletResponse3 = EasyMock.mock(HttpServletResponse.class);
-    ServletHttpFrameworkHandler handler3 = new ServletHttpFrameworkHandler(mockHttpServletRequest3, mockHttpServletResponse3);
+    ServletFrameworkHandler handler3 = new ServletFrameworkHandler(mockHttpServletRequest3, mockHttpServletResponse3);
     handler3.setHeader(EasyMock.capture(userTaskHeader), EasyMock.capture(userTaskHeaderValue));
 
     EasyMock.replay(mockUuidGenerator, mockHttpSession, mockHttpServletResponse1, mockHttpServletResponse2, mockHttpServletResponse3);
@@ -175,7 +174,7 @@ public class UserTaskManagerTest {
     RoutingContext context = prepareVertxRequest(mockHttpSession, null, "test", requestParams1, response);
     Capture<String> userTaskHeader = Capture.newInstance();
     Capture<String> userTaskHeaderValue = Capture.newInstance();
-    VertxHttpFrameworkHandler handler1 = new VertxHttpFrameworkHandler(context);
+    VertxFrameworkHandler handler1 = new VertxFrameworkHandler(context);
     EasyMock.expect(response.putHeader(EasyMock.anyString(), EasyMock.anyString())).andReturn(EasyMock.mock(HttpServerResponse.class));
     handler1.setHeader(EasyMock.capture(userTaskHeader), EasyMock.capture(userTaskHeaderValue));
 
@@ -183,14 +182,14 @@ public class UserTaskManagerTest {
     requestParams2.put("param", new String[]{"true"});
     HttpServerResponse response2 = EasyMock.mock(HttpServerResponse.class);
     RoutingContext context2 = prepareVertxRequest(mockHttpSession, null, "test", requestParams2, response2);
-    VertxHttpFrameworkHandler handler2 = new VertxHttpFrameworkHandler(context2);
+    VertxFrameworkHandler handler2 = new VertxFrameworkHandler(context2);
     handler2.setHeader(EasyMock.capture(userTaskHeader), EasyMock.capture(userTaskHeaderValue));
 
     Map<String, String []> requestParams3 = new HashMap<>();
     requestParams3.put("param", new String[]{"true"});
     HttpServerResponse response3 = EasyMock.mock(HttpServerResponse.class);
     RoutingContext context3 = prepareVertxRequest(mockHttpSession, testUserTaskId.toString(), "test", requestParams3, response3);
-    VertxHttpFrameworkHandler handler3 = new VertxHttpFrameworkHandler(context3);
+    VertxFrameworkHandler handler3 = new VertxFrameworkHandler(context3);
     handler3.setHeader(EasyMock.capture(userTaskHeader), EasyMock.capture(userTaskHeaderValue));
 
     EasyMock.replay(mockUuidGenerator, mockHttpSession, response, response2, response3);
@@ -223,7 +222,7 @@ public class UserTaskManagerTest {
     HttpServletRequest mockHttpServletRequest = prepareServletRequest(mockHttpSession, null);
 
     HttpServletResponse mockHttpServletResponse = EasyMock.mock(HttpServletResponse.class);
-    ServletHttpFrameworkHandler handler = new ServletHttpFrameworkHandler(mockHttpServletRequest, mockHttpServletResponse);
+    ServletFrameworkHandler handler = new ServletFrameworkHandler(mockHttpServletRequest, mockHttpServletResponse);
     handler.setHeader(EasyMock.anyString(), EasyMock.anyString());
     EasyMock.replay(mockUuidGenerator, mockHttpSession, mockHttpServletResponse);
 
@@ -263,7 +262,7 @@ public class UserTaskManagerTest {
             100, new MockTime(), mockUuidGenerator);
 
     HttpServletResponse mockHttpServletResponse = EasyMock.mock(HttpServletResponse.class);
-    ServletHttpFrameworkHandler handler = new ServletHttpFrameworkHandler(mockHttpServletRequest, mockHttpServletResponse);
+    ServletFrameworkHandler handler = new ServletFrameworkHandler(mockHttpServletRequest, mockHttpServletResponse);
     Capture<String> userTaskHeader = Capture.newInstance();
     Capture<String> userTaskHeaderValue = Capture.newInstance();
     handler.setHeader(EasyMock.capture(userTaskHeader), EasyMock.capture(userTaskHeaderValue));
@@ -301,7 +300,7 @@ public class UserTaskManagerTest {
             100, mockTime, mockUuidGenerator);
 
     HttpServletResponse mockHttpServletResponse = EasyMock.mock(HttpServletResponse.class);
-    ServletHttpFrameworkHandler servletHandler = new ServletHttpFrameworkHandler(mockHttpServletRequest, mockHttpServletResponse);
+    ServletFrameworkHandler servletHandler = new ServletFrameworkHandler(mockHttpServletRequest, mockHttpServletResponse);
     servletHandler.setHeader(EasyMock.anyString(), EasyMock.anyString());
 
     EasyMock.replay(mockUuidGenerator, mockHttpSession, mockHttpServletResponse);
@@ -338,7 +337,7 @@ public class UserTaskManagerTest {
     UserTaskManager userTaskManager = new UserTaskManager(1000, 1, TimeUnit.HOURS.toMillis(6),
             100, mockTime, mockUuidGenerator);
 
-    VertxHttpFrameworkHandler vertxHandler = new VertxHttpFrameworkHandler(mockContext);
+    VertxFrameworkHandler vertxHandler = new VertxFrameworkHandler(mockContext);
     EasyMock.expect(mockVertxResponse.putHeader(UserTaskManager.USER_TASK_HEADER_NAME,
             testUserTaskId.toString())).andReturn(mockVertxResponse).anyTimes();
 
@@ -371,7 +370,7 @@ public class UserTaskManagerTest {
             100, new MockTime());
 
     HttpServletResponse mockHttpServletResponse = EasyMock.mock(HttpServletResponse.class);
-    ServletHttpFrameworkHandler handler1 = new ServletHttpFrameworkHandler(mockHttpServletRequest1, mockHttpServletResponse);
+    ServletFrameworkHandler handler1 = new ServletFrameworkHandler(mockHttpServletRequest1, mockHttpServletResponse);
     handler1.setHeader(EasyMock.anyString(), EasyMock.anyString());
 
     EasyMock.replay(mockHttpSession1, mockHttpServletResponse);
@@ -386,7 +385,7 @@ public class UserTaskManagerTest {
     EasyMock.reset(mockHttpServletResponse);
 
     HttpServletRequest mockHttpServletRequest2 = prepareServletRequest(mockHttpSession2, null, "/test2", Collections.emptyMap());
-    ServletHttpFrameworkHandler handler2 = new ServletHttpFrameworkHandler(mockHttpServletRequest2, mockHttpServletResponse);
+    ServletFrameworkHandler handler2 = new ServletFrameworkHandler(mockHttpServletRequest2, mockHttpServletResponse);
     try {
       OperationFuture future2 =
               userTaskManager.getOrCreateUserTask(handler2, uuid -> future, 0, true, null).get(0);

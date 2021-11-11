@@ -14,8 +14,8 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import com.linkedin.cruisecontrol.httframeworkhandler.HttpFrameworkHandler;
-import com.linkedin.kafka.cruisecontrol.httpframeworkhandler.ServletHttpFrameworkHandler;
-import com.linkedin.kafka.cruisecontrol.httpframeworkhandler.VertxHttpFrameworkHandler;
+import com.linkedin.kafka.cruisecontrol.servlet.ServletFrameworkHandler;
+import com.linkedin.kafka.cruisecontrol.vertx.VertxFrameworkHandler;
 import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,11 +107,11 @@ public abstract class AbstractParameters implements CruiseControlParameters {
   @Override
   public void configure(Map<String, ?> configs) {
     if (configs.get(ROUTING_CONTEXT_OBJECT_CONFIG) == null) {
-      _handler = new ServletHttpFrameworkHandler(
+      _handler = new ServletFrameworkHandler(
               (HttpServletRequest) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_HTTP_SERVLET_REQUEST_OBJECT_CONFIG),
               "HttpServletRequest configuration is missing from the request."), null);
     } else {
-      _handler = new VertxHttpFrameworkHandler((RoutingContext) validateNotNull(configs.get(ROUTING_CONTEXT_OBJECT_CONFIG),
+      _handler = new VertxFrameworkHandler((RoutingContext) validateNotNull(configs.get(ROUTING_CONTEXT_OBJECT_CONFIG),
               "HttpServletRequest configuration is missing from the request."));
     }
     _config = (KafkaCruiseControlConfig) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_CONFIG_OBJECT_CONFIG),

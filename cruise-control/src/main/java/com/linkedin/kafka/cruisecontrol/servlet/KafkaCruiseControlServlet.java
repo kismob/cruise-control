@@ -15,7 +15,6 @@ import com.linkedin.kafka.cruisecontrol.async.AsyncKafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.config.RequestParameterWrapper;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
-import com.linkedin.kafka.cruisecontrol.httpframeworkhandler.ServletHttpFrameworkHandler;
 import com.linkedin.kafka.cruisecontrol.servlet.purgatory.Purgatory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,7 +124,7 @@ public class KafkaCruiseControlServlet extends HttpServlet {
   }
 
   private void doGetOrPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    ServletHttpFrameworkHandler handler = new ServletHttpFrameworkHandler(request, response);
+    ServletFrameworkHandler handler = new ServletFrameworkHandler(request, response);
     try {
       _asyncOperationStep.set(0);
       CruiseControlEndPoint endPoint = getValidEndpoint(handler, _config);
@@ -181,7 +180,7 @@ public class KafkaCruiseControlServlet extends HttpServlet {
                          Map<String, Object> requestConfigOverrides,
                          Map<String, Object> parameterConfigOverrides)
           throws Exception {
-    ServletHttpFrameworkHandler handler = new ServletHttpFrameworkHandler(request, response);
+    ServletFrameworkHandler handler = new ServletFrameworkHandler(request, response);
     // Sanity check: if the request is for REVIEW_BOARD, two step verification must be enabled.
     if (endPoint == REVIEW_BOARD && !_twoStepVerification) {
       throw new ConfigException(String.format("Attempt to access %s endpoint without enabling '%s' config.",
@@ -213,7 +212,7 @@ public class KafkaCruiseControlServlet extends HttpServlet {
                           Map<String, Object> requestConfigOverrides,
                           Map<String, Object> parameterConfigOverrides)
           throws Exception {
-    ServletHttpFrameworkHandler handler = new ServletHttpFrameworkHandler(request, response);
+    ServletFrameworkHandler handler = new ServletFrameworkHandler(request, response);
     CruiseControlParameters parameters;
     RequestParameterWrapper requestParameter = requestParameterFor(endPoint);
     if (endPoint == REVIEW) {
