@@ -339,6 +339,7 @@ public class UserTaskManager implements Closeable {
     Iterator<Map.Entry<UUID, UserTaskInfo>> iter = _uuidToActiveUserTaskInfoMap.entrySet().iterator();
     while (iter.hasNext()) {
       Map.Entry<UUID, UserTaskInfo> entry = iter.next();
+      System.out.println("asdasdasd");
       if (entry.getValue().isUserTaskDoneExceptionally()) {
         LOG.warn("UserTask {} is completed with Exception and removed from active tasks list", entry.getKey());
         _uuidToCompletedUserTaskInfoMap.get(entry.getValue().endPoint().endpointType())

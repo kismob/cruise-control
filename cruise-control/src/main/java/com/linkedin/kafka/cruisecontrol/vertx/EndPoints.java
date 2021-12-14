@@ -1,27 +1,35 @@
 /*
- * Copyright 2018 LinkedIn Corp. Licensed under the BSD 2-Clause License (the "License"). See License in the project root for license information.
+ * Copyright 2021 LinkedIn Corp. Licensed under the BSD 2-Clause License (the "License"). See License in the project root for license information.
  */
 
 package com.linkedin.kafka.cruisecontrol.vertx;
 
+import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 import com.linkedin.cruisecontrol.common.config.ConfigException;
+import com.linkedin.cruisecontrol.servlet.EndPoint;
 import com.linkedin.cruisecontrol.servlet.handler.Request;
 import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
 import com.linkedin.kafka.cruisecontrol.async.AsyncKafkaCruiseControl;
+import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.config.RequestParameterWrapper;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import com.linkedin.kafka.cruisecontrol.httpframeworkhandler.VertxHttpFrameworkHandler;
 import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
-import com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServlet;
 import com.linkedin.kafka.cruisecontrol.servlet.UserRequestException;
+import com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager;
+import com.linkedin.kafka.cruisecontrol.servlet.purgatory.Purgatory;
 import org.slf4j.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import static com.linkedin.kafka.cruisecontrol.KafkaCruiseControlUtils.KAFKA_CRUISE_CONTROL_SERVLET_SENSOR;
 import static com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint.REVIEW;
 import static com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint.REVIEW_BOARD;
 import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.GET_METHOD;
@@ -37,12 +45,33 @@ import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServlet
 import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.requestParameterFor;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.hasValidParameterNames;
 
-public class EndPoints extends KafkaCruiseControlServlet implements SwaggerEndPoints {
+public class EndPoints implements SwaggerEndPoints {
 
     private static final Logger LOG = LoggerFactory.getLogger(EndPoints.class);
+    protected final AsyncKafkaCruiseControl _asyncKafkaCruiseControl;
+    protected final KafkaCruiseControlConfig _config;
+    protected final UserTaskManager _userTaskManager;
+    protected final ThreadLocal<Integer> _asyncOperationStep;
+    protected final Map<EndPoint, Meter> _requestMeter = new HashMap<>();
+    protected final Map<EndPoint, Timer> _successfulRequestExecutionTimer = new HashMap<>();
+    protected final boolean _twoStepVerification;
+    protected final Purgatory _purgatory;
 
     public EndPoints(AsyncKafkaCruiseControl asynckafkaCruiseControl, MetricRegistry dropwizardMetricRegistry) {
-        super(asynckafkaCruiseControl, dropwizardMetricRegistry);
+        _config = asynckafkaCruiseControl.config();
+        _asyncKafkaCruiseControl = asynckafkaCruiseControl;
+        _twoStepVerification = _config.getBoolean(WebServerConfig.TWO_STEP_VERIFICATION_ENABLED_CONFIG);
+        _purgatory = _twoStepVerification ? new Purgatory(_config) : null;
+        _userTaskManager = new UserTaskManager(_config, dropwizardMetricRegistry, _successfulRequestExecutionTimer, _purgatory);
+        _asyncKafkaCruiseControl.setUserTaskManagerInExecutor(_userTaskManager);
+        _asyncOperationStep = new ThreadLocal<>();
+        _asyncOperationStep.set(0);
+        for (CruiseControlEndPoint endpoint : CruiseControlEndPoint.cachedValues()) {
+            _requestMeter.put(endpoint, dropwizardMetricRegistry.meter(
+                    MetricRegistry.name(KAFKA_CRUISE_CONTROL_SERVLET_SENSOR, endpoint.name() + "-request-rate")));
+            _successfulRequestExecutionTimer.put(endpoint, dropwizardMetricRegistry.timer(
+                    MetricRegistry.name(KAFKA_CRUISE_CONTROL_SERVLET_SENSOR, endpoint.name() + "-successful-request-execution-timer")));
+        }
     }
 
     @Override
@@ -153,6 +182,31 @@ public class EndPoints extends KafkaCruiseControlServlet implements SwaggerEndPo
             // ccRequest would be null if request is added to Purgatory.
             ccRequest.handle(handler);
         }
+    }
+
+    @Override
+    public AsyncKafkaCruiseControl asyncKafkaCruiseControl() {
+        return _asyncKafkaCruiseControl;
+    }
+
+    @Override
+    public Map<EndPoint, Timer> successfulRequestExecutionTimer() {
+        return Collections.unmodifiableMap(_successfulRequestExecutionTimer);
+    }
+
+    @Override
+    public ThreadLocal<Integer> asyncOperationStep() {
+        return _asyncOperationStep;
+    }
+
+    @Override
+    public UserTaskManager userTaskManager() {
+        return _userTaskManager;
+    }
+
+    @Override
+    public List<UserTaskManager.UserTaskInfo> getAllUserTasks() {
+        return _userTaskManager.getAllUserTasks();
     }
 
     @Override

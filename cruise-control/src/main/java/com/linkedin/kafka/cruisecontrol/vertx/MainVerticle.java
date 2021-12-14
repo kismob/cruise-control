@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 LinkedIn Corp. Licensed under the BSD 2-Clause License (the "License"). See License in the project root for license information.
+ * Copyright 2021 LinkedIn Corp. Licensed under the BSD 2-Clause License (the "License"). See License in the project root for license information.
  */
 package com.linkedin.kafka.cruisecontrol.vertx;
 
@@ -40,7 +40,7 @@ public class MainVerticle extends AbstractVerticle {
   private int _port;
   private String _host;
   private HttpServer _server;
-  private static EndPoints endPoints;
+  private SwaggerEndPoints endPoints;
   private AsyncKafkaCruiseControl _asynckafkaCruiseControl;
   private MetricRegistry _dropwizardMetricRegistry;
 
@@ -237,7 +237,7 @@ public class MainVerticle extends AbstractVerticle {
     }
   }
 
-  public static EndPoints getEndPoints() {
+  public SwaggerEndPoints getEndPoints() {
     return endPoints;
   }
 

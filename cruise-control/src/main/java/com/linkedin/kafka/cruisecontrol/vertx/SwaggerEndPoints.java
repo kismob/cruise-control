@@ -1,9 +1,13 @@
 /*
- * Copyright 2018 LinkedIn Corp. Licensed under the BSD 2-Clause License (the "License"). See License in the project root for license information.
+ * Copyright 2021 LinkedIn Corp. Licensed under the BSD 2-Clause License (the "License"). See License in the project root for license information.
  */
 
 package com.linkedin.kafka.cruisecontrol.vertx;
 
+import com.codahale.metrics.Timer;
+import com.linkedin.cruisecontrol.servlet.EndPoint;
+import com.linkedin.kafka.cruisecontrol.async.AsyncKafkaCruiseControl;
+import com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -13,6 +17,10 @@ import io.swagger.v3.oas.annotations.media.Encoding;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.vertx.ext.web.RoutingContext;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public interface SwaggerEndPoints {
 
@@ -809,4 +817,16 @@ public interface SwaggerEndPoints {
             }
     )
     void rightsize(RoutingContext context);
+
+    void destroy();
+
+    AsyncKafkaCruiseControl asyncKafkaCruiseControl();
+
+    Map<EndPoint, Timer> successfulRequestExecutionTimer();
+
+    ThreadLocal<Integer> asyncOperationStep();
+
+    UserTaskManager userTaskManager();
+
+    List<UserTaskManager.UserTaskInfo> getAllUserTasks();
 }
