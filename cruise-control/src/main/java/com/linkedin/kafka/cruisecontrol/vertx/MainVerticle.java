@@ -40,7 +40,7 @@ public class MainVerticle extends AbstractVerticle {
   private int _port;
   private String _host;
   private HttpServer _server;
-  private SwaggerApi _endPoints;
+  private SwaggerApi _vertxHandler;
   private AsyncKafkaCruiseControl _asynckafkaCruiseControl;
   private MetricRegistry _dropwizardMetricRegistry;
 
@@ -59,10 +59,10 @@ public class MainVerticle extends AbstractVerticle {
   @Override
   public void start(Future<Void> startFuture) throws Exception {
 
-    _endPoints = new VertxHandler(_asynckafkaCruiseControl, _dropwizardMetricRegistry);
+    _vertxHandler = new VertxHandler(_asynckafkaCruiseControl, _dropwizardMetricRegistry);
 
     _server = vertx.createHttpServer(createOptions());
-    _server.requestHandler(configurationRouter()::accept);
+    _server.requestHandler(configureRouter()::accept);
     _server.listen(result -> {
       if (result.succeeded()) {
         startFuture.complete();
@@ -74,7 +74,7 @@ public class MainVerticle extends AbstractVerticle {
 
   @Override
   public void stop(Future<Void> future) {
-    _endPoints.destroy();
+    _vertxHandler.destroy();
     if (_server == null) {
       future.complete();
       return;
@@ -89,7 +89,7 @@ public class MainVerticle extends AbstractVerticle {
     return options;
   }
 
-  private Router configurationRouter() {
+  private Router configureRouter() {
     Router router = Router.router(vertx);
     router.route().consumes(APPLICATION_JSON);
     router.route().produces(APPLICATION_JSON);
@@ -117,23 +117,23 @@ public class MainVerticle extends AbstractVerticle {
     router.route().failureHandler(ErrorHandler.create(true));
 
     // Routing section - this is where we declare which end points we want to use
-    router.get("/kafka_cluster_state").handler(_endPoints::kafkaClusterState);
-    router.get("/state").handler(_endPoints::cruiseControlState);
-    router.get("/load").handler(_endPoints::load);
-    router.get("/user_tasks").handler(_endPoints::userTasks);
-    router.get("/partition_load").handler(_endPoints::partitionLoad);
-    router.get("/proposals").handler(_endPoints::proposals);
-    router.post("/rebalance").handler(_endPoints::rebalance);
-    router.post("/add_broker").handler(_endPoints::addBroker);
-    router.post("/remove_broker").handler(_endPoints::removeBroker);
-    router.post("/fix_offline_replicas").handler(_endPoints::fixOfflineReplicas);
-    router.post("/demote_broker").handler(_endPoints::demoteBroker);
-    router.post("/stop_proposal_execution").handler(_endPoints::stopProposalExecution);
-    router.post("/pause_sampling").handler(_endPoints::pauseSampling);
-    router.post("/resume_sampling").handler(_endPoints::resumeSampling);
-    router.post("/topic_configuration").handler(_endPoints::topicConfiguration);
-    router.post("/admin").handler(_endPoints::admin);
-    router.post("/rightsize").handler(_endPoints::rightsize);
+    router.get("/kafka_cluster_state").handler(_vertxHandler::kafkaClusterState);
+    router.get("/state").handler(_vertxHandler::cruiseControlState);
+    router.get("/load").handler(_vertxHandler::load);
+    router.get("/user_tasks").handler(_vertxHandler::userTasks);
+    router.get("/partition_load").handler(_vertxHandler::partitionLoad);
+    router.get("/proposals").handler(_vertxHandler::proposals);
+    router.post("/rebalance").handler(_vertxHandler::rebalance);
+    router.post("/add_broker").handler(_vertxHandler::addBroker);
+    router.post("/remove_broker").handler(_vertxHandler::removeBroker);
+    router.post("/fix_offline_replicas").handler(_vertxHandler::fixOfflineReplicas);
+    router.post("/demote_broker").handler(_vertxHandler::demoteBroker);
+    router.post("/stop_proposal_execution").handler(_vertxHandler::stopProposalExecution);
+    router.post("/pause_sampling").handler(_vertxHandler::pauseSampling);
+    router.post("/resume_sampling").handler(_vertxHandler::resumeSampling);
+    router.post("/topic_configuration").handler(_vertxHandler::topicConfiguration);
+    router.post("/admin").handler(_vertxHandler::admin);
+    router.post("/rightsize").handler(_vertxHandler::rightsize);
 
     OpenAPI openAPIDoc = OpenApiRoutePublisher.publishOpenApiSpec(
       router,
@@ -238,7 +238,7 @@ public class MainVerticle extends AbstractVerticle {
   }
 
   public SwaggerApi getEndPoints() {
-    return _endPoints;
+    return _vertxHandler;
   }
 
 }
