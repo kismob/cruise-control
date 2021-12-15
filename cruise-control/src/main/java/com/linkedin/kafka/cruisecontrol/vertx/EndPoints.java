@@ -4,32 +4,24 @@
 
 package com.linkedin.kafka.cruisecontrol.vertx;
 
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
 import com.linkedin.cruisecontrol.common.config.ConfigException;
-import com.linkedin.cruisecontrol.servlet.EndPoint;
 import com.linkedin.cruisecontrol.servlet.handler.Request;
 import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
+import com.linkedin.kafka.cruisecontrol.CruiseControlEndPoints;
 import com.linkedin.kafka.cruisecontrol.async.AsyncKafkaCruiseControl;
-import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.config.RequestParameterWrapper;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import com.linkedin.kafka.cruisecontrol.httpframeworkhandler.VertxHttpFrameworkHandler;
 import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
 import com.linkedin.kafka.cruisecontrol.servlet.UserRequestException;
-import com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager;
-import com.linkedin.kafka.cruisecontrol.servlet.purgatory.Purgatory;
 import org.slf4j.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import static com.linkedin.kafka.cruisecontrol.KafkaCruiseControlUtils.KAFKA_CRUISE_CONTROL_SERVLET_SENSOR;
 import static com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint.REVIEW;
 import static com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint.REVIEW_BOARD;
 import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.GET_METHOD;
@@ -45,56 +37,34 @@ import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServlet
 import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.requestParameterFor;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.hasValidParameterNames;
 
-public class EndPoints implements SwaggerEndPoints {
+public class EndPoints implements SwaggerApi {
 
     private static final Logger LOG = LoggerFactory.getLogger(EndPoints.class);
-    protected final AsyncKafkaCruiseControl _asyncKafkaCruiseControl;
-    protected final KafkaCruiseControlConfig _config;
-    protected final UserTaskManager _userTaskManager;
-    protected final ThreadLocal<Integer> _asyncOperationStep;
-    protected final Map<EndPoint, Meter> _requestMeter = new HashMap<>();
-    protected final Map<EndPoint, Timer> _successfulRequestExecutionTimer = new HashMap<>();
-    protected final boolean _twoStepVerification;
-    protected final Purgatory _purgatory;
+    protected final CruiseControlEndPoints cruiseControlEndPoints;
 
-    public EndPoints(AsyncKafkaCruiseControl asynckafkaCruiseControl, MetricRegistry dropwizardMetricRegistry) {
-        _config = asynckafkaCruiseControl.config();
-        _asyncKafkaCruiseControl = asynckafkaCruiseControl;
-        _twoStepVerification = _config.getBoolean(WebServerConfig.TWO_STEP_VERIFICATION_ENABLED_CONFIG);
-        _purgatory = _twoStepVerification ? new Purgatory(_config) : null;
-        _userTaskManager = new UserTaskManager(_config, dropwizardMetricRegistry, _successfulRequestExecutionTimer, _purgatory);
-        _asyncKafkaCruiseControl.setUserTaskManagerInExecutor(_userTaskManager);
-        _asyncOperationStep = new ThreadLocal<>();
-        _asyncOperationStep.set(0);
-        for (CruiseControlEndPoint endpoint : CruiseControlEndPoint.cachedValues()) {
-            _requestMeter.put(endpoint, dropwizardMetricRegistry.meter(
-                    MetricRegistry.name(KAFKA_CRUISE_CONTROL_SERVLET_SENSOR, endpoint.name() + "-request-rate")));
-            _successfulRequestExecutionTimer.put(endpoint, dropwizardMetricRegistry.timer(
-                    MetricRegistry.name(KAFKA_CRUISE_CONTROL_SERVLET_SENSOR, endpoint.name() + "-successful-request-execution-timer")));
-        }
+    public EndPoints(AsyncKafkaCruiseControl asynckafkaCruiseControl, MetricRegistry dropwizardMetricRegistry){
+        cruiseControlEndPoints = new CruiseControlEndPoints(asynckafkaCruiseControl, dropwizardMetricRegistry);
     }
+
 
     @Override
     public void destroy() {
-        _userTaskManager.close();
-        if (_purgatory != null) {
-            _purgatory.close();
-        }
+        cruiseControlEndPoints.destroy();
     }
 
     private void doGetOrPost(RoutingContext context) throws IOException {
         VertxHttpFrameworkHandler handler = new VertxHttpFrameworkHandler(context);
         try {
-            _asyncOperationStep.set(0);
-            CruiseControlEndPoint endPoint = getValidEndpoint(handler, _config);
+            cruiseControlEndPoints.asyncOperationStep().set(0);
+            CruiseControlEndPoint endPoint = getValidEndpoint(handler, cruiseControlEndPoints.config());
             if (endPoint != null) {
-                _requestMeter.get(endPoint).mark();
+                cruiseControlEndPoints.requestMeter().get(endPoint).mark();
                 Map<String, Object> requestConfigOverrides = new HashMap<>();
                 requestConfigOverrides.put(KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG, this);
 
                 Map<String, Object> parameterConfigOverrides = new HashMap<>();
                 parameterConfigOverrides.put(KAFKA_CRUISE_CONTROL_HTTP_SERVLET_REQUEST_OBJECT_CONFIG, context.request());
-                parameterConfigOverrides.put(KAFKA_CRUISE_CONTROL_CONFIG_OBJECT_CONFIG, _config);
+                parameterConfigOverrides.put(KAFKA_CRUISE_CONTROL_CONFIG_OBJECT_CONFIG, cruiseControlEndPoints.config());
                 parameterConfigOverrides.put(ROUTING_CONTEXT_OBJECT_CONFIG, context);
                 switch (context.request().method().toString()) {
                     case GET_METHOD:
@@ -108,13 +78,13 @@ public class EndPoints implements SwaggerEndPoints {
                 }
             }
         } catch (UserRequestException ure) {
-            String errorMessage = handleUserRequestException(ure, handler, _config);
+            String errorMessage = handleUserRequestException(ure, handler, cruiseControlEndPoints.config());
             LOG.error(errorMessage, ure);
         } catch (ConfigException ce) {
-            String errorMessage = handleConfigException(ce, handler, _config);
+            String errorMessage = handleConfigException(ce, handler, cruiseControlEndPoints.config());
             LOG.error(errorMessage, ce);
         } catch (Exception e) {
-            String errorMessage = handleException(e, handler, _config);
+            String errorMessage = handleException(e, handler, cruiseControlEndPoints.config());
             LOG.error(errorMessage, e);
         }
     }
@@ -126,17 +96,17 @@ public class EndPoints implements SwaggerEndPoints {
             throws Exception {
         VertxHttpFrameworkHandler handler = new VertxHttpFrameworkHandler(context);
         // Sanity check: if the request is for REVIEW_BOARD, two step verification must be enabled.
-        if (endPoint == REVIEW_BOARD && !_twoStepVerification) {
+        if (endPoint == REVIEW_BOARD && !cruiseControlEndPoints.twoStepVerification()) {
             throw new ConfigException(String.format("Attempt to access %s endpoint without enabling '%s' config.",
                     endPoint, WebServerConfig.TWO_STEP_VERIFICATION_ENABLED_CONFIG));
         }
         RequestParameterWrapper requestParameter = requestParameterFor(endPoint);
-        CruiseControlParameters parameters = _config.getConfiguredInstance(requestParameter.parametersClass(),
+        CruiseControlParameters parameters = cruiseControlEndPoints.config().getConfiguredInstance(requestParameter.parametersClass(),
                 CruiseControlParameters.class,
                 parameterConfigOverrides);
-        if (hasValidParameterNames(handler, _config, parameters)) {
+        if (hasValidParameterNames(handler, cruiseControlEndPoints.config(), parameters)) {
             requestConfigOverrides.put(requestParameter.parameterObject(), parameters);
-            Request ccRequest = _config.getConfiguredInstance(requestParameter.requestClass(), Request.class, requestConfigOverrides);
+            Request ccRequest = cruiseControlEndPoints.config().getConfiguredInstance(requestParameter.requestClass(), Request.class, requestConfigOverrides);
 
             ccRequest.handle(handler);
         }
@@ -152,30 +122,30 @@ public class EndPoints implements SwaggerEndPoints {
         RequestParameterWrapper requestParameter = requestParameterFor(endPoint);
         if (endPoint == REVIEW) {
             // Sanity check: if the request is for REVIEW, two step verification must be enabled.
-            if (!_twoStepVerification) {
+            if (!cruiseControlEndPoints.twoStepVerification()) {
                 throw new ConfigException(String.format("Attempt to access %s endpoint without enabling '%s' config.",
                         endPoint, WebServerConfig.TWO_STEP_VERIFICATION_ENABLED_CONFIG));
             }
 
-            parameters = _config.getConfiguredInstance(requestParameter.parametersClass(), CruiseControlParameters.class, parameterConfigOverrides);
-            if (!hasValidParameterNames(handler, _config, parameters)) {
+            parameters = cruiseControlEndPoints.config().getConfiguredInstance(requestParameter.parametersClass(), CruiseControlParameters.class, parameterConfigOverrides);
+            if (!hasValidParameterNames(handler, cruiseControlEndPoints.config(), parameters)) {
                 return;
             }
-        } else if (!_twoStepVerification) {
+        } else if (!cruiseControlEndPoints.twoStepVerification()) {
             // Do not add to the purgatory if the two-step verification is disabled.
-            parameters = _config.getConfiguredInstance(requestParameter.parametersClass(), CruiseControlParameters.class, parameterConfigOverrides);
-            if (!hasValidParameterNames(handler, _config, parameters)) {
+            parameters = cruiseControlEndPoints.config().getConfiguredInstance(requestParameter.parametersClass(), CruiseControlParameters.class, parameterConfigOverrides);
+            if (!hasValidParameterNames(handler, cruiseControlEndPoints.config(), parameters)) {
                 return;
             }
         } else {
             // Add to the purgatory if the two-step verification is enabled.
-            parameters = _purgatory.maybeAddToPurgatory(handler, requestParameter.parametersClass(), parameterConfigOverrides, _userTaskManager);
+            parameters = cruiseControlEndPoints.purgatory().maybeAddToPurgatory(handler, requestParameter.parametersClass(), parameterConfigOverrides, cruiseControlEndPoints.userTaskManager());
         }
 
         Request ccRequest = null;
         if (parameters != null) {
             requestConfigOverrides.put(requestParameter.parameterObject(), parameters);
-            ccRequest = _config.getConfiguredInstance(requestParameter.requestClass(), Request.class, requestConfigOverrides);
+            ccRequest = cruiseControlEndPoints.config().getConfiguredInstance(requestParameter.requestClass(), Request.class, requestConfigOverrides);
         }
 
         if (ccRequest != null) {
@@ -184,30 +154,6 @@ public class EndPoints implements SwaggerEndPoints {
         }
     }
 
-    @Override
-    public AsyncKafkaCruiseControl asyncKafkaCruiseControl() {
-        return _asyncKafkaCruiseControl;
-    }
-
-    @Override
-    public Map<EndPoint, Timer> successfulRequestExecutionTimer() {
-        return Collections.unmodifiableMap(_successfulRequestExecutionTimer);
-    }
-
-    @Override
-    public ThreadLocal<Integer> asyncOperationStep() {
-        return _asyncOperationStep;
-    }
-
-    @Override
-    public UserTaskManager userTaskManager() {
-        return _userTaskManager;
-    }
-
-    @Override
-    public List<UserTaskManager.UserTaskInfo> getAllUserTasks() {
-        return _userTaskManager.getAllUserTasks();
-    }
 
     @Override
     public void kafkaClusterState(RoutingContext context) {
@@ -363,4 +309,7 @@ public class EndPoints implements SwaggerEndPoints {
         }
     }
 
+    public CruiseControlEndPoints cruiseControlEndPoints() {
+        return cruiseControlEndPoints;
+    }
 }

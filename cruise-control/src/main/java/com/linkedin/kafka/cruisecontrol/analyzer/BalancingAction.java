@@ -14,7 +14,7 @@ import static com.linkedin.cruisecontrol.common.utils.Utils.validateNotNull;
 
 
 /**
- * Represents the load balancing operation over a replica for Kafka load GoalOptimizer.
+ * Represents the load balancing operation over a replica for Kafka Load GoalOptimizer.
  * Note _destinationTp field is only relevant in replica swap operation, for other operations, it will be null.
  */
 public class BalancingAction {

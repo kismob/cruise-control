@@ -530,13 +530,13 @@ public abstract class ResourceDistributionGoal extends AbstractGoal {
 
   /**
    * Get the sorted replicas in the given broker whose (1) topic is not an excluded topic AND (2) do not violate the given load
-   * limit in ascending or descending order. load limit requires the replica load to be (1) above the given limit in
+   * limit in ascending or descending order. Load limit requires the replica load to be (1) above the given limit in
    * descending order, (2) below the given limit in ascending order. Offline replicas have priority over online replicas.
    *
    * @param broker Broker whose replicas will be considered.
    * @param clusterModel The state of the cluster.
    * @param excludedTopics Excluded topics for which the replicas will be remove from the returned candidate replicas.
-   * @param loadLimit load limit determining the lower cutoff in descending order, upper cutoff in ascending order.
+   * @param loadLimit Load limit determining the lower cutoff in descending order, upper cutoff in ascending order.
    * @param isAscending {@code true} if sort requested in ascending order, {@code false} otherwise.
    * @param followersOnly Candidate replicas contain only the followers.
    * @param leadersOnly Candidate replicas contain only the leaders.

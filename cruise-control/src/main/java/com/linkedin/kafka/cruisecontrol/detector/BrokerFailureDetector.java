@@ -82,7 +82,7 @@ public class BrokerFailureDetector extends AbstractAnomalyDetector {
    * {@link kafka.zookeeper.ZooKeeperClient#registerZNodeChildChangeHandler(ZNodeChildChangeHandler)}
    */
   void startDetection() {
-    // load the failed broker information from zookeeper.
+    // Load the failed broker information from zookeeper.
     String failedBrokerListString = loadPersistedFailedBrokerList();
     parsePersistedFailedBrokers(failedBrokerListString);
     // Detect broker failures.

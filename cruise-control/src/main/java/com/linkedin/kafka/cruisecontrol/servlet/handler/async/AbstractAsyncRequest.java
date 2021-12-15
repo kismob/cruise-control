@@ -4,6 +4,7 @@
 
 package com.linkedin.kafka.cruisecontrol.servlet.handler.async;
 
+import com.linkedin.kafka.cruisecontrol.CruiseControlEndPoints;
 import com.linkedin.kafka.cruisecontrol.async.AsyncKafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.async.progress.OperationProgress;
 import com.linkedin.kafka.cruisecontrol.async.progress.Pending;
@@ -69,17 +70,11 @@ public abstract class AbstractAsyncRequest extends AbstractRequest {
   @Override
   public void configure(Map<String, ?> configs) {
     super.configure(configs);
-    if (_servlet != null) {
-      _asyncKafkaCruiseControl = _servlet.asyncKafkaCruiseControl();
-      _asyncOperationStep = _servlet.asyncOperationStep();
-      _userTaskManager = _servlet.userTaskManager();
-      _maxBlockMs = _asyncKafkaCruiseControl.config().getLong(WebServerConfig.WEBSERVER_REQUEST_MAX_BLOCK_TIME_MS_CONFIG);
-    } else {
-      _asyncKafkaCruiseControl = _endPoints.asyncKafkaCruiseControl();
-      _asyncOperationStep = _endPoints.asyncOperationStep();
-      _userTaskManager = _endPoints.userTaskManager();
-      _maxBlockMs = _asyncKafkaCruiseControl.config().getLong(WebServerConfig.WEBSERVER_REQUEST_MAX_BLOCK_TIME_MS_CONFIG);
-    }
+    CruiseControlEndPoints cruiseControlEndPoints = _servlet == null ? _endPoints.cruiseControlEndPoints() : _servlet.cruiseControlEndPoints();
+    _asyncKafkaCruiseControl = cruiseControlEndPoints.asyncKafkaCruiseControl();
+    _asyncOperationStep = cruiseControlEndPoints.asyncOperationStep();
+    _userTaskManager = cruiseControlEndPoints.userTaskManager();
+    _maxBlockMs = cruiseControlEndPoints.config().getLong(WebServerConfig.WEBSERVER_REQUEST_MAX_BLOCK_TIME_MS_CONFIG);
   }
 
   protected void pending(OperationProgress progress) {

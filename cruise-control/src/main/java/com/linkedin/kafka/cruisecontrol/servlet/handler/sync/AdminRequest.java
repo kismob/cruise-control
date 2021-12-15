@@ -5,6 +5,7 @@
 package com.linkedin.kafka.cruisecontrol.servlet.handler.sync;
 
 import com.linkedin.cruisecontrol.detector.AnomalyType;
+import com.linkedin.kafka.cruisecontrol.CruiseControlEndPoints;
 import com.linkedin.kafka.cruisecontrol.KafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.executor.ConcurrencyType;
 import com.linkedin.kafka.cruisecontrol.servlet.parameters.AdminParameters;
@@ -224,11 +225,8 @@ public class AdminRequest extends AbstractSyncRequest {
   @Override
   public void configure(Map<String, ?> configs) {
     super.configure(configs);
-    if (_servlet != null) {
-      _kafkaCruiseControl = _servlet.asyncKafkaCruiseControl();
-    } else {
-      _kafkaCruiseControl = _endPoints.asyncKafkaCruiseControl();
-    }
+    CruiseControlEndPoints cruiseControlEndPoints = _servlet == null ? _endPoints.cruiseControlEndPoints() : _servlet.cruiseControlEndPoints();
+    _kafkaCruiseControl = cruiseControlEndPoints.asyncKafkaCruiseControl();
     _parameters = (AdminParameters) validateNotNull(configs.get(ADMIN_PARAMETER_OBJECT_CONFIG),
                                                     "Parameter configuration is missing from the request.");
   }

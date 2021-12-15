@@ -42,7 +42,7 @@ public final class AnomalyUtils {
   /**
    * Check whether the load monitor state is ready -- i.e. not in loading or bootstrapping state.
    *
-   * @param loadMonitorTaskRunnerState load monitor task runner state.
+   * @param loadMonitorTaskRunnerState Load monitor task runner state.
    * @return {@code true} if the load monitor is ready, {@code false} otherwise.
    */
   public static boolean isLoadMonitorReady(LoadMonitorTaskRunner.LoadMonitorTaskRunnerState loadMonitorTaskRunnerState) {

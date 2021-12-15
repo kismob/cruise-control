@@ -4,6 +4,7 @@
 
 package com.linkedin.kafka.cruisecontrol.servlet.handler.sync;
 
+import com.linkedin.kafka.cruisecontrol.CruiseControlEndPoints;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager;
 import com.linkedin.kafka.cruisecontrol.servlet.parameters.UserTasksParameters;
@@ -42,16 +43,10 @@ public class UserTasksRequest extends AbstractSyncRequest {
   @Override
   public void configure(Map<String, ?> configs) {
     super.configure(configs);
-    if (_servlet != null) {
-      _userTasks = _servlet.getAllUserTasks();
-      _config = _servlet.asyncKafkaCruiseControl().config();
-      _parameters = (UserTasksParameters) validateNotNull(configs.get(USER_TASKS_PARAMETER_OBJECT_CONFIG),
-              "Parameter configuration is missing from the request.");
-    } else {
-      _userTasks = _endPoints.getAllUserTasks();
-      _config = _endPoints.asyncKafkaCruiseControl().config();
-      _parameters = (UserTasksParameters) validateNotNull(configs.get(USER_TASKS_PARAMETER_OBJECT_CONFIG),
-              "Parameter configuration is missing from the request.");
-    }
+    CruiseControlEndPoints cruiseControlEndPoints = _servlet == null ? _endPoints.cruiseControlEndPoints() : _servlet.cruiseControlEndPoints();
+    _userTasks = cruiseControlEndPoints.getAllUserTasks();
+    _config = cruiseControlEndPoints.asyncKafkaCruiseControl().config();
+    _parameters = (UserTasksParameters) validateNotNull(configs.get(USER_TASKS_PARAMETER_OBJECT_CONFIG),
+            "Parameter configuration is missing from the request.");
   }
 }

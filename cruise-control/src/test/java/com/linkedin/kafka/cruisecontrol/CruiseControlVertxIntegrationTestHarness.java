@@ -13,8 +13,7 @@ import com.linkedin.kafka.cruisecontrol.metricsreporter.utils.CCEmbeddedBroker;
 import com.linkedin.kafka.cruisecontrol.metricsreporter.utils.CCKafkaIntegrationTestHarness;
 import com.linkedin.kafka.cruisecontrol.monitor.sampling.KafkaSampleStore;
 import com.linkedin.kafka.cruisecontrol.servlet.response.ClusterBrokerState;
-import com.linkedin.kafka.cruisecontrol.vertx.EndPoints;
-import com.linkedin.kafka.cruisecontrol.vertx.SwaggerEndPoints;
+import com.linkedin.kafka.cruisecontrol.vertx.SwaggerApi;
 import kafka.server.KafkaConfig;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -94,7 +93,7 @@ public class CruiseControlVertxIntegrationTestHarness extends CCKafkaIntegration
         kafkaCruiseControl.startUp();
         _vertxApp = new KafkaCruiseControlVertxApp(_config, new ServerSocket(0).getLocalPort(), LOCALHOST,
                 kafkaCruiseControl, metricRegistry);
-        SwaggerEndPoints endPoints = null;
+        SwaggerApi endPoints = null;
         ClusterBrokerState clusterBrokerState =
                 new ClusterBrokerState(kafkaCruiseControl.kafkaCluster(),
                         kafkaCruiseControl.adminClient(), kafkaCruiseControl.config());

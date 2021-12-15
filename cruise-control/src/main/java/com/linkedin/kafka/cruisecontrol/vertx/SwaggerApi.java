@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public interface SwaggerEndPoints {
+public interface SwaggerApi {
 
     @Operation(summary = "Gives partition healthiness on the cluster.", method = "GET", operationId = "kafka_cluster_state",
             tags = {
@@ -819,14 +819,4 @@ public interface SwaggerEndPoints {
     void rightsize(RoutingContext context);
 
     void destroy();
-
-    AsyncKafkaCruiseControl asyncKafkaCruiseControl();
-
-    Map<EndPoint, Timer> successfulRequestExecutionTimer();
-
-    ThreadLocal<Integer> asyncOperationStep();
-
-    UserTaskManager userTaskManager();
-
-    List<UserTaskManager.UserTaskInfo> getAllUserTasks();
 }

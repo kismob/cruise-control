@@ -89,7 +89,6 @@ public class KafkaCruiseControl {
   private static final String VERSION;
   private static final String COMMIT_ID;
   private static final boolean FORCE_PAUSE_SAMPLING = false;
-  //  private boolean _isRunning = false;
 
   // Referenced similar method to get software version in Kafka code.
   static {
@@ -296,7 +295,7 @@ public class KafkaCruiseControl {
           }
         } else {
           throw new IllegalStateException(String.format("Cannot execute new proposals while there are ongoing partition reassignments "
-                + "initiated by external agent: %s", partitionsBeingReassigned));
+                  + "initiated by external agent: %s", partitionsBeingReassigned));
         }
       }
     }
