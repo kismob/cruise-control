@@ -59,7 +59,7 @@ public class MainVerticle extends AbstractVerticle {
   @Override
   public void start(Future<Void> startFuture) throws Exception {
 
-    _endPoints = new EndPoints(_asynckafkaCruiseControl, _dropwizardMetricRegistry);
+    _endPoints = new VertxHandler(_asynckafkaCruiseControl, _dropwizardMetricRegistry);
 
     _server = vertx.createHttpServer(createOptions());
     _server.requestHandler(configurationRouter()::accept);

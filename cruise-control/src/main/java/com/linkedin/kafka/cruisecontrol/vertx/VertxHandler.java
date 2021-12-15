@@ -37,12 +37,12 @@ import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServlet
 import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.requestParameterFor;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.hasValidParameterNames;
 
-public class EndPoints implements SwaggerApi {
+public class VertxHandler implements SwaggerApi {
 
-    private static final Logger LOG = LoggerFactory.getLogger(EndPoints.class);
+    private static final Logger LOG = LoggerFactory.getLogger(VertxHandler.class);
     protected final CruiseControlEndPoints _cruiseControlEndPoints;
 
-    public EndPoints(AsyncKafkaCruiseControl asynckafkaCruiseControl, MetricRegistry dropwizardMetricRegistry) {
+    public VertxHandler(AsyncKafkaCruiseControl asynckafkaCruiseControl, MetricRegistry dropwizardMetricRegistry) {
         _cruiseControlEndPoints = new CruiseControlEndPoints(asynckafkaCruiseControl, dropwizardMetricRegistry);
     }
 

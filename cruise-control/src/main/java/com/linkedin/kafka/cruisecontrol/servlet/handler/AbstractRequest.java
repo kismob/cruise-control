@@ -9,7 +9,7 @@ import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
 import com.linkedin.cruisecontrol.servlet.response.CruiseControlResponse;
 import com.linkedin.cruisecontrol.httframeworkhandler.HttpFrameworkHandler;
 import com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServlet;
-import com.linkedin.kafka.cruisecontrol.vertx.EndPoints;
+import com.linkedin.kafka.cruisecontrol.vertx.VertxHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Map;
@@ -21,7 +21,7 @@ import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServlet
 public abstract class AbstractRequest implements Request {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractRequest.class);
   protected KafkaCruiseControlServlet _servlet;
-  protected EndPoints _endPoints;
+  protected VertxHandler _vertxHandler;
 
   /**
    * Handle the request and populate the response.
@@ -61,8 +61,8 @@ public abstract class AbstractRequest implements Request {
       _servlet = (KafkaCruiseControlServlet) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG),
               "Kafka Cruise Control vertx configuration is missing from the request.");
     }
-    if (configs.get(KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG).getClass().equals(EndPoints.class)) {
-      _endPoints = (EndPoints) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG),
+    if (configs.get(KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG).getClass().equals(VertxHandler.class)) {
+      _vertxHandler = (VertxHandler) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG),
               "Kafka Cruise Control vertx configuration is missing from the request.");
     }
   }
