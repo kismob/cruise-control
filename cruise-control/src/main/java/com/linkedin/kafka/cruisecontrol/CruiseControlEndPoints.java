@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 LinkedIn Corp. Licensed under the BSD 2-Clause License (the "License"). See License in the project root for license information.
+ */
+
 package com.linkedin.kafka.cruisecontrol;
 
 import com.codahale.metrics.Meter;
@@ -10,7 +14,6 @@ import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
 import com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager;
 import com.linkedin.kafka.cruisecontrol.servlet.purgatory.Purgatory;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -46,7 +49,8 @@ public class CruiseControlEndPoints {
     }
 
     //only for tests
-    public CruiseControlEndPoints(AsyncKafkaCruiseControl asynckafkaCruiseControl, MetricRegistry dropwizardMetricRegistry, UserTaskManager userTaskManager) {
+    public CruiseControlEndPoints(AsyncKafkaCruiseControl asynckafkaCruiseControl,
+                                  MetricRegistry dropwizardMetricRegistry, UserTaskManager userTaskManager) {
         _config = asynckafkaCruiseControl.config();
         _asyncKafkaCruiseControl = asynckafkaCruiseControl;
         _twoStepVerification = _config.getBoolean(WebServerConfig.TWO_STEP_VERIFICATION_ENABLED_CONFIG);
@@ -91,10 +95,17 @@ public class CruiseControlEndPoints {
         return _requestMeter;
     }
 
+    /**
+     *
+     * @return is_twoStepVerification
+     */
     public boolean twoStepVerification() {
         return _twoStepVerification;
     }
 
+    /**
+     * Destroys the UserTaskManager and the Purgatory.
+     */
     public void destroy() {
         _userTaskManager.close();
         if (_purgatory != null) {

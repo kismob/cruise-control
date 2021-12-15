@@ -15,5 +15,5 @@
   <suppress checks="MissingJavadocMethod" files="OpenApiRoutePublisher.java"/>
   <suppress checks="MissingJavadocMethod" files=".*Test.*.java"/>
   <suppress checks="MissingJavadocMethod" files="VertxPath.java"/>
-  <suppress checks="LineLength" files="SwaggerEndPoints.java"/>
+  <suppress checks="LineLength" files="SwaggerApi.java"/>
 </suppressions>

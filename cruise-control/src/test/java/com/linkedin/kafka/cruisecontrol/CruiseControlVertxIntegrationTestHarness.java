@@ -13,7 +13,7 @@ import com.linkedin.kafka.cruisecontrol.metricsreporter.utils.CCEmbeddedBroker;
 import com.linkedin.kafka.cruisecontrol.metricsreporter.utils.CCKafkaIntegrationTestHarness;
 import com.linkedin.kafka.cruisecontrol.monitor.sampling.KafkaSampleStore;
 import com.linkedin.kafka.cruisecontrol.servlet.response.ClusterBrokerState;
-import com.linkedin.kafka.cruisecontrol.vertx.SwaggerApi;
+import com.linkedin.kafka.cruisecontrol.vertx.EndPoints;
 import kafka.server.KafkaConfig;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -93,7 +93,7 @@ public class CruiseControlVertxIntegrationTestHarness extends CCKafkaIntegration
         kafkaCruiseControl.startUp();
         _vertxApp = new KafkaCruiseControlVertxApp(_config, new ServerSocket(0).getLocalPort(), LOCALHOST,
                 kafkaCruiseControl, metricRegistry);
-        SwaggerApi endPoints = null;
+        EndPoints endPoints = null;
         ClusterBrokerState clusterBrokerState =
                 new ClusterBrokerState(kafkaCruiseControl.kafkaCluster(),
                         kafkaCruiseControl.adminClient(), kafkaCruiseControl.config());
@@ -104,9 +104,9 @@ public class CruiseControlVertxIntegrationTestHarness extends CCKafkaIntegration
                     new ClusterBrokerState(kafkaCruiseControl.kafkaCluster(),
                             kafkaCruiseControl.adminClient(), kafkaCruiseControl.config());
         }
-        endPoints = _vertxApp.getVerticle().getEndPoints();
+        endPoints = (EndPoints) _vertxApp.getVerticle().getEndPoints();
         _servletApp = new KafkaCruiseControlServletApp(_config, new ServerSocket(0).getLocalPort(), LOCALHOST,
-                kafkaCruiseControl, metricRegistry, endPoints.userTaskManager());
+                kafkaCruiseControl, metricRegistry, endPoints.cruiseControlEndPoints()._userTaskManager);
         Properties properties = new Properties();
         properties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers());
         _adminClient = AdminClient.create(properties);

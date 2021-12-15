@@ -4,10 +4,6 @@
 
 package com.linkedin.kafka.cruisecontrol.vertx;
 
-import com.codahale.metrics.Timer;
-import com.linkedin.cruisecontrol.servlet.EndPoint;
-import com.linkedin.kafka.cruisecontrol.async.AsyncKafkaCruiseControl;
-import com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -17,10 +13,6 @@ import io.swagger.v3.oas.annotations.media.Encoding;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.vertx.ext.web.RoutingContext;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 public interface SwaggerApi {
 
