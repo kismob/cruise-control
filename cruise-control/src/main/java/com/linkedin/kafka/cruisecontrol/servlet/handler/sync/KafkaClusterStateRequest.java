@@ -46,7 +46,7 @@ public class KafkaClusterStateRequest extends AbstractSyncRequest {
   @Override
   public void configure(Map<String, ?> configs) {
     super.configure(configs);
-    CruiseControlEndPoints cruiseControlEndPoints = _servlet == null ? _endPoints.cruiseControlEndPoints() : _servlet.cruiseControlEndPoints();
+    CruiseControlEndPoints cruiseControlEndPoints = _servlet == null ? _vertxHandler.cruiseControlEndPoints() : _servlet.cruiseControlEndPoints();
     _kafkaCluster = cruiseControlEndPoints.asyncKafkaCruiseControl().kafkaCluster();
     _topicConfigProvider = cruiseControlEndPoints.asyncKafkaCruiseControl().topicConfigProvider();
     _config = cruiseControlEndPoints.asyncKafkaCruiseControl().config();

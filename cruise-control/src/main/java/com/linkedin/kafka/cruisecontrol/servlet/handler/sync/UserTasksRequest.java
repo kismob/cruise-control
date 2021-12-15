@@ -43,7 +43,7 @@ public class UserTasksRequest extends AbstractSyncRequest {
   @Override
   public void configure(Map<String, ?> configs) {
     super.configure(configs);
-    CruiseControlEndPoints cruiseControlEndPoints = _servlet == null ? _endPoints.cruiseControlEndPoints() : _servlet.cruiseControlEndPoints();
+    CruiseControlEndPoints cruiseControlEndPoints = _servlet == null ? _vertxHandler.cruiseControlEndPoints() : _servlet.cruiseControlEndPoints();
     _userTasks = cruiseControlEndPoints.getAllUserTasks();
     _config = cruiseControlEndPoints.asyncKafkaCruiseControl().config();
     _parameters = (UserTasksParameters) validateNotNull(configs.get(USER_TASKS_PARAMETER_OBJECT_CONFIG),
