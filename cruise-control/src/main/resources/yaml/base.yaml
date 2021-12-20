@@ -3,46 +3,52 @@ info:
   title: Cruise Control API
   description: Cruise-control is the first of its kind to fully automate the dynamic workload rebalance and self-healing of a kafka cluster. It provides great value to Kafka users by simplifying the operation of Kafka clusters.
   version: 1.0.0
+servers:
+  - url: /{urlPrefix}
+    variables:
+      urlPrefix:
+        default: kafkacruisecontrol
+        description: REST API default url prefix, configured by webserver.api.urlprefix
 paths:
-  /kafkacruisecontrol/add_broker:
+  /add_broker:
     $ref: 'endpoints/addBroker.yaml#/AddBrokerEndpoint'
-  /kafkacruisecontrol/admin:
+  /admin:
     $ref: 'endpoints/admin.yaml#/AdminEndpoint'
-  /kafkacruisecontrol/bootstrap:
+  /bootstrap:
     $ref: 'endpoints/bootstrap.yaml#/BootstrapEndpoint'
-  /kafkacruisecontrol/demote_broker:
+  /demote_broker:
     $ref: 'endpoints/demoteBroker.yaml#/DemoteBrokerEndpoint'
-  /kafkacruisecontrol/fix_offline_replicas:
+  /fix_offline_replicas:
     $ref: 'endpoints/fixOfflineReplicas.yaml#/FixOfflineReplicasEndpoint'
-  /kafkacruisecontrol/kafka_cluster_state:
+  /kafka_cluster_state:
     $ref: 'endpoints/kafkaClusterState.yaml#/KafkaClusterStateEndpoint'
-  /kafkacruisecontrol/load:
+  /load:
     $ref: 'endpoints/load.yaml#/LoadEndpoint'
-  /kafkacruisecontrol/partition_load:
+  /partition_load:
     $ref: 'endpoints/partitionLoad.yaml#/PartitionLoadEndpoint'
-  /kafkacruisecontrol/pause_sampling:
+  /pause_sampling:
     $ref: 'endpoints/pauseSampling.yaml#/PauseSamplingEndpoint'
-  /kafkacruisecontrol/proposals:
+  /proposals:
     $ref: 'endpoints/proposals.yaml#/ProposalsEndpoint'
-  /kafkacruisecontrol/rebalance:
+  /rebalance:
     $ref: 'endpoints/rebalance.yaml#/RebalanceEndpoint'
-  /kafkacruisecontrol/remove_broker:
+  /remove_broker:
     $ref: 'endpoints/removeBroker.yaml#/RemoveBrokerEndpoint'
-  /kafkacruisecontrol/rightsize:
+  /rightsize:
     $ref: 'endpoints/rightsize.yaml#/RightsizeEndpoint'
-  /kafkacruisecontrol/resume_sampling:
+  /resume_sampling:
     $ref: 'endpoints/resumeSampling.yaml#/ResumeSamplingEndpoint'
-  /kafkacruisecontrol/review:
+  /review:
     $ref: 'endpoints/review.yaml#/ReviewEndpoint'
-  /kafkacruisecontrol/review_board:
+  /review_board:
     $ref: 'endpoints/reviewBoard.yaml#/ReviewBoardEndpoint'
-  /kafkacruisecontrol/state:
+  /state:
     $ref: 'endpoints/state.yaml#/StateEndpoint'
-  /kafkacruisecontrol/stop_proposal_execution:
+  /stop_proposal_execution:
     $ref: 'endpoints/stopProposalExecution.yaml#/StopProposalExecutionEndpoint'
-  /kafkacruisecontrol/topic_configuration:
+  /topic_configuration:
     $ref: 'endpoints/topicConfiguration.yaml#/TopicConfigurationEndpoint'
-  /kafkacruisecontrol/train:
+  /train:
     $ref: 'endpoints/train.yaml#/TrainEndpoint'
-  /kafkacruisecontrol/user_tasks:
+  /user_tasks:
     $ref: 'endpoints/userTasks.yaml#/UserTasksEndpoint'
