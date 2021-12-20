@@ -21,6 +21,7 @@ import io.vertx.ext.web.handler.StaticHandler;
 import io.vertx.ext.web.openapi.RouterBuilder;
 import io.vertx.ext.web.sstore.LocalSessionStore;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public class MainVerticle extends AbstractVerticle {
@@ -50,7 +51,7 @@ public class MainVerticle extends AbstractVerticle {
 
     _endPoints = new VertxHandler(_asynckafkaCruiseControl, _dropwizardMetricRegistry);
 
-    RouterBuilder.create(vertx, this.getClass().getClassLoader().getResource("yaml/base.yaml").toString(), asyncResult -> {
+    RouterBuilder.create(vertx, Objects.requireNonNull(this.getClass().getClassLoader().getResource("yaml/base.yaml")).toString(), asyncResult -> {
       if (!asyncResult.succeeded()) {
         throw new RuntimeException(asyncResult.cause());
       } else {
@@ -73,7 +74,7 @@ public class MainVerticle extends AbstractVerticle {
     if (_server == null) {
       return;
     }
-    _server.close();
+    _server.close((v) -> promise.complete());
   }
 
   private Router buildRouter(RouterBuilder builder) {
