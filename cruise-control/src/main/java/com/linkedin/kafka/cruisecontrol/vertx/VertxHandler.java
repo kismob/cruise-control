@@ -37,7 +37,7 @@ import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServlet
 import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.requestParameterFor;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.hasValidParameterNames;
 
-public class VertxHandler implements SwaggerApi {
+public class VertxHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(VertxHandler.class);
     protected final CruiseControlEndPoints _cruiseControlEndPoints;
@@ -46,9 +46,23 @@ public class VertxHandler implements SwaggerApi {
         _cruiseControlEndPoints = new CruiseControlEndPoints(asynckafkaCruiseControl, dropwizardMetricRegistry);
     }
 
-    @Override
+    /**
+     * Shuts down the handler.
+     */
     public void destroy() {
         _cruiseControlEndPoints.destroy();
+    }
+
+    /**
+     * Handles the request
+     * @param context is the request
+     */
+    public void handle(RoutingContext context) {
+        try {
+            doGetOrPost(context);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void doGetOrPost(RoutingContext context) throws IOException {
@@ -155,160 +169,6 @@ public class VertxHandler implements SwaggerApi {
         if (ccRequest != null) {
             // ccRequest would be null if request is added to Purgatory.
             ccRequest.handle(handler);
-        }
-    }
-
-    @Override
-    public void kafkaClusterState(RoutingContext context) {
-        try {
-            doGetOrPost(context);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void cruiseControlState(RoutingContext context) {
-        try {
-            doGetOrPost(context);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    @Override
-    public void load(RoutingContext context) {
-        try {
-            doGetOrPost(context);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void userTasks(RoutingContext context) {
-        try {
-            doGetOrPost(context);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void partitionLoad(RoutingContext context) {
-        try {
-            doGetOrPost(context);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void proposals(RoutingContext context) {
-        try {
-            doGetOrPost(context);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void rebalance(RoutingContext context) {
-        try {
-            doGetOrPost(context);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void addBroker(RoutingContext context) {
-        try {
-            doGetOrPost(context);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void removeBroker(RoutingContext context) {
-        try {
-            doGetOrPost(context);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void fixOfflineReplicas(RoutingContext context) {
-        try {
-            doGetOrPost(context);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void demoteBroker(RoutingContext context) {
-        try {
-            doGetOrPost(context);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void stopProposalExecution(RoutingContext context) {
-        try {
-            doGetOrPost(context);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void pauseSampling(RoutingContext context) {
-        try {
-            doGetOrPost(context);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    @Override
-    public void resumeSampling(RoutingContext context) {
-        try {
-            doGetOrPost(context);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    @Override
-    public void topicConfiguration(RoutingContext context) {
-        try {
-            doGetOrPost(context);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void admin(RoutingContext context) {
-        try {
-            doGetOrPost(context);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void rightsize(RoutingContext context) {
-        try {
-            doGetOrPost(context);
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
