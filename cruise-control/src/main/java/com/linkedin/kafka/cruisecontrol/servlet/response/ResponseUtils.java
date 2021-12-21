@@ -8,7 +8,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.linkedin.cruisecontrol.httframeworkhandler.HttpFrameworkHandler;
+import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestHandler;
 import com.linkedin.kafka.cruisecontrol.KafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
@@ -124,7 +124,7 @@ public final class ResponseUtils {
    * @param wantJsonSchema {@code true} for json error response, {@code false} otherwise.
    * @param config The configurations for Cruise Control.
    */
-  public static void writeErrorResponse(HttpFrameworkHandler<KafkaCruiseControlConfig> handler,
+  public static void writeErrorResponse(CruiseControlRequestHandler<KafkaCruiseControlConfig> handler,
                                         Exception e,
                                         String errorMessage,
                                         int responseCode,

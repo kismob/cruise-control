@@ -9,7 +9,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.linkedin.cruisecontrol.servlet.EndPoint;
 import com.linkedin.cruisecontrol.servlet.EndpointType;
-import com.linkedin.cruisecontrol.httframeworkhandler.HttpFrameworkHandler;
+import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestHandler;
 import com.linkedin.kafka.cruisecontrol.config.constants.UserTaskManagerConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlHttpSession;
@@ -219,7 +219,7 @@ public class UserTaskManager implements Closeable {
    * @param parameters Parsed parameters from http request, or null if the parsing result is unavailable.
    * @return An unmodifiable list of {@link OperationFuture} for the linked UserTask.
    */
-  public List<OperationFuture> getOrCreateUserTask(HttpFrameworkHandler handler,
+  public List<OperationFuture> getOrCreateUserTask(CruiseControlRequestHandler handler,
                                                    Function<String, OperationFuture> function,
                                                    int step,
                                                    boolean isAsyncRequest,
@@ -255,7 +255,7 @@ public class UserTaskManager implements Closeable {
     }
   }
 
-  private void createSessionKeyMapping(UUID userTaskId, HttpFrameworkHandler handler) {
+  private void createSessionKeyMapping(UUID userTaskId, CruiseControlRequestHandler handler) {
     SessionKey sessionKey = new SessionKey(handler);
     LOG.info("Create a new UserTask {} with SessionKey {}", userTaskId, sessionKey);
     synchronized (_sessionKeyToUserTaskIdMap) {
@@ -271,7 +271,7 @@ public class UserTaskManager implements Closeable {
    * @return The future from the given request.
    */
   @SuppressWarnings("unchecked")
-  public <T> T getFuture(HttpFrameworkHandler handler) {
+  public <T> T getFuture(CruiseControlRequestHandler handler) {
     UUID userTaskId = getUserTaskId(handler);
     UserTaskInfo userTaskInfo = getUserTaskByUserTaskId(userTaskId, handler);
     List<OperationFuture> operationFutures = null;
@@ -320,7 +320,7 @@ public class UserTaskManager implements Closeable {
    * @param handler the HttpServletRequest to fetch the User-Task-ID and HTTPSession.
    * @return UUID of the user tasks or null if user task doesn't exist.
    */
-  public UUID getUserTaskId(HttpFrameworkHandler handler) {
+  public UUID getUserTaskId(CruiseControlRequestHandler handler) {
     String userTaskIdString = handler.getHeader(USER_TASK_HEADER_NAME);
     UUID userTaskId;
     if (userTaskIdString != null && !userTaskIdString.isEmpty()) {
@@ -441,7 +441,7 @@ public class UserTaskManager implements Closeable {
    * @param handler the HttpServletRequest.
    * @return User task by user task id.
    */
-  public synchronized UserTaskInfo getUserTaskByUserTaskId(UUID userTaskId, HttpFrameworkHandler handler) {
+  public synchronized UserTaskInfo getUserTaskByUserTaskId(UUID userTaskId, CruiseControlRequestHandler handler) {
     if (userTaskId == null) {
       return null;
     }
@@ -485,7 +485,7 @@ public class UserTaskManager implements Closeable {
    */
   private synchronized UserTaskInfo insertFuturesByUserTaskId(UUID userTaskId,
                                                               Function<String, OperationFuture> operation,
-                                                              HttpFrameworkHandler handler,
+                                                              CruiseControlRequestHandler handler,
                                                               CruiseControlParameters parameters) {
     if (_uuidToActiveUserTaskInfoMap.containsKey(userTaskId)) {
       _uuidToActiveUserTaskInfoMap.get(userTaskId).futures().add(operation.apply(userTaskId.toString()));
@@ -565,7 +565,7 @@ public class UserTaskManager implements Closeable {
     private final String _requestUrl;
     private final Map<String, Set<String>> _queryParams;
 
-    SessionKey(HttpFrameworkHandler<KafkaCruiseControlConfig> handler) {
+    SessionKey(CruiseControlRequestHandler<KafkaCruiseControlConfig> handler) {
       _session = handler.getSession();
       _requestUrl = httpServletRequestToString(handler);
       _queryParams = new HashMap<>();
@@ -647,7 +647,7 @@ public class UserTaskManager implements Closeable {
     private TaskState _state;
     private final CruiseControlParameters _parameters;
 
-    public UserTaskInfo(HttpFrameworkHandler handler,
+    public UserTaskInfo(CruiseControlRequestHandler handler,
                         List<OperationFuture> futures,
                         long startMs,
                         UUID userTaskId,

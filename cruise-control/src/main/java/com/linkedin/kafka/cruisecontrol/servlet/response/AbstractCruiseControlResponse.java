@@ -7,7 +7,7 @@ package com.linkedin.kafka.cruisecontrol.servlet.response;
 import com.linkedin.cruisecontrol.servlet.response.CruiseControlResponse;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
-import com.linkedin.cruisecontrol.httframeworkhandler.HttpFrameworkHandler;
+import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestHandler;
 import java.io.IOException;
 
 import static javax.servlet.http.HttpServletResponse.SC_OK;
@@ -28,7 +28,7 @@ public abstract class AbstractCruiseControlResponse implements CruiseControlResp
   protected abstract void discardIrrelevantAndCacheRelevant(CruiseControlParameters parameters);
 
   @Override
-  public void writeSuccessResponse(CruiseControlParameters parameters, HttpFrameworkHandler handler) throws IOException {
+  public void writeSuccessResponse(CruiseControlParameters parameters, CruiseControlRequestHandler handler) throws IOException {
     boolean json = parameters.json();
     boolean wantResponseSchema = parameters.wantResponseSchema();
     discardIrrelevantResponse(parameters);

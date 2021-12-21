@@ -5,7 +5,7 @@
 package com.linkedin.cruisecontrol.servlet.handler;
 
 import com.linkedin.cruisecontrol.common.CruiseControlConfigurable;
-import com.linkedin.cruisecontrol.httframeworkhandler.HttpFrameworkHandler;
+import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestHandler;
 
 
 /**
@@ -19,6 +19,6 @@ public interface Request extends CruiseControlConfigurable {
    * @param handler The request handler
    * Handle the request and populate the response.
    */
-  void handle(HttpFrameworkHandler handler)
+  void handle(CruiseControlRequestHandler handler)
           throws Exception;
 }

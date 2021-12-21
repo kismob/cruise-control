@@ -7,8 +7,8 @@ package com.linkedin.kafka.cruisecontrol.servlet.handler;
 import com.linkedin.cruisecontrol.servlet.handler.Request;
 import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
 import com.linkedin.cruisecontrol.servlet.response.CruiseControlResponse;
-import com.linkedin.cruisecontrol.httframeworkhandler.HttpFrameworkHandler;
-import com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServlet;
+import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestHandler;
+import com.linkedin.kafka.cruisecontrol.servlet.ServletRequestHandler;
 import com.linkedin.kafka.cruisecontrol.vertx.VertxHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +20,7 @@ import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServlet
 
 public abstract class AbstractRequest implements Request {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractRequest.class);
-  protected KafkaCruiseControlServlet _servlet;
+  protected ServletRequestHandler _servlet;
   protected VertxHandler _vertxHandler;
 
   /**
@@ -28,7 +28,7 @@ public abstract class AbstractRequest implements Request {
    *
    */
   @Override
-  public void handle(HttpFrameworkHandler handler)
+  public void handle(CruiseControlRequestHandler handler)
           throws Exception {
 
     if (parameters().parseParameters(handler)) {
@@ -50,15 +50,15 @@ public abstract class AbstractRequest implements Request {
    *
    * @return Response of the requests.
    */
-  protected abstract CruiseControlResponse getResponse(HttpFrameworkHandler handler)
+  protected abstract CruiseControlResponse getResponse(CruiseControlRequestHandler handler)
           throws Exception;
 
   public abstract CruiseControlParameters parameters();
 
   @Override
   public void configure(Map<String, ?> configs) {
-    if (configs.get(KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG).getClass().equals(KafkaCruiseControlServlet.class)) {
-      _servlet = (KafkaCruiseControlServlet) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG),
+    if (configs.get(KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG).getClass().equals(ServletRequestHandler.class)) {
+      _servlet = (ServletRequestHandler) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG),
               "Kafka Cruise Control vertx configuration is missing from the request.");
     }
     if (configs.get(KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG).getClass().equals(VertxHandler.class)) {

@@ -6,7 +6,7 @@ package com.linkedin.kafka.cruisecontrol.servlet.purgatory;
 
 import com.linkedin.cruisecontrol.servlet.EndPoint;
 import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
-import com.linkedin.cruisecontrol.httframeworkhandler.HttpFrameworkHandler;
+import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestHandler;
 import com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils;
 import com.linkedin.kafka.cruisecontrol.servlet.response.JsonResponseClass;
 import com.linkedin.kafka.cruisecontrol.servlet.response.JsonResponseField;
@@ -53,7 +53,7 @@ public class RequestInfo {
   private volatile String _reason;
   private volatile boolean _accessToAlreadySubmittedRequest;
 
-  public <P extends CruiseControlParameters> RequestInfo(HttpFrameworkHandler handler, P parameters) {
+  public <P extends CruiseControlParameters> RequestInfo(CruiseControlRequestHandler handler, P parameters) {
     if (handler == null) {
       throw new IllegalArgumentException("Request is missing from the request info.");
     } else if (parameters == null) {

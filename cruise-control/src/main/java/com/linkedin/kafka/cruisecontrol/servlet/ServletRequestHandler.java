@@ -12,7 +12,6 @@ import com.linkedin.kafka.cruisecontrol.CruiseControlEndPoints;
 import com.linkedin.kafka.cruisecontrol.async.AsyncKafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.config.RequestParameterWrapper;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
-import com.linkedin.kafka.cruisecontrol.httpframeworkhandler.ServletHttpFrameworkHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import javax.servlet.http.HttpServlet;
@@ -31,18 +30,18 @@ import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils
 /**
  * The servlet for Kafka Cruise Control.
  */
-public class KafkaCruiseControlServlet extends HttpServlet {
+public class ServletRequestHandler extends HttpServlet {
 
-  private static final Logger LOG = LoggerFactory.getLogger(KafkaCruiseControlServlet.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ServletRequestHandler.class);
   protected final CruiseControlEndPoints _cruiseControlEndPoints;
 
-  public KafkaCruiseControlServlet(AsyncKafkaCruiseControl asynckafkaCruiseControl, MetricRegistry dropwizardMetricRegistry) {
+  public ServletRequestHandler(AsyncKafkaCruiseControl asynckafkaCruiseControl, MetricRegistry dropwizardMetricRegistry) {
     _cruiseControlEndPoints = new CruiseControlEndPoints(asynckafkaCruiseControl, dropwizardMetricRegistry);
   }
 
   //only for tests
-  public KafkaCruiseControlServlet(AsyncKafkaCruiseControl asynckafkaCruiseControl,
-                                   MetricRegistry dropwizardMetricRegistry, UserTaskManager userTaskManager) {
+  public ServletRequestHandler(AsyncKafkaCruiseControl asynckafkaCruiseControl,
+                               MetricRegistry dropwizardMetricRegistry, UserTaskManager userTaskManager) {
     _cruiseControlEndPoints = new CruiseControlEndPoints(asynckafkaCruiseControl, dropwizardMetricRegistry, userTaskManager);
   }
 

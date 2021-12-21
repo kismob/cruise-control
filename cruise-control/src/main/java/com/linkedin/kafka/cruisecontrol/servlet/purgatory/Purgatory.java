@@ -5,7 +5,7 @@
 package com.linkedin.kafka.cruisecontrol.servlet.purgatory;
 
 import com.linkedin.kafka.cruisecontrol.common.KafkaCruiseControlThreadFactory;
-import com.linkedin.cruisecontrol.httframeworkhandler.HttpFrameworkHandler;
+import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestHandler;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
@@ -78,7 +78,7 @@ public class Purgatory implements Closeable {
    * @param <P> Type corresponding to the request parameters.
    * @return The result showing the {@link ReviewResult} for the request that has been added to the purgatory.
    */
-  private synchronized <P extends CruiseControlParameters> ReviewResult addRequest(HttpFrameworkHandler handler,
+  private synchronized <P extends CruiseControlParameters> ReviewResult addRequest(CruiseControlRequestHandler handler,
                                                                                    P parameters) {
     if (!handler.getMethod().equals(POST_METHOD)) {
       throw new IllegalArgumentException(String.format("Purgatory can only contain POST request (Attempted to add: %s).",
@@ -112,7 +112,7 @@ public class Purgatory implements Closeable {
    * @return Parameters of the request if it is in the purgatory, and requested with the corresponding reviewId,
    * {@code null} otherwise.
    */
-  public CruiseControlParameters maybeAddToPurgatory(HttpFrameworkHandler handler,
+  public CruiseControlParameters maybeAddToPurgatory(CruiseControlRequestHandler handler,
                                                      String classConfig,
                                                      Map<String, Object> parameterConfigOverrides,
                                                      UserTaskManager userTaskManager) throws IOException {
@@ -140,7 +140,7 @@ public class Purgatory implements Closeable {
     }
   }
 
-  private static void sanityCheckSubmittedRequest(HttpFrameworkHandler handler, RequestInfo requestInfo, UserTaskManager userTaskManager) {
+  private static void sanityCheckSubmittedRequest(CruiseControlRequestHandler handler, RequestInfo requestInfo, UserTaskManager userTaskManager) {
     if (requestInfo.accessToAlreadySubmittedRequest()
         && userTaskManager.getUserTaskByUserTaskId(userTaskManager.getUserTaskId(handler), handler) == null) {
       throw new UserRequestException(
@@ -165,7 +165,7 @@ public class Purgatory implements Closeable {
    * @param handler the request handler.
    * @return Submitted request info.
    */
-  public synchronized RequestInfo submit(int reviewId, HttpFrameworkHandler handler) {
+  public synchronized RequestInfo submit(int reviewId, CruiseControlRequestHandler handler) {
     RequestInfo requestInfo = _requestInfoById.get(reviewId);
     // 1. Ensure that a request with the given review id exists in the purgatory.
     if (requestInfo == null) {

@@ -4,8 +4,7 @@
 
 package com.linkedin.kafka.cruisecontrol.servlet;
 
-import com.linkedin.kafka.cruisecontrol.httpframeworkhandler.ServletHttpFrameworkHandler;
-import com.linkedin.kafka.cruisecontrol.httpframeworkhandler.VertxHttpFrameworkHandler;
+import com.linkedin.kafka.cruisecontrol.vertx.VertxRequestHandler;
 import com.linkedin.kafka.cruisecontrol.servlet.handler.async.runnable.OperationFuture;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpMethod;
@@ -175,7 +174,7 @@ public class UserTaskManagerTest {
     RoutingContext context = prepareVertxRequest(mockHttpSession, null, "test", requestParams1, response);
     //    Capture<String> userTaskHeader = Capture.newInstance();
     //    Capture<String> userTaskHeaderValue = Capture.newInstance();
-    VertxHttpFrameworkHandler handler1 = new VertxHttpFrameworkHandler(context);
+    VertxRequestHandler handler1 = new VertxRequestHandler(context);
     EasyMock.expect(response.putHeader(EasyMock.anyString(),
             EasyMock.anyString())).andReturn(EasyMock.mock(Http1xServerResponse.class)).anyTimes();
     //response.putHeader(EasyMock.capture(userTaskHeader), EasyMock.capture(userTaskHeaderValue));
@@ -184,7 +183,7 @@ public class UserTaskManagerTest {
     requestParams2.put("param", new String[]{"true"});
     Http1xServerResponse response2 = EasyMock.mock(Http1xServerResponse.class);
     RoutingContext context2 = prepareVertxRequest(mockHttpSession, null, "test", requestParams2, response2);
-    VertxHttpFrameworkHandler handler2 = new VertxHttpFrameworkHandler(context2);
+    VertxRequestHandler handler2 = new VertxRequestHandler(context2);
     EasyMock.expect(response2.putHeader(EasyMock.anyString(),
             EasyMock.anyString())).andReturn(EasyMock.mock(Http1xServerResponse.class)).anyTimes();
     //handler2.setHeader(EasyMock.capture(userTaskHeader), EasyMock.capture(userTaskHeaderValue));
@@ -193,7 +192,7 @@ public class UserTaskManagerTest {
     requestParams3.put("param", new String[]{"true"});
     Http1xServerResponse response3 = EasyMock.mock(Http1xServerResponse.class);
     RoutingContext context3 = prepareVertxRequest(mockHttpSession, testUserTaskId.toString(), "test", requestParams3, response3);
-    VertxHttpFrameworkHandler handler3 = new VertxHttpFrameworkHandler(context3);
+    VertxRequestHandler handler3 = new VertxRequestHandler(context3);
     EasyMock.expect(response3.putHeader(EasyMock.anyString(),
             EasyMock.anyString())).andReturn(EasyMock.mock(Http1xServerResponse.class)).anyTimes();
     //handler3.setHeader(EasyMock.capture(userTaskHeader), EasyMock.capture(userTaskHeaderValue));
@@ -383,7 +382,7 @@ public class UserTaskManagerTest {
     UserTaskManager userTaskManager = new UserTaskManager(1000, 1, TimeUnit.HOURS.toMillis(6),
             100, mockTime, mockUuidGenerator);
 
-    VertxHttpFrameworkHandler vertxHandler = new VertxHttpFrameworkHandler(mockContext);
+    VertxRequestHandler vertxHandler = new VertxRequestHandler(mockContext);
     EasyMock.expect(mockVertxResponse.putHeader(UserTaskManager.USER_TASK_HEADER_NAME,
             testUserTaskId.toString())).andReturn(mockVertxResponse).anyTimes();
 

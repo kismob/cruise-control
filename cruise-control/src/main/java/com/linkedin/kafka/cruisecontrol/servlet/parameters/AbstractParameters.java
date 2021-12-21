@@ -13,9 +13,9 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import com.linkedin.cruisecontrol.httframeworkhandler.HttpFrameworkHandler;
-import com.linkedin.kafka.cruisecontrol.httpframeworkhandler.ServletHttpFrameworkHandler;
-import com.linkedin.kafka.cruisecontrol.httpframeworkhandler.VertxHttpFrameworkHandler;
+import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestHandler;
+import com.linkedin.kafka.cruisecontrol.servlet.ServletHttpFrameworkHandler;
+import com.linkedin.kafka.cruisecontrol.vertx.VertxRequestHandler;
 import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +46,7 @@ public abstract class AbstractParameters implements CruiseControlParameters {
     CASE_INSENSITIVE_PARAMETER_NAMES = Collections.unmodifiableSortedSet(validParameterNames);
 
   }
-  protected HttpFrameworkHandler _handler;
+  protected CruiseControlRequestHandler _handler;
   protected boolean _initialized = false;
   protected KafkaCruiseControlConfig _config;
   // Common to all parameters, expected to be populated via initParameters.
@@ -66,7 +66,7 @@ public abstract class AbstractParameters implements CruiseControlParameters {
   }
 
   @Override
-  public boolean parseParameters(HttpFrameworkHandler handler) {
+  public boolean parseParameters(CruiseControlRequestHandler handler) {
     if (_initialized) {
       LOG.trace("Attempt to parse an already parsed request {}.", _handler);
       return false;
@@ -111,7 +111,7 @@ public abstract class AbstractParameters implements CruiseControlParameters {
               (HttpServletRequest) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_HTTP_SERVLET_REQUEST_OBJECT_CONFIG),
               "HttpServletRequest configuration is missing from the request."), null);
     } else {
-      _handler = new VertxHttpFrameworkHandler((RoutingContext) validateNotNull(configs.get(ROUTING_CONTEXT_OBJECT_CONFIG),
+      _handler = new VertxRequestHandler((RoutingContext) validateNotNull(configs.get(ROUTING_CONTEXT_OBJECT_CONFIG),
               "HttpServletRequest configuration is missing from the request."));
     }
     _config = (KafkaCruiseControlConfig) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_CONFIG_OBJECT_CONFIG),

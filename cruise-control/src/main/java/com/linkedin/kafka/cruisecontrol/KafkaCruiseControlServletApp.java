@@ -7,7 +7,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.linkedin.kafka.cruisecontrol.async.AsyncKafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
-import com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServlet;
+import com.linkedin.kafka.cruisecontrol.servlet.ServletRequestHandler;
 import com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager;
 import com.linkedin.kafka.cruisecontrol.servlet.security.CruiseControlSecurityHandler;
 import com.linkedin.kafka.cruisecontrol.servlet.security.SecurityProvider;
@@ -42,7 +42,7 @@ public class KafkaCruiseControlServletApp extends KafkaCruiseControlApp {
 
         setupWebUi(contextHandler);
 
-        KafkaCruiseControlServlet servlet = new KafkaCruiseControlServlet(_kafkaCruiseControl, _metricRegistry);
+        ServletRequestHandler servlet = new ServletRequestHandler(_kafkaCruiseControl, _metricRegistry);
         String apiUrlPrefix = config.getString(WebServerConfig.WEBSERVER_API_URLPREFIX_CONFIG);
         ServletHolder servletHolder = new ServletHolder(servlet);
         contextHandler.addServlet(servletHolder, apiUrlPrefix);
@@ -67,7 +67,7 @@ public class KafkaCruiseControlServletApp extends KafkaCruiseControlApp {
 
         setupWebUi(contextHandler);
 
-        KafkaCruiseControlServlet servlet = new KafkaCruiseControlServlet(_kafkaCruiseControl, _metricRegistry, userTaskManager);
+        ServletRequestHandler servlet = new ServletRequestHandler(_kafkaCruiseControl, _metricRegistry, userTaskManager);
         String apiUrlPrefix = config.getString(WebServerConfig.WEBSERVER_API_URLPREFIX_CONFIG);
         ServletHolder servletHolder = new ServletHolder(servlet);
         contextHandler.addServlet(servletHolder, apiUrlPrefix);
