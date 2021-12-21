@@ -5,6 +5,7 @@ package com.linkedin.kafka.cruisecontrol.vertx;
 
 import com.codahale.metrics.MetricRegistry;
 import com.linkedin.kafka.cruisecontrol.async.AsyncKafkaCruiseControl;
+import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpMethod;
@@ -70,7 +71,6 @@ public class MainVerticle extends AbstractVerticle {
   public void stop(Promise<Void> promise) {
     _endPoints.destroy();
     if (_server == null) {
-      promise.complete();
       return;
     }
     _server.close();
@@ -94,6 +94,10 @@ public class MainVerticle extends AbstractVerticle {
     builder.operation("topicConfiguration").handler(_endPoints::handle);
     builder.operation("admin").handler(_endPoints::handle);
     builder.operation("rightsize").handler(_endPoints::handle);
+    builder.rootHandler(StaticHandler
+            .create()
+            .setCachingEnabled(false)
+            .setWebRoot("webroot/"));
     Router router = builder.createRouter();
 
     router.route().consumes(APPLICATION_JSON);
@@ -119,13 +123,15 @@ public class MainVerticle extends AbstractVerticle {
     router.route().handler(RoutingContext::next);
     router.route().failureHandler(ErrorHandler.create(vertx, true));
 
-    // Serve the Swagger UI out on /doc/index.html
-    router.route("/doc/*").handler(StaticHandler
-            .create()
-            .setCachingEnabled(false)
-            .setWebRoot("webroot/"));
+    Router root = Router.router(vertx);
+    String rootPath = _asynckafkaCruiseControl
+            .config()
+            .getString(WebServerConfig.WEBSERVER_API_URLPREFIX_CONFIG)
+            .trim()
+            .replace("/*", "/");
+    root.mountSubRouter(rootPath, router);
 
-    return router;
+    return root;
   }
 
   private HttpServerOptions createOptions() {
