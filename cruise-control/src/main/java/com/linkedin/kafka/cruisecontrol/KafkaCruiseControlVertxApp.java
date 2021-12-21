@@ -18,18 +18,19 @@ import java.util.concurrent.TimeUnit;
 public class KafkaCruiseControlVertxApp extends KafkaCruiseControlApp {
 
     protected static MainVerticle verticle;
+    private static Vertx vertx;
 
     KafkaCruiseControlVertxApp(KafkaCruiseControlConfig config, Integer port, String hostname) {
         super(config, port, hostname);
+        vertx = Vertx.vertx();
     }
 
     //visible for testing
     KafkaCruiseControlVertxApp(KafkaCruiseControlConfig config, Integer port,
                                String hostname, AsyncKafkaCruiseControl asyncKafkaCruiseControl, MetricRegistry metricRegistry) {
         super(config, port, hostname, asyncKafkaCruiseControl, metricRegistry);
-        Vertx vertx = Vertx.vertx();
+        vertx = Vertx.vertx();
         verticle = new MainVerticle(_kafkaCruiseControl, _metricRegistry, _port, _hostname);
-        vertx.deployVerticle(verticle);
     }
 
     @Override
@@ -39,21 +40,38 @@ public class KafkaCruiseControlVertxApp extends KafkaCruiseControlApp {
 
     @Override
     void start() {
-        CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch startupLatch = new CountDownLatch(1);
         if (LoadMonitorTaskRunner.LoadMonitorTaskRunnerState.NOT_STARTED
                 .equals(_kafkaCruiseControl.getLoadMonitorTaskRunnerState())) {
             _kafkaCruiseControl.startUp();
         }
-        Vertx vertx = Vertx.vertx();
+
         verticle = new MainVerticle(_kafkaCruiseControl, _metricRegistry, _port, _hostname);
         vertx.deployVerticle(verticle, event -> {
             if (event.failed()) {
-                throw new RuntimeException(event.cause());
+                throw new RuntimeException("Startup failed", event.cause());
             }
-            latch.countDown();
+            startupLatch.countDown();
         });
         try {
-            latch.await(1, TimeUnit.MINUTES);
+            startupLatch.await(1, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Startup interrupted", e);
+        }
+    }
+
+    @Override
+    void stop() {
+        CountDownLatch shutdownLatch = new CountDownLatch(1);
+        vertx.close(event -> {
+            super.stop();
+            if (event.failed()) {
+                throw new RuntimeException("Sutdown failed", event.cause());
+            }
+            shutdownLatch.countDown();
+        });
+        try {
+            shutdownLatch.await(1, TimeUnit.MINUTES);
         } catch (InterruptedException e) {
             throw new RuntimeException("Startup interrupted", e);
         }
@@ -66,5 +84,4 @@ public class KafkaCruiseControlVertxApp extends KafkaCruiseControlApp {
         }
         return verticle;
     }
-
 }
