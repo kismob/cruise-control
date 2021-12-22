@@ -165,7 +165,8 @@ public class KafkaCruiseControlServletEndpointTest {
     Map<String, String []> answerQueryParam1 = new HashMap<>();
     answerQueryParam1.put("param", new String[]{"true"});
     answerQueryParam1.put("endpoints", new String[]{PROPOSALS + "," + REBALANCE});
-    CruiseControlRequestHandler answerQueryRequest1 = prepareRequest(MOCK_HTTP_SESSION, null, "", USER_TASKS.toString(), answerQueryParam1, GET_METHOD);
+    CruiseControlRequestHandler answerQueryRequest1 = prepareRequest(MOCK_HTTP_SESSION, null, "",
+            USER_TASKS.toString(), answerQueryParam1, GET_METHOD);
     UserTasksParameters parameters1 = mockUserTasksParameters(answerQueryRequest1);
     List<UserTaskManager.UserTaskInfo> result1 = userTaskState.prepareResultList(parameters1);
     // Test Case 1 result
@@ -176,7 +177,8 @@ public class KafkaCruiseControlServletEndpointTest {
     Map<String, String []> answerQueryParam2 = new HashMap<>();
     answerQueryParam2.put("param", new String[]{"true"});
     answerQueryParam2.put("client_ids", new String[]{"0.0.0.1"});
-    CruiseControlRequestHandler answerQueryRequest2 = prepareRequest(MOCK_HTTP_SESSION, null, "", USER_TASKS.toString(), answerQueryParam2, GET_METHOD);
+    CruiseControlRequestHandler answerQueryRequest2 = prepareRequest(MOCK_HTTP_SESSION, null, "",
+            USER_TASKS.toString(), answerQueryParam2, GET_METHOD);
     UserTasksParameters parameters2 = mockUserTasksParameters(answerQueryRequest2);
     List<UserTaskManager.UserTaskInfo> result2 = userTaskState.prepareResultList(parameters2);
     // Test Case 2 result
@@ -188,7 +190,8 @@ public class KafkaCruiseControlServletEndpointTest {
     answerQueryParam3.put("param", new String[]{"true"});
     answerQueryParam3.put("client_ids", new String[]{"0.0.0.1"});
     answerQueryParam3.put("endpoints", new String[]{PROPOSALS + "," + REMOVE_BROKER});
-    CruiseControlRequestHandler answerQueryRequest3 = prepareRequest(MOCK_HTTP_SESSION, null, "", USER_TASKS.toString(), answerQueryParam3, GET_METHOD);
+    CruiseControlRequestHandler answerQueryRequest3 = prepareRequest(MOCK_HTTP_SESSION, null, "",
+            USER_TASKS.toString(), answerQueryParam3, GET_METHOD);
     UserTasksParameters parameters3 = mockUserTasksParameters(answerQueryRequest3);
     List<UserTaskManager.UserTaskInfo> result3 = userTaskState.prepareResultList(parameters3);
     // Test Case 3 result
@@ -199,7 +202,8 @@ public class KafkaCruiseControlServletEndpointTest {
     Map<String, String []> answerQueryParam4 = new HashMap<>();
     answerQueryParam4.put("param", new String[]{"true"});
     answerQueryParam4.put("entries", new String[]{"4"});
-    CruiseControlRequestHandler answerQueryRequest4 = prepareRequest(MOCK_HTTP_SESSION, null, "", USER_TASKS.toString(), answerQueryParam4, GET_METHOD);
+    CruiseControlRequestHandler answerQueryRequest4 = prepareRequest(MOCK_HTTP_SESSION, null, "",
+            USER_TASKS.toString(), answerQueryParam4, GET_METHOD);
     UserTasksParameters parameters4 = mockUserTasksParameters(answerQueryRequest4);
     List<UserTaskManager.UserTaskInfo> result4 = userTaskState.prepareResultList(parameters4);
     // Test Case 4 result
@@ -225,7 +229,8 @@ public class KafkaCruiseControlServletEndpointTest {
     answerQueryParam5.put("endpoints", new String[]{LOAD + "," + REMOVE_BROKER});
     answerQueryParam5.put("user_task_ids", new String[]{repeatUUID.toString()});
     answerQueryParam5.put("types", new String[]{UserTaskManager.TaskState.COMPLETED.toString()});
-    CruiseControlRequestHandler answerQueryRequest5 = prepareRequest(MOCK_HTTP_SESSION, null, "", USER_TASKS.toString(), answerQueryParam5, GET_METHOD);
+    CruiseControlRequestHandler answerQueryRequest5 = prepareRequest(MOCK_HTTP_SESSION, null, "",
+            USER_TASKS.toString(), answerQueryParam5, GET_METHOD);
     UserTasksParameters parameters5 = mockUserTasksParameters(answerQueryRequest5);
     List<UserTaskManager.UserTaskInfo> result5 = userTaskState2.prepareResultList(parameters5);
     // Test Case 5 result
@@ -250,7 +255,8 @@ public class KafkaCruiseControlServletEndpointTest {
 
   @SuppressWarnings("unchecked")
   private CruiseControlRequestHandler prepareTestRequest(HttpSession session, Object userTaskId, Object clientId, Object resource,
-                                                         Object params, UserTaskManager.UuidGenerator mockUuidGenerator, Object addToRequest, Object method) {
+                                                         Object params, UserTaskManager.UuidGenerator mockUuidGenerator,
+                                                         Object addToRequest, Object method) {
 
     UUID uuidForGenerator = (userTaskId == null ? UUID.randomUUID() : (UUID) userTaskId);
     String uuidForRequest = (((Boolean) addToRequest && userTaskId != null) ? userTaskId.toString() : null);

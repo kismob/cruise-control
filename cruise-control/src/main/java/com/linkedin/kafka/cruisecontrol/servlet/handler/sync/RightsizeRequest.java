@@ -4,7 +4,6 @@
 
 package com.linkedin.kafka.cruisecontrol.servlet.handler.sync;
 
-import com.linkedin.kafka.cruisecontrol.CruiseControlEndPoints;
 import com.linkedin.kafka.cruisecontrol.KafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.analyzer.ProvisionRecommendation;
 import com.linkedin.kafka.cruisecontrol.analyzer.ProvisionStatus;
@@ -97,8 +96,7 @@ public class RightsizeRequest extends AbstractSyncRequest {
   @Override
   public void configure(Map<String, ?> configs) {
     super.configure(configs);
-    CruiseControlEndPoints cruiseControlEndPoints = _servlet == null ? _vertxHandler.cruiseControlEndPoints() : _servlet.cruiseControlEndPoints();
-    _kafkaCruiseControl = cruiseControlEndPoints.asyncKafkaCruiseControl();
+    _kafkaCruiseControl = getCruiseControlEndpoints().asyncKafkaCruiseControl();
     _parameters = (RightsizeParameters) validateNotNull(configs.get(RIGHTSIZE_PARAMETER_OBJECT_CONFIG),
                                                         "Parameter configuration is missing from the request.");
   }

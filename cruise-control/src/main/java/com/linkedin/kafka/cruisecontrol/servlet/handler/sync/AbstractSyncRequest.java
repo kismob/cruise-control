@@ -59,8 +59,14 @@ public abstract class AbstractSyncRequest extends AbstractRequest {
   @Override
   public void configure(Map<String, ?> configs) {
     super.configure(configs);
-    CruiseControlEndPoints cruiseControlEndPoints = _servlet == null ? _vertxHandler.cruiseControlEndPoints() : _servlet.cruiseControlEndPoints();
+    CruiseControlEndPoints cruiseControlEndPoints = getCruiseControlEndpoints();
     _userTaskManager = cruiseControlEndPoints.userTaskManager();
     _successfulRequestExecutionTimer = cruiseControlEndPoints.successfulRequestExecutionTimer();
+  }
+
+  protected CruiseControlEndPoints getCruiseControlEndpoints() {
+    return _servletRequestHandler == null
+            ? _vertxRequestHandler.cruiseControlEndPoints()
+            : _servletRequestHandler.cruiseControlEndPoints();
   }
 }

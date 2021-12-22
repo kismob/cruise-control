@@ -4,143 +4,174 @@
 
 package com.linkedin.kafka.cruisecontrol.vertx;
 
-import com.google.gson.Gson;
-import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlHttpSession;
-import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestHandler;
-import com.linkedin.kafka.cruisecontrol.KafkaCruiseControl;
-import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
-import com.linkedin.kafka.cruisecontrol.servlet.response.ResponseUtils;
-import io.vertx.core.MultiMap;
+import com.codahale.metrics.MetricRegistry;
+import com.linkedin.cruisecontrol.common.config.ConfigException;
+import com.linkedin.cruisecontrol.servlet.handler.Request;
+import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
+import com.linkedin.kafka.cruisecontrol.CruiseControlEndPoints;
+import com.linkedin.kafka.cruisecontrol.async.AsyncKafkaCruiseControl;
+import com.linkedin.kafka.cruisecontrol.config.RequestParameterWrapper;
+import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
+import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
+import com.linkedin.kafka.cruisecontrol.servlet.UserRequestException;
+import org.slf4j.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
+import org.slf4j.Logger;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager.USER_TASK_HEADER_NAME;
-import static com.linkedin.kafka.cruisecontrol.servlet.response.ResponseUtils.getJsonSchema;
+import static com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint.REVIEW;
+import static com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint.REVIEW_BOARD;
+import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.GET_METHOD;
+import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.KAFKA_CRUISE_CONTROL_CONFIG_OBJECT_CONFIG;
+import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.KAFKA_CRUISE_CONTROL_HTTP_SERVLET_REQUEST_OBJECT_CONFIG;
+import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG;
+import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.POST_METHOD;
+import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.ROUTING_CONTEXT_OBJECT_CONFIG;
+import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.getValidEndpoint;
+import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.handleConfigException;
+import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.handleException;
+import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.handleUserRequestException;
+import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.requestParameterFor;
+import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.hasValidParameterNames;
 
-public class VertxRequestHandler implements CruiseControlRequestHandler<KafkaCruiseControlConfig> {
+public class VertxRequestHandler {
 
-    protected RoutingContext _context;
+    private static final Logger LOG = LoggerFactory.getLogger(VertxRequestHandler.class);
+    protected final CruiseControlEndPoints _cruiseControlEndPoints;
 
-    private final CruiseControlHttpSession _session;
-
-    public VertxRequestHandler(RoutingContext context) {
-        super();
-        _context = context;
-        _session = new VertxSession(context.session());
-    }
-
-    @Override
-    public String getRequestURL() {
-        return String.format("%s %s", _context.request().method(), _context.request().uri().split("\\?")[0]);
-    }
-
-    @Override
-    public String getUserTaskIdString() {
-        return _context.request().getHeader(USER_TASK_HEADER_NAME);
-    }
-
-    @Override
-    public String getMethod() {
-        return _context.request().method().toString();
-    }
-
-    @Override
-    public String getPathInfo() {
-        return _context.request().uri().split("\\?")[0];
-    }
-
-    @Override
-    public String getClientIdentity() {
-        return getVertxClientIpAddress(_context);
-    }
-
-    @Override
-    public MultiMap getHeaders() {
-        return _context.request().headers();
-    }
-
-    @Override
-    public String getHeader(String header) {
-        return _context.request().getHeader(header);
-    }
-
-    @Override
-    public String getRemoteAddr() {
-        return _context.request().remoteAddress().toString().split(":")[0];
-    }
-
-    @Override
-    public Map<String, String[]> getParameterMap() {
-        return getVertxQueryParamsMap(_context);
-    }
-
-    @Override
-    public String getRequestUri() {
-        return _context.request().uri();
-    }
-
-    @Override
-    public String getParameter(String parameter) {
-        return _context.queryParams().get(parameter);
-    }
-
-    @Override
-    public void writeResponseToOutputStream(int responseCode, boolean json, boolean wantJsonSchema, String responseMessage,
-                                            KafkaCruiseControlConfig config) throws IOException {
-        ResponseUtils.setResponseCode(_context, responseCode, config);
-        _context.response().putHeader("Cruise-Control-Version", KafkaCruiseControl.cruiseControlVersion());
-        _context.response().putHeader("Cruise-Control-Commit_Id", KafkaCruiseControl.cruiseControlCommitId());
-        if (json && wantJsonSchema) {
-            _context.response().putHeader("Cruise-Control-JSON-Schema", getJsonSchema(responseMessage));
-        }
-        _context.response()
-                .end(responseMessage);
-    }
-
-    @Override
-    public CruiseControlHttpSession getSession() {
-        return _session;
-    }
-
-    @Override
-    public String getRequestURI() {
-        return _context.request().uri().split("\\?")[0];
-    }
-
-    @Override
-    public Map<String, Object> getJson() {
-        Gson gson = new Gson();
-        return gson.fromJson(_context.getBodyAsString(), Map.class);
-    }
-
-    @Override
-    public void setHeader(String key, String value) {
-        _context.response().putHeader(key, value);
+    public VertxRequestHandler(AsyncKafkaCruiseControl asynckafkaCruiseControl, MetricRegistry dropwizardMetricRegistry) {
+        _cruiseControlEndPoints = new CruiseControlEndPoints(asynckafkaCruiseControl, dropwizardMetricRegistry);
     }
 
     /**
-     * Makes a Map from the query parameters of RoutingContext.
-     *
-     * @param context The routing context
-     * @return Returns the query parameter map
+     * Shuts down the handler.
      */
-    public static Map<String, String[]> getVertxQueryParamsMap(RoutingContext context) {
-        Map<String, String[]> queryParamsMap = new HashMap<>();
-        for (Map.Entry<String, String> entry : context.queryParams().entries()) {
-            queryParamsMap.put(entry.getKey(), new String[]{entry.getValue()});
-        }
-        return queryParamsMap;
+    public void destroy() {
+        _cruiseControlEndPoints.destroy();
     }
 
-    private String getVertxClientIpAddress(RoutingContext context) {
-        for (String header : HEADERS_TO_TRY) {
-            String ip = context.request().getHeader(header);
-            if (ip != null && ip.length() != 0 && !"unknown".equalsIgnoreCase(ip)) {
-                return "[" + ip + "]";
-            }
+    /**
+     * Handles the request
+     * @param context is the request
+     */
+    public void handle(RoutingContext context) {
+        try {
+            doGetOrPost(context);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        return "[" + context.request().remoteAddress().host() + "]";
+    }
+
+    private void doGetOrPost(RoutingContext context) throws IOException {
+        VertxRequestContext handler = new VertxRequestContext(context);
+        try {
+            _cruiseControlEndPoints.asyncOperationStep().set(0);
+            CruiseControlEndPoint endPoint = getValidEndpoint(handler, _cruiseControlEndPoints.config());
+            if (endPoint != null) {
+                _cruiseControlEndPoints.requestMeter().get(endPoint).mark();
+                Map<String, Object> requestConfigOverrides = new HashMap<>();
+                requestConfigOverrides.put(KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG, this);
+
+                Map<String, Object> parameterConfigOverrides = new HashMap<>();
+                parameterConfigOverrides.put(KAFKA_CRUISE_CONTROL_HTTP_SERVLET_REQUEST_OBJECT_CONFIG, context.request());
+                parameterConfigOverrides.put(KAFKA_CRUISE_CONTROL_CONFIG_OBJECT_CONFIG, _cruiseControlEndPoints.config());
+                parameterConfigOverrides.put(ROUTING_CONTEXT_OBJECT_CONFIG, context);
+                switch (context.request().method().toString()) {
+                    case GET_METHOD:
+                        handleGet(context, endPoint, requestConfigOverrides, parameterConfigOverrides);
+                        break;
+                    case POST_METHOD:
+                        handlePost(context, endPoint, requestConfigOverrides, parameterConfigOverrides);
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unsupported request method: " + context.request().method().toString() + ".");
+                }
+            }
+        } catch (UserRequestException ure) {
+            String errorMessage = handleUserRequestException(ure, handler, _cruiseControlEndPoints.config());
+            LOG.error(errorMessage, ure);
+        } catch (ConfigException ce) {
+            String errorMessage = handleConfigException(ce, handler, _cruiseControlEndPoints.config());
+            LOG.error(errorMessage, ce);
+        } catch (Exception e) {
+            String errorMessage = handleException(e, handler, _cruiseControlEndPoints.config());
+            LOG.error(errorMessage, e);
+        }
+    }
+
+    private void handleGet(RoutingContext context,
+                           CruiseControlEndPoint endPoint,
+                           Map<String, Object> requestConfigOverrides,
+                           Map<String, Object> parameterConfigOverrides)
+            throws Exception {
+        VertxRequestContext handler = new VertxRequestContext(context);
+        // Sanity check: if the request is for REVIEW_BOARD, two step verification must be enabled.
+        if (endPoint == REVIEW_BOARD && !_cruiseControlEndPoints.twoStepVerification()) {
+            throw new ConfigException(String.format("Attempt to access %s endpoint without enabling '%s' config.",
+                    endPoint, WebServerConfig.TWO_STEP_VERIFICATION_ENABLED_CONFIG));
+        }
+        RequestParameterWrapper requestParameter = requestParameterFor(endPoint);
+        CruiseControlParameters parameters = _cruiseControlEndPoints.config().getConfiguredInstance(requestParameter.parametersClass(),
+                CruiseControlParameters.class,
+                parameterConfigOverrides);
+        if (hasValidParameterNames(handler, _cruiseControlEndPoints.config(), parameters)) {
+            requestConfigOverrides.put(requestParameter.parameterObject(), parameters);
+            Request ccRequest = _cruiseControlEndPoints.config().getConfiguredInstance(requestParameter.requestClass(),
+                    Request.class, requestConfigOverrides);
+
+            ccRequest.handle(handler);
+        }
+    }
+
+    private void handlePost(RoutingContext context,
+                            CruiseControlEndPoint endPoint,
+                            Map<String, Object> requestConfigOverrides,
+                            Map<String, Object> parameterConfigOverrides)
+            throws Exception {
+        VertxRequestContext handler = new VertxRequestContext(context);
+        CruiseControlParameters parameters;
+        RequestParameterWrapper requestParameter = requestParameterFor(endPoint);
+        if (endPoint == REVIEW) {
+            // Sanity check: if the request is for REVIEW, two step verification must be enabled.
+            if (!_cruiseControlEndPoints.twoStepVerification()) {
+                throw new ConfigException(String.format("Attempt to access %s endpoint without enabling '%s' config.",
+                        endPoint, WebServerConfig.TWO_STEP_VERIFICATION_ENABLED_CONFIG));
+            }
+
+            parameters = _cruiseControlEndPoints.config().getConfiguredInstance(requestParameter.parametersClass(),
+                    CruiseControlParameters.class, parameterConfigOverrides);
+            if (!hasValidParameterNames(handler, _cruiseControlEndPoints.config(), parameters)) {
+                return;
+            }
+        } else if (!_cruiseControlEndPoints.twoStepVerification()) {
+            // Do not add to the purgatory if the two-step verification is disabled.
+            parameters = _cruiseControlEndPoints.config().getConfiguredInstance(requestParameter.parametersClass(),
+                    CruiseControlParameters.class, parameterConfigOverrides);
+            if (!hasValidParameterNames(handler, _cruiseControlEndPoints.config(), parameters)) {
+                return;
+            }
+        } else {
+            // Add to the purgatory if the two-step verification is enabled.
+            parameters = _cruiseControlEndPoints.purgatory().maybeAddToPurgatory(handler, requestParameter.parametersClass(),
+                    parameterConfigOverrides, _cruiseControlEndPoints.userTaskManager());
+        }
+
+        Request ccRequest = null;
+        if (parameters != null) {
+            requestConfigOverrides.put(requestParameter.parameterObject(), parameters);
+            ccRequest = _cruiseControlEndPoints.config().getConfiguredInstance(requestParameter.requestClass(),
+                    Request.class, requestConfigOverrides);
+        }
+
+        if (ccRequest != null) {
+            // ccRequest would be null if request is added to Purgatory.
+            ccRequest.handle(handler);
+        }
+    }
+
+    public CruiseControlEndPoints cruiseControlEndPoints() {
+        return _cruiseControlEndPoints;
     }
 }

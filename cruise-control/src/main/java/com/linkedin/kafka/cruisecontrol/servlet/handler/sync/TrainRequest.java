@@ -4,7 +4,6 @@
 
 package com.linkedin.kafka.cruisecontrol.servlet.handler.sync;
 
-import com.linkedin.kafka.cruisecontrol.CruiseControlEndPoints;
 import com.linkedin.kafka.cruisecontrol.KafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.servlet.parameters.TrainParameters;
 import com.linkedin.kafka.cruisecontrol.servlet.response.TrainResult;
@@ -41,8 +40,7 @@ public class TrainRequest extends AbstractSyncRequest {
   @Override
   public void configure(Map<String, ?> configs) {
     super.configure(configs);
-    CruiseControlEndPoints cruiseControlEndPoints = _servlet == null ? _vertxHandler.cruiseControlEndPoints() : _servlet.cruiseControlEndPoints();
-    _kafkaCruiseControl = cruiseControlEndPoints.asyncKafkaCruiseControl();
+    _kafkaCruiseControl = getCruiseControlEndpoints().asyncKafkaCruiseControl();
     _parameters = (TrainParameters) validateNotNull(configs.get(TRAIN_PARAMETER_OBJECT_CONFIG),
             "Parameter configuration is missing from the request.");
   }
