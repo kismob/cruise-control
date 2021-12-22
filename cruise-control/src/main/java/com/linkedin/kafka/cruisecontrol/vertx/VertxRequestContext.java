@@ -6,7 +6,7 @@ package com.linkedin.kafka.cruisecontrol.vertx;
 
 import com.google.gson.Gson;
 import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlHttpSession;
-import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestHandler;
+import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestContext;
 import com.linkedin.kafka.cruisecontrol.KafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.servlet.response.ResponseUtils;
@@ -16,10 +16,12 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.KAFKA_CRUISE_CONTROL_HTTP_SERVLET_REQUEST_OBJECT_CONFIG;
+import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.ROUTING_CONTEXT_OBJECT_CONFIG;
 import static com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager.USER_TASK_HEADER_NAME;
 import static com.linkedin.kafka.cruisecontrol.servlet.response.ResponseUtils.getJsonSchema;
 
-public class VertxRequestContext implements CruiseControlRequestHandler<KafkaCruiseControlConfig> {
+public class VertxRequestContext implements CruiseControlRequestContext<KafkaCruiseControlConfig> {
 
     protected RoutingContext _context;
 
@@ -118,6 +120,14 @@ public class VertxRequestContext implements CruiseControlRequestHandler<KafkaCru
     @Override
     public void setHeader(String key, String value) {
         _context.response().putHeader(key, value);
+    }
+
+    @Override
+    public Map<String, Object> getParameterConfigOverrides() {
+        Map<String, Object> overrides = new HashMap<>();
+        overrides.put(KAFKA_CRUISE_CONTROL_HTTP_SERVLET_REQUEST_OBJECT_CONFIG, _context.request());
+        overrides.put(ROUTING_CONTEXT_OBJECT_CONFIG, _context);
+        return overrides;
     }
 
     /**

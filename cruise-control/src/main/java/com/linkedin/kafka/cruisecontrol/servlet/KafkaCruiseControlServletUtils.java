@@ -6,7 +6,7 @@ package com.linkedin.kafka.cruisecontrol.servlet;
 
 import com.linkedin.cruisecontrol.common.config.ConfigException;
 import com.linkedin.cruisecontrol.servlet.EndPoint;
-import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestHandler;
+import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestContext;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.config.RequestParameterWrapper;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
@@ -169,7 +169,7 @@ public final class KafkaCruiseControlServletUtils {
    * @param handler the request handler.
    * @return The ip address of the client sending the request.
    */
-  public static String getClientIpAddress(CruiseControlRequestHandler handler) {
+  public static String getClientIpAddress(CruiseControlRequestContext handler) {
     for (String header : HEADERS_TO_TRY) {
       String ip = handler.getHeader(header);
       if (ip != null && ip.length() != 0 && !"unknown".equalsIgnoreCase(ip)) {
@@ -192,7 +192,7 @@ public final class KafkaCruiseControlServletUtils {
    * @return The endpoint if the request contains a valid one, otherwise (1) writes the error response to the given HTTP
    * response and (2) returns null.
    */
-  public static CruiseControlEndPoint getValidEndpoint(CruiseControlRequestHandler handler, KafkaCruiseControlConfig config)
+  public static CruiseControlEndPoint getValidEndpoint(CruiseControlRequestContext handler, KafkaCruiseControlConfig config)
       throws IOException {
     CruiseControlEndPoint endPoint = endPoint(handler);
     if (endPoint == null) {
@@ -215,7 +215,7 @@ public final class KafkaCruiseControlServletUtils {
    * @return The error message.
    */
   public static String handleUserRequestException(UserRequestException ure,
-                                                  CruiseControlRequestHandler handler,
+                                                  CruiseControlRequestContext handler,
                                                   KafkaCruiseControlConfig config)
       throws IOException {
     String errorMessage = String.format("Bad %s request '%s' due to '%s'.", handler.getMethod(), handler.getPathInfo(), ure.getMessage());
@@ -230,7 +230,7 @@ public final class KafkaCruiseControlServletUtils {
    * @return The error message.
    */
   public static String handleConfigException(ConfigException ce,
-                                             CruiseControlRequestHandler handler,
+                                             CruiseControlRequestContext handler,
                                              KafkaCruiseControlConfig config)
       throws IOException {
     String errorMessage = String.format("Cannot process %s request '%s' due to: '%s'.",
@@ -247,7 +247,7 @@ public final class KafkaCruiseControlServletUtils {
    * @return The error message.
    */
   public static String handleException(Exception e,
-                                       CruiseControlRequestHandler handler,
+                                       CruiseControlRequestContext handler,
                                        KafkaCruiseControlConfig config)
       throws IOException {
     String errorMessage = String.format("Error processing %s request '%s' due to: '%s'.",
@@ -282,7 +282,7 @@ public final class KafkaCruiseControlServletUtils {
    * @param handler HTTP request received by Cruise Control.
    * @param headerName a <code>String</code> specifying the header name
    */
-  static void ensureHeaderNotPresent(CruiseControlRequestHandler handler, String headerName) {
+  static void ensureHeaderNotPresent(CruiseControlRequestContext handler, String headerName) {
     String value = handler.getHeaders().get(headerName);
     if (value != null) {
       throw new IllegalArgumentException(String.format("Unexpected header %s (value: %s) in the request.", value, headerName));
@@ -296,7 +296,7 @@ public final class KafkaCruiseControlServletUtils {
     }
   }
 
-  public static String httpServletRequestToString(CruiseControlRequestHandler handler) {
+  public static String httpServletRequestToString(CruiseControlRequestContext handler) {
     return String.format("%s %s", handler.getMethod(), handler.getRequestURI());
   }
 

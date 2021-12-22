@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestHandler;
+import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestContext;
 import com.linkedin.kafka.cruisecontrol.servlet.ServletRequestContext;
 import com.linkedin.kafka.cruisecontrol.vertx.VertxRequestContext;
 import io.vertx.ext.web.RoutingContext;
@@ -46,7 +46,7 @@ public abstract class AbstractParameters implements CruiseControlParameters {
     CASE_INSENSITIVE_PARAMETER_NAMES = Collections.unmodifiableSortedSet(validParameterNames);
 
   }
-  protected CruiseControlRequestHandler _handler;
+  protected CruiseControlRequestContext _handler;
   protected boolean _initialized = false;
   protected KafkaCruiseControlConfig _config;
   // Common to all parameters, expected to be populated via initParameters.
@@ -66,7 +66,7 @@ public abstract class AbstractParameters implements CruiseControlParameters {
   }
 
   @Override
-  public boolean parseParameters(CruiseControlRequestHandler handler) {
+  public boolean parseParameters(CruiseControlRequestContext handler) {
     if (_initialized) {
       LOG.trace("Attempt to parse an already parsed request {}.", _handler);
       return false;

@@ -4,7 +4,7 @@
 
 package com.linkedin.cruisecontrol.servlet.response;
 
-import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestHandler;
+import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestContext;
 import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
 import java.io.IOException;
 
@@ -23,7 +23,7 @@ public interface CruiseControlResponse {
      * @param handler The request handler
      */
 
-    void writeSuccessResponse(CruiseControlParameters parameters, CruiseControlRequestHandler<?> handler) throws IOException;
+    void writeSuccessResponse(CruiseControlParameters parameters, CruiseControlRequestContext<?> handler) throws IOException;
 
     /**
     * Based on the given parameters, keep the relevant response to be returned to the user and discard the remaining.

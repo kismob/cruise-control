@@ -4,7 +4,7 @@
 
 package com.linkedin.kafka.cruisecontrol.servlet.parameters;
 
-import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestHandler;
+import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestContext;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.ExecutorConfig;
 import java.util.Collections;
@@ -26,7 +26,7 @@ public class ParameterUtilsTest {
 
   @Test
   public void testParseTimeRangeSet() {
-    CruiseControlRequestHandler mockRequest = EasyMock.mock(CruiseControlRequestHandler.class);
+    CruiseControlRequestContext mockRequest = EasyMock.mock(CruiseControlRequestContext.class);
     Map<String, String[]> paramMap = new HashMap<>();
     paramMap.put(ParameterUtils.START_MS_PARAM, new String[]{ParameterUtils.START_MS_PARAM});
     paramMap.put(ParameterUtils.END_MS_PARAM, new String[]{ParameterUtils.END_MS_PARAM});
@@ -58,7 +58,7 @@ public class ParameterUtilsTest {
     String secondResponse = Boolean.FALSE.toString();
 
     // Mock for (1) default response (2) response for valid input with true/false.
-    CruiseControlRequestHandler mockRequest = EasyMock.mock(CruiseControlRequestHandler.class);
+    CruiseControlRequestContext mockRequest = EasyMock.mock(CruiseControlRequestContext.class);
     EasyMock.expect(mockRequest.getParameterMap()).andReturn(Collections.emptyMap())
             .andReturn(Collections.singletonMap(ParameterUtils.MIN_ISR_BASED_CONCURRENCY_ADJUSTMENT_PARAM, new String[]{firstResponse}))
             .andReturn(Collections.singletonMap(ParameterUtils.MIN_ISR_BASED_CONCURRENCY_ADJUSTMENT_PARAM, new String[]{secondResponse}));
@@ -83,7 +83,7 @@ public class ParameterUtilsTest {
 
   @Test
   public void testParseTimeRangeNotSet() {
-    CruiseControlRequestHandler mockRequest = EasyMock.mock(CruiseControlRequestHandler.class);
+    CruiseControlRequestContext mockRequest = EasyMock.mock(CruiseControlRequestContext.class);
     // Mock the request so that it does not contain start/end time
     EasyMock.expect(mockRequest.getParameterMap()).andReturn(Collections.emptyMap()).times(4);
     EasyMock.replay(mockRequest);
@@ -103,7 +103,7 @@ public class ParameterUtilsTest {
 
   @Test
   public void testParseReplicationThrottleWithNoDefault() {
-    CruiseControlRequestHandler mockRequest = EasyMock.mock(CruiseControlRequestHandler.class);
+    CruiseControlRequestContext mockRequest = EasyMock.mock(CruiseControlRequestContext.class);
     KafkaCruiseControlConfig controlConfig = EasyMock.mock(KafkaCruiseControlConfig.class);
 
     Map<String, String[]> paramMap = Collections.singletonMap(
@@ -124,7 +124,7 @@ public class ParameterUtilsTest {
 
   @Test
   public void testParseReplicationThrottleWithDefault() {
-    CruiseControlRequestHandler mockRequest = EasyMock.mock(CruiseControlRequestHandler.class);
+    CruiseControlRequestContext mockRequest = EasyMock.mock(CruiseControlRequestContext.class);
     KafkaCruiseControlConfig controlConfig = EasyMock.mock(KafkaCruiseControlConfig.class);
     // No parameter string value in the parameter map
     EasyMock.expect(mockRequest.getParameterMap()).andReturn(Collections.emptyMap()).once();
@@ -139,7 +139,7 @@ public class ParameterUtilsTest {
 
   @Test
   public void testParseExecutionProgressCheckIntervalMsNoValue() {
-    CruiseControlRequestHandler mockRequest = EasyMock.mock(CruiseControlRequestHandler.class);
+    CruiseControlRequestContext mockRequest = EasyMock.mock(CruiseControlRequestContext.class);
     EasyMock.expect(mockRequest.getParameterMap()).andReturn(Collections.emptyMap()).once();
     EasyMock.replay(mockRequest);
     Assert.assertNull(ParameterUtils.executionProgressCheckIntervalMs(mockRequest));
@@ -148,7 +148,7 @@ public class ParameterUtilsTest {
 
   @Test
   public void testParseExecutionProgressCheckIntervalMsWithValue() {
-    CruiseControlRequestHandler mockRequest = EasyMock.mock(CruiseControlRequestHandler.class);
+    CruiseControlRequestContext mockRequest = EasyMock.mock(CruiseControlRequestContext.class);
 
     Map<String, String[]> paramMap = Collections.singletonMap(
         ParameterUtils.EXECUTION_PROGRESS_CHECK_INTERVAL_MS_PARAM,

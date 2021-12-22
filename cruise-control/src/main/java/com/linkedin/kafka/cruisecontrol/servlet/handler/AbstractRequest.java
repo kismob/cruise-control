@@ -7,7 +7,7 @@ package com.linkedin.kafka.cruisecontrol.servlet.handler;
 import com.linkedin.cruisecontrol.servlet.handler.Request;
 import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
 import com.linkedin.cruisecontrol.servlet.response.CruiseControlResponse;
-import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestHandler;
+import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestContext;
 import com.linkedin.kafka.cruisecontrol.servlet.ServletRequestHandler;
 import com.linkedin.kafka.cruisecontrol.vertx.VertxRequestHandler;
 import org.slf4j.Logger;
@@ -28,7 +28,7 @@ public abstract class AbstractRequest implements Request {
    *
    */
   @Override
-  public void handle(CruiseControlRequestHandler handler)
+  public void handle(CruiseControlRequestContext handler)
           throws Exception {
 
     if (parameters().parseParameters(handler)) {
@@ -50,7 +50,7 @@ public abstract class AbstractRequest implements Request {
    *
    * @return Response of the requests.
    */
-  protected abstract CruiseControlResponse getResponse(CruiseControlRequestHandler handler)
+  protected abstract CruiseControlResponse getResponse(CruiseControlRequestContext handler)
           throws Exception;
 
   public abstract CruiseControlParameters parameters();

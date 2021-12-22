@@ -4,7 +4,7 @@
 
 package com.linkedin.kafka.cruisecontrol.servlet;
 
-import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestHandler;
+import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestContext;
 import com.linkedin.kafka.cruisecontrol.servlet.handler.async.runnable.OperationFuture;
 import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
 import com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils;
@@ -51,7 +51,7 @@ public class KafkaCruiseControlServletEndpointTest {
   private static final Collection<Object[]> POPULATE_USER_TASK_MANAGER_OUTPUT = new ArrayList<>();
   private static final UserTaskManager.UuidGenerator MOCK_UUID_GENERATOR;
   private static final HttpSession MOCK_HTTP_SESSION;
-  private static final CruiseControlRequestHandler MOCK_HTTP_SERVLET_RESPONSE;
+  private static final CruiseControlRequestContext MOCK_HTTP_SERVLET_RESPONSE;
   private static final UserTaskManager USER_TASK_MANAGER;
 
   private static final String[] PARAMS_TO_GET = {
@@ -68,7 +68,7 @@ public class KafkaCruiseControlServletEndpointTest {
     Time mockTime = new MockTime();
     MOCK_UUID_GENERATOR = EasyMock.mock(UserTaskManager.UuidGenerator.class);
     MOCK_HTTP_SESSION = EasyMock.mock(HttpSession.class);
-    MOCK_HTTP_SERVLET_RESPONSE = EasyMock.mock(CruiseControlRequestHandler.class);
+    MOCK_HTTP_SERVLET_RESPONSE = EasyMock.mock(CruiseControlRequestContext.class);
     EasyMock.expect(MOCK_HTTP_SESSION.getLastAccessedTime()).andReturn(mockTime.milliseconds()).anyTimes();
     MOCK_HTTP_SESSION.invalidate();
     MOCK_HTTP_SERVLET_RESPONSE.setHeader(EasyMock.anyString(), EasyMock.anyString());
@@ -80,7 +80,7 @@ public class KafkaCruiseControlServletEndpointTest {
   private static class MockResult implements CruiseControlResponse {
 
     @Override
-    public void writeSuccessResponse(CruiseControlParameters parameters, CruiseControlRequestHandler<?> handler) {
+    public void writeSuccessResponse(CruiseControlParameters parameters, CruiseControlRequestContext<?> handler) {
 
     }
 
@@ -99,11 +99,11 @@ public class KafkaCruiseControlServletEndpointTest {
     return new Object[]{userTaskId, clientId, endPoint, params, addToRequest, methodType};
   }
 
-  private static Object[] outputRequestInfo(CruiseControlRequestHandler mockHttpServletRequest) {
+  private static Object[] outputRequestInfo(CruiseControlRequestContext mockHttpServletRequest) {
     return new Object[]{mockHttpServletRequest};
   }
 
-  private static Object[] inputCreateTaskParams(CruiseControlRequestHandler request, Integer taskIndex, Integer futureIndex) {
+  private static Object[] inputCreateTaskParams(CruiseControlRequestContext request, Integer taskIndex, Integer futureIndex) {
     return new Object[]{request, taskIndex, futureIndex};
   }
 
@@ -127,17 +127,17 @@ public class KafkaCruiseControlServletEndpointTest {
     allParams.add(inputRequestParams(repeatUUID, "0.0.0.4", REMOVE_BROKER.toString(), EMPTY_PARAM, true, POST_METHOD));
 
     for (Object[] params : allParams) {
-      CruiseControlRequestHandler mockHttpServletRequest = prepareTestRequest(mockHttpSession, params[0], params[1], params[2],
+      CruiseControlRequestContext mockHttpServletRequest = prepareTestRequest(mockHttpSession, params[0], params[1], params[2],
                                                                      params[3], mockUuidGenerator, params[4], params[5]);
       INITIALIZE_SERVLET_REQUESTS_OUTPUT.add(outputRequestInfo(mockHttpServletRequest));
     }
   }
 
   // Create 5 User Tasks. Note the 5th and 6th one have same user task id, thus count as 1.
-  private void populateUserTaskManager(CruiseControlRequestHandler mockHttpFrameworkResponse, UserTaskManager userTaskManager) throws Exception {
+  private void populateUserTaskManager(CruiseControlRequestContext mockHttpFrameworkResponse, UserTaskManager userTaskManager) throws Exception {
     List<Object[]> allParams = new ArrayList<>();
     for (Object[] initInfo : INITIALIZE_SERVLET_REQUESTS_OUTPUT) {
-      allParams.add(inputCreateTaskParams((CruiseControlRequestHandler) initInfo[0], 0, 0));
+      allParams.add(inputCreateTaskParams((CruiseControlRequestContext) initInfo[0], 0, 0));
     }
     // for the 6th getOrCreateUserTask() call, we set step to 1 and get the 2nd future
     allParams.get(5)[1] = 1;
@@ -165,7 +165,7 @@ public class KafkaCruiseControlServletEndpointTest {
     Map<String, String []> answerQueryParam1 = new HashMap<>();
     answerQueryParam1.put("param", new String[]{"true"});
     answerQueryParam1.put("endpoints", new String[]{PROPOSALS + "," + REBALANCE});
-    CruiseControlRequestHandler answerQueryRequest1 = prepareRequest(MOCK_HTTP_SESSION, null, "",
+    CruiseControlRequestContext answerQueryRequest1 = prepareRequest(MOCK_HTTP_SESSION, null, "",
             USER_TASKS.toString(), answerQueryParam1, GET_METHOD);
     UserTasksParameters parameters1 = mockUserTasksParameters(answerQueryRequest1);
     List<UserTaskManager.UserTaskInfo> result1 = userTaskState.prepareResultList(parameters1);
@@ -177,7 +177,7 @@ public class KafkaCruiseControlServletEndpointTest {
     Map<String, String []> answerQueryParam2 = new HashMap<>();
     answerQueryParam2.put("param", new String[]{"true"});
     answerQueryParam2.put("client_ids", new String[]{"0.0.0.1"});
-    CruiseControlRequestHandler answerQueryRequest2 = prepareRequest(MOCK_HTTP_SESSION, null, "",
+    CruiseControlRequestContext answerQueryRequest2 = prepareRequest(MOCK_HTTP_SESSION, null, "",
             USER_TASKS.toString(), answerQueryParam2, GET_METHOD);
     UserTasksParameters parameters2 = mockUserTasksParameters(answerQueryRequest2);
     List<UserTaskManager.UserTaskInfo> result2 = userTaskState.prepareResultList(parameters2);
@@ -190,7 +190,7 @@ public class KafkaCruiseControlServletEndpointTest {
     answerQueryParam3.put("param", new String[]{"true"});
     answerQueryParam3.put("client_ids", new String[]{"0.0.0.1"});
     answerQueryParam3.put("endpoints", new String[]{PROPOSALS + "," + REMOVE_BROKER});
-    CruiseControlRequestHandler answerQueryRequest3 = prepareRequest(MOCK_HTTP_SESSION, null, "",
+    CruiseControlRequestContext answerQueryRequest3 = prepareRequest(MOCK_HTTP_SESSION, null, "",
             USER_TASKS.toString(), answerQueryParam3, GET_METHOD);
     UserTasksParameters parameters3 = mockUserTasksParameters(answerQueryRequest3);
     List<UserTaskManager.UserTaskInfo> result3 = userTaskState.prepareResultList(parameters3);
@@ -202,7 +202,7 @@ public class KafkaCruiseControlServletEndpointTest {
     Map<String, String []> answerQueryParam4 = new HashMap<>();
     answerQueryParam4.put("param", new String[]{"true"});
     answerQueryParam4.put("entries", new String[]{"4"});
-    CruiseControlRequestHandler answerQueryRequest4 = prepareRequest(MOCK_HTTP_SESSION, null, "",
+    CruiseControlRequestContext answerQueryRequest4 = prepareRequest(MOCK_HTTP_SESSION, null, "",
             USER_TASKS.toString(), answerQueryParam4, GET_METHOD);
     UserTasksParameters parameters4 = mockUserTasksParameters(answerQueryRequest4);
     List<UserTaskManager.UserTaskInfo> result4 = userTaskState.prepareResultList(parameters4);
@@ -229,7 +229,7 @@ public class KafkaCruiseControlServletEndpointTest {
     answerQueryParam5.put("endpoints", new String[]{LOAD + "," + REMOVE_BROKER});
     answerQueryParam5.put("user_task_ids", new String[]{repeatUUID.toString()});
     answerQueryParam5.put("types", new String[]{UserTaskManager.TaskState.COMPLETED.toString()});
-    CruiseControlRequestHandler answerQueryRequest5 = prepareRequest(MOCK_HTTP_SESSION, null, "",
+    CruiseControlRequestContext answerQueryRequest5 = prepareRequest(MOCK_HTTP_SESSION, null, "",
             USER_TASKS.toString(), answerQueryParam5, GET_METHOD);
     UserTasksParameters parameters5 = mockUserTasksParameters(answerQueryRequest5);
     List<UserTaskManager.UserTaskInfo> result5 = userTaskState2.prepareResultList(parameters5);
@@ -240,7 +240,7 @@ public class KafkaCruiseControlServletEndpointTest {
   }
 
   // Some how we cannot instantiate UserTasksParameters (fail at instantiating LOGGER object), so we mock it.
-  private static UserTasksParameters mockUserTasksParameters(CruiseControlRequestHandler answerQueryRequest) throws UnsupportedEncodingException {
+  private static UserTasksParameters mockUserTasksParameters(CruiseControlRequestContext answerQueryRequest) throws UnsupportedEncodingException {
     UserTasksParameters parameters = EasyMock.mock(UserTasksParameters.class);
     EasyMock.expect(parameters.userTaskIds()).andReturn(ParameterUtils.userTaskIds(answerQueryRequest)).anyTimes();
     EasyMock.expect(parameters.clientIds()).andReturn(ParameterUtils.clientIds(answerQueryRequest)).anyTimes();
@@ -254,7 +254,7 @@ public class KafkaCruiseControlServletEndpointTest {
   }
 
   @SuppressWarnings("unchecked")
-  private CruiseControlRequestHandler prepareTestRequest(HttpSession session, Object userTaskId, Object clientId, Object resource,
+  private CruiseControlRequestContext prepareTestRequest(HttpSession session, Object userTaskId, Object clientId, Object resource,
                                                          Object params, UserTaskManager.UuidGenerator mockUuidGenerator,
                                                          Object addToRequest, Object method) {
 
@@ -265,9 +265,9 @@ public class KafkaCruiseControlServletEndpointTest {
     return prepareRequest(session, uuidForRequest, (String) clientId, (String) resource, (Map<String, String []>) params, (String) method);
   }
 
-  private CruiseControlRequestHandler prepareRequest(HttpSession session, String userTaskId, String clientId, String resource,
+  private CruiseControlRequestContext prepareRequest(HttpSession session, String userTaskId, String clientId, String resource,
                                                      Map<String, String []> params, String method) {
-    CruiseControlRequestHandler request = EasyMock.mock(CruiseControlRequestHandler.class);
+    CruiseControlRequestContext request = EasyMock.mock(CruiseControlRequestContext.class);
 
     EasyMock.expect(request.getSession()).andReturn(new ServletSession(session)).anyTimes();
     EasyMock.expect(request.getMethod()).andReturn(method).anyTimes();
