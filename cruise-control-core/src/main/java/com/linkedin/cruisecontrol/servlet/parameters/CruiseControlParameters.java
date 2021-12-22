@@ -5,7 +5,7 @@
 package com.linkedin.cruisecontrol.servlet.parameters;
 
 import com.linkedin.cruisecontrol.common.CruiseControlConfigurable;
-import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestHandler;
+import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestContext;
 import com.linkedin.cruisecontrol.servlet.EndPoint;
 import java.util.SortedSet;
 
@@ -24,7 +24,7 @@ public interface CruiseControlParameters extends CruiseControlConfigurable {
    * @return {@code true} if there has been a failure to parse parameters, {@code false} otherwise. If the object is already initialized,
    *         directly return false.
    */
-  boolean parseParameters(CruiseControlRequestHandler handler);
+  boolean parseParameters(CruiseControlRequestContext handler);
   /**
    * @return Endpoint for which the parameters are parsed.
    */

@@ -8,7 +8,7 @@ import com.linkedin.kafka.cruisecontrol.CruiseControlEndPoints;
 import com.linkedin.kafka.cruisecontrol.async.AsyncKafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.async.progress.OperationProgress;
 import com.linkedin.kafka.cruisecontrol.async.progress.Pending;
-import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestHandler;
+import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestContext;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager;
 import com.linkedin.kafka.cruisecontrol.servlet.handler.AbstractRequest;
@@ -44,7 +44,7 @@ public abstract class AbstractAsyncRequest extends AbstractRequest {
   public abstract OperationFuture handle(String uuid);
 
   @Override
-  public CruiseControlResponse getResponse(CruiseControlRequestHandler handler)
+  public CruiseControlResponse getResponse(CruiseControlRequestContext handler)
           throws Exception {
     LOG.info("Processing async request {}.", name());
     int step = _asyncOperationStep.get();

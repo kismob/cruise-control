@@ -5,7 +5,7 @@
 package com.linkedin.kafka.cruisecontrol.servlet.handler.sync;
 
 import com.codahale.metrics.Timer;
-import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestHandler;
+import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestContext;
 import com.linkedin.kafka.cruisecontrol.CruiseControlEndPoints;
 import com.linkedin.kafka.cruisecontrol.servlet.handler.async.runnable.OperationFuture;
 import com.linkedin.cruisecontrol.servlet.EndPoint;
@@ -35,7 +35,7 @@ public abstract class AbstractSyncRequest extends AbstractRequest {
   protected abstract CruiseControlResponse handle();
 
   @Override
-  public CruiseControlResponse getResponse(CruiseControlRequestHandler handler)
+  public CruiseControlResponse getResponse(CruiseControlRequestContext handler)
           throws Exception {
     LOG.info("Processing sync request {}.", name());
     long requestExecutionStartTime = System.nanoTime();

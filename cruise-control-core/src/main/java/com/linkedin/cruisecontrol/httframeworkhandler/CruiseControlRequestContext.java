@@ -7,7 +7,7 @@ import io.vertx.core.MultiMap;
 import java.io.IOException;
 import java.util.Map;
 
-public interface CruiseControlRequestHandler<T> {
+public interface CruiseControlRequestContext<T> {
 
     String[] HEADERS_TO_TRY = {
             "X-Forwarded-For",
@@ -63,4 +63,6 @@ public interface CruiseControlRequestHandler<T> {
     Map<String, Object> getJson() throws IOException;
 
     void setHeader(String key, String value);
+
+    Map<String, Object> getParameterConfigOverrides();
 }

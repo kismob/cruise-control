@@ -6,7 +6,7 @@ package com.linkedin.kafka.cruisecontrol.servlet;
 
 import com.google.gson.Gson;
 import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlHttpSession;
-import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestHandler;
+import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestContext;
 import com.linkedin.kafka.cruisecontrol.KafkaCruiseControl;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.servlet.response.ResponseUtils;
@@ -18,11 +18,13 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Map;
 
+import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.KAFKA_CRUISE_CONTROL_HTTP_SERVLET_REQUEST_OBJECT_CONFIG;
 import static com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager.USER_TASK_HEADER_NAME;
 
-public class ServletRequestContext implements CruiseControlRequestHandler<KafkaCruiseControlConfig> {
+public class ServletRequestContext implements CruiseControlRequestContext<KafkaCruiseControlConfig> {
 
     protected HttpServletRequest _request;
     protected HttpServletResponse _response;
@@ -143,6 +145,13 @@ public class ServletRequestContext implements CruiseControlRequestHandler<KafkaC
     @Override
     public void setHeader(String key, String value) {
         _response.setHeader(key, value);
+    }
+
+    @Override
+    public Map<String, Object> getParameterConfigOverrides() {
+        Map<String, Object> overrides = new HashMap<>();
+        overrides.put(KAFKA_CRUISE_CONTROL_HTTP_SERVLET_REQUEST_OBJECT_CONFIG, _request);
+        return overrides;
     }
 
     public HttpServletRequest getRequest() {
