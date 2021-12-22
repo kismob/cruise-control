@@ -70,11 +70,17 @@ public abstract class AbstractAsyncRequest extends AbstractRequest {
   @Override
   public void configure(Map<String, ?> configs) {
     super.configure(configs);
-    CruiseControlEndPoints cruiseControlEndPoints = _servlet == null ? _vertxHandler.cruiseControlEndPoints() : _servlet.cruiseControlEndPoints();
+    CruiseControlEndPoints cruiseControlEndPoints = getCruiseControlEndpoints();
     _asyncKafkaCruiseControl = cruiseControlEndPoints.asyncKafkaCruiseControl();
     _asyncOperationStep = cruiseControlEndPoints.asyncOperationStep();
     _userTaskManager = cruiseControlEndPoints.userTaskManager();
     _maxBlockMs = cruiseControlEndPoints.config().getLong(WebServerConfig.WEBSERVER_REQUEST_MAX_BLOCK_TIME_MS_CONFIG);
+  }
+
+  protected CruiseControlEndPoints getCruiseControlEndpoints() {
+    return _servletRequestHandler == null
+            ? _vertxRequestHandler.cruiseControlEndPoints()
+            : _servletRequestHandler.cruiseControlEndPoints();
   }
 
   protected void pending(OperationProgress progress) {

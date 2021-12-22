@@ -22,13 +22,13 @@ import java.util.Map;
 
 import static com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager.USER_TASK_HEADER_NAME;
 
-public class ServletHttpFrameworkHandler implements CruiseControlRequestHandler<KafkaCruiseControlConfig> {
+public class ServletRequestContext implements CruiseControlRequestHandler<KafkaCruiseControlConfig> {
 
     protected HttpServletRequest _request;
     protected HttpServletResponse _response;
     private final CruiseControlHttpSession _servletSession;
 
-    public ServletHttpFrameworkHandler(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+    public ServletRequestContext(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
         _request = httpServletRequest;
         _response = httpServletResponse;
         _servletSession = new ServletSession(_request.getSession());

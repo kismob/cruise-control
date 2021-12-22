@@ -66,7 +66,7 @@ public class ServletRequestHandler extends HttpServlet {
   }
 
   private void doGetOrPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    ServletHttpFrameworkHandler handler = new ServletHttpFrameworkHandler(request, response);
+    ServletRequestContext handler = new ServletRequestContext(request, response);
     try {
       _cruiseControlEndPoints.asyncOperationStep().set(0);
       CruiseControlEndPoint endPoint = getValidEndpoint(handler, _cruiseControlEndPoints.config());
@@ -122,7 +122,7 @@ public class ServletRequestHandler extends HttpServlet {
                          Map<String, Object> requestConfigOverrides,
                          Map<String, Object> parameterConfigOverrides)
           throws Exception {
-    ServletHttpFrameworkHandler handler = new ServletHttpFrameworkHandler(request, response);
+    ServletRequestContext handler = new ServletRequestContext(request, response);
     // Sanity check: if the request is for REVIEW_BOARD, two step verification must be enabled.
     if (endPoint == REVIEW_BOARD && !_cruiseControlEndPoints.twoStepVerification()) {
       throw new ConfigException(String.format("Attempt to access %s endpoint without enabling '%s' config.",
@@ -154,7 +154,7 @@ public class ServletRequestHandler extends HttpServlet {
                           Map<String, Object> requestConfigOverrides,
                           Map<String, Object> parameterConfigOverrides)
           throws Exception {
-    ServletHttpFrameworkHandler handler = new ServletHttpFrameworkHandler(request, response);
+    ServletRequestContext handler = new ServletRequestContext(request, response);
     CruiseControlParameters parameters;
     RequestParameterWrapper requestParameter = requestParameterFor(endPoint);
     if (endPoint == REVIEW) {
