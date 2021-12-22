@@ -48,7 +48,7 @@ public class StopProposalRequest extends AbstractSyncRequest {
   @Override
   public void configure(Map<String, ?> configs) {
     super.configure(configs);
-    CruiseControlEndPoints cruiseControlEndPoints = _servlet == null ? _vertxHandler.cruiseControlEndPoints() : _servlet.cruiseControlEndPoints();
+    CruiseControlEndPoints cruiseControlEndPoints = _servlet == null ? _vertxRequestHandler.cruiseControlEndPoints() : _servlet.cruiseControlEndPoints();
     _kafkaCruiseControl = cruiseControlEndPoints.asyncKafkaCruiseControl();
     _parameters = (StopProposalParameters) validateNotNull(configs.get(STOP_PROPOSAL_PARAMETER_OBJECT_CONFIG),
             "Parameter configuration is missing from the request.");

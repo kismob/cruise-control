@@ -30,7 +30,7 @@ public class MainVerticle extends AbstractVerticle {
   private int _port;
   private String _host;
   private HttpServer _server;
-  private VertxHandler _endPoints;
+  private VertxRequestHandler _endPoints;
   private AsyncKafkaCruiseControl _asynckafkaCruiseControl;
   private MetricRegistry _dropwizardMetricRegistry;
 
@@ -49,7 +49,7 @@ public class MainVerticle extends AbstractVerticle {
   @Override
   public void start(Promise<Void> startPromise) throws Exception {
 
-    _endPoints = new VertxHandler(_asynckafkaCruiseControl, _dropwizardMetricRegistry);
+    _endPoints = new VertxRequestHandler(_asynckafkaCruiseControl, _dropwizardMetricRegistry);
 
     RouterBuilder.create(vertx, Objects.requireNonNull(this.getClass().getClassLoader().getResource("yaml/base.yaml")).toString(), asyncResult -> {
       if (!asyncResult.succeeded()) {
@@ -142,7 +142,7 @@ public class MainVerticle extends AbstractVerticle {
     return options;
   }
 
-  public VertxHandler getEndPoints() {
+  public VertxRequestHandler getEndPoints() {
     return _endPoints;
   }
 
