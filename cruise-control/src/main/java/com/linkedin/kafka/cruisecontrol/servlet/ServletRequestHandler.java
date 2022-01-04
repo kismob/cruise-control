@@ -22,25 +22,21 @@ import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServlet
 public class ServletRequestHandler extends HttpServlet {
 
   private final RequestHandler _requestHandler;
-  private final UserTaskManager _userTaskManager;
 
   public ServletRequestHandler(AsyncKafkaCruiseControl asynckafkaCruiseControl, MetricRegistry dropwizardMetricRegistry) {
     _requestHandler = new RequestHandler(asynckafkaCruiseControl, dropwizardMetricRegistry);
-    _userTaskManager = null;
   }
 
   //only for tests
   public ServletRequestHandler(AsyncKafkaCruiseControl asynckafkaCruiseControl,
                                MetricRegistry dropwizardMetricRegistry, UserTaskManager userTaskManager) {
-    _requestHandler = new RequestHandler(asynckafkaCruiseControl, dropwizardMetricRegistry);
-    _userTaskManager = userTaskManager;
+    _requestHandler = new RequestHandler(asynckafkaCruiseControl, dropwizardMetricRegistry, userTaskManager);
   }
 
   @Override
   public void destroy() {
     super.destroy();
     _requestHandler.destroy();
-    _userTaskManager.close();
   }
 
   protected void doOptions(HttpServletRequest request, HttpServletResponse response) {
