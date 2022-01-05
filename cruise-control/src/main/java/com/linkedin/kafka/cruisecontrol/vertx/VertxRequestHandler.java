@@ -32,7 +32,7 @@ public class VertxRequestHandler {
      */
     public void handle(RoutingContext context) {
         try {
-            _requestHandler.doGetOrPost(new VertxRequestContext(context));
+            _requestHandler.doGetOrPost(new VertxRequestContext(context, cruiseControlEndPoints().config()));
         } catch (IOException e) {
             e.printStackTrace();
         }

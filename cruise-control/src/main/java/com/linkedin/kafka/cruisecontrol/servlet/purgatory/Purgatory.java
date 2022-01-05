@@ -129,7 +129,7 @@ public class Purgatory implements Closeable {
       CruiseControlParameters parameters = _config.getConfiguredInstance(classConfig,
                                                                          CruiseControlParameters.class,
                                                                          parameterConfigOverrides);
-      if (hasValidParameterNames(handler, _config, parameters) && !parameters.parseParameters(handler)) {
+      if (hasValidParameterNames(handler, parameters) && !parameters.parseParameters(handler)) {
         // Add request to purgatory and return ReviewResult.
         ReviewResult reviewResult = addRequest(handler, parameters);
         reviewResult.writeSuccessResponse(parameters, handler);

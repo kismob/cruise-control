@@ -565,7 +565,7 @@ public class UserTaskManager implements Closeable {
     private final String _requestUrl;
     private final Map<String, Set<String>> _queryParams;
 
-    SessionKey(CruiseControlRequestContext<KafkaCruiseControlConfig> handler) {
+    SessionKey(CruiseControlRequestContext handler) {
       _session = handler.getSession();
       _requestUrl = httpServletRequestToString(handler);
       _queryParams = new HashMap<>();

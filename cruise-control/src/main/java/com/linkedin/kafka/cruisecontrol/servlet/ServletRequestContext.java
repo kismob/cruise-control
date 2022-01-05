@@ -24,15 +24,19 @@ import java.util.Map;
 import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.KAFKA_CRUISE_CONTROL_HTTP_SERVLET_REQUEST_OBJECT_CONFIG;
 import static com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager.USER_TASK_HEADER_NAME;
 
-public class ServletRequestContext implements CruiseControlRequestContext<KafkaCruiseControlConfig> {
+public class ServletRequestContext implements CruiseControlRequestContext {
 
     protected HttpServletRequest _request;
     protected HttpServletResponse _response;
-    private final CruiseControlHttpSession _servletSession;
 
-    public ServletRequestContext(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+    private final CruiseControlHttpSession _servletSession;
+    private final KafkaCruiseControlConfig _config;
+
+    public ServletRequestContext(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse,
+                                 KafkaCruiseControlConfig config) {
         _request = httpServletRequest;
         _response = httpServletResponse;
+        _config = config;
         _servletSession = new ServletSession(_request.getSession());
     }
 
@@ -103,9 +107,9 @@ public class ServletRequestContext implements CruiseControlRequestContext<KafkaC
 
     @Override
     public void writeResponseToOutputStream(int responseCode, boolean json, boolean wantJsonSchema,
-                                            String responseMessage, KafkaCruiseControlConfig config) throws IOException {
+                                            String responseMessage) throws IOException {
         OutputStream out = _response.getOutputStream();
-        ResponseUtils.setResponseCode(_response, responseCode, json, config);
+        ResponseUtils.setResponseCode(_response, responseCode, json, _config);
         _response.addHeader("Cruise-Control-Version", KafkaCruiseControl.cruiseControlVersion());
         _response.addHeader("Cruise-Control-Commit_Id", KafkaCruiseControl.cruiseControlCommitId());
         if (json && wantJsonSchema) {

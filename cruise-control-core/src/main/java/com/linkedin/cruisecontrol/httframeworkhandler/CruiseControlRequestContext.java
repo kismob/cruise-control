@@ -7,7 +7,7 @@ import io.vertx.core.MultiMap;
 import java.io.IOException;
 import java.util.Map;
 
-public interface CruiseControlRequestContext<T> {
+public interface CruiseControlRequestContext {
 
     String[] HEADERS_TO_TRY = {
             "X-Forwarded-For",
@@ -48,8 +48,7 @@ public interface CruiseControlRequestContext<T> {
     void writeResponseToOutputStream(int responseCode,
                                      boolean json,
                                      boolean wantJsonSchema,
-                                     String responseMessage,
-                                     T config) throws IOException;
+                                     String responseMessage) throws IOException;
 
     CruiseControlHttpSession getSession();
 

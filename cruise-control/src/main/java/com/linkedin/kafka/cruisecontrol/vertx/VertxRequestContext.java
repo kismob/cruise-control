@@ -21,15 +21,17 @@ import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServlet
 import static com.linkedin.kafka.cruisecontrol.servlet.UserTaskManager.USER_TASK_HEADER_NAME;
 import static com.linkedin.kafka.cruisecontrol.servlet.response.ResponseUtils.getJsonSchema;
 
-public class VertxRequestContext implements CruiseControlRequestContext<KafkaCruiseControlConfig> {
+public class VertxRequestContext implements CruiseControlRequestContext {
 
     protected RoutingContext _context;
 
     private final CruiseControlHttpSession _session;
+    private final KafkaCruiseControlConfig _config;
 
-    public VertxRequestContext(RoutingContext context) {
+    public VertxRequestContext(RoutingContext context, KafkaCruiseControlConfig config) {
         super();
         _context = context;
+        _config = config;
         _session = new VertxSession(context.session());
     }
 
@@ -89,9 +91,9 @@ public class VertxRequestContext implements CruiseControlRequestContext<KafkaCru
     }
 
     @Override
-    public void writeResponseToOutputStream(int responseCode, boolean json, boolean wantJsonSchema, String responseMessage,
-                                            KafkaCruiseControlConfig config) throws IOException {
-        ResponseUtils.setResponseCode(_context, responseCode, config);
+    public void writeResponseToOutputStream(int responseCode, boolean json, boolean wantJsonSchema,
+                                            String responseMessage) throws IOException {
+        ResponseUtils.setResponseCode(_context, responseCode, _config);
         _context.response().putHeader("Cruise-Control-Version", KafkaCruiseControl.cruiseControlVersion());
         _context.response().putHeader("Cruise-Control-Commit_Id", KafkaCruiseControl.cruiseControlCommitId());
         if (json && wantJsonSchema) {

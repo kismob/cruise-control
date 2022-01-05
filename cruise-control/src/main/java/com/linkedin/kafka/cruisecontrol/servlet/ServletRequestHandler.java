@@ -45,12 +45,12 @@ public class ServletRequestHandler extends HttpServlet {
 
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    _requestHandler.doGetOrPost(new ServletRequestContext(request, response));
+    _requestHandler.doGetOrPost(new ServletRequestContext(request, response, _requestHandler.cruiseControlEndPoints().config()));
   }
 
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    _requestHandler.doGetOrPost(new ServletRequestContext(request, response));
+    _requestHandler.doGetOrPost(new ServletRequestContext(request, response, _requestHandler.cruiseControlEndPoints().config()));
   }
 
   public CruiseControlEndPoints cruiseControlEndPoints() {

@@ -23,7 +23,7 @@ public interface CruiseControlResponse {
      * @param handler The request handler
      */
 
-    void writeSuccessResponse(CruiseControlParameters parameters, CruiseControlRequestContext<?> handler) throws IOException;
+    void writeSuccessResponse(CruiseControlParameters parameters, CruiseControlRequestContext handler) throws IOException;
 
     /**
     * Based on the given parameters, keep the relevant response to be returned to the user and discard the remaining.

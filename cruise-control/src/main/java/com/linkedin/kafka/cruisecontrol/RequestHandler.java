@@ -10,7 +10,6 @@ import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestContex
 import com.linkedin.cruisecontrol.servlet.handler.Request;
 import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
 import com.linkedin.kafka.cruisecontrol.async.AsyncKafkaCruiseControl;
-import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.config.RequestParameterWrapper;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
@@ -27,7 +26,7 @@ import static com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint.REV
 import static com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint.REVIEW_BOARD;
 import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.GET_METHOD;
 import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.KAFKA_CRUISE_CONTROL_CONFIG_OBJECT_CONFIG;
-import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG;
+import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.KAFKA_CRUISE_CONTROL_REQUEST_HANDLER_OBJECT_CONFIG;
 import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.POST_METHOD;
 import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.getValidEndpoint;
 import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.handleConfigException;
@@ -63,14 +62,14 @@ public class RequestHandler {
      * @param context is the request context that will provide any information for handling it.
      * @throws IOException
      */
-    public void doGetOrPost(CruiseControlRequestContext<KafkaCruiseControlConfig> context) throws IOException {
+    public void doGetOrPost(CruiseControlRequestContext context) throws IOException {
         try {
             _cruiseControlEndPoints.asyncOperationStep().set(0);
-            CruiseControlEndPoint endPoint = getValidEndpoint(context, _cruiseControlEndPoints.config());
+            CruiseControlEndPoint endPoint = getValidEndpoint(context);
             if (endPoint != null) {
                 _cruiseControlEndPoints.requestMeter().get(endPoint).mark();
                 Map<String, Object> requestConfigOverrides = new HashMap<>();
-                requestConfigOverrides.put(KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG, this);
+                requestConfigOverrides.put(KAFKA_CRUISE_CONTROL_REQUEST_HANDLER_OBJECT_CONFIG, this);
 
                 Map<String, Object> parameterConfigOverrides = new HashMap<>();
                 parameterConfigOverrides.putAll(context.getParameterConfigOverrides());
@@ -87,18 +86,18 @@ public class RequestHandler {
                 }
             }
         } catch (UserRequestException ure) {
-            String errorMessage = handleUserRequestException(ure, context, _cruiseControlEndPoints.config());
+            String errorMessage = handleUserRequestException(ure, context);
             LOG.error(errorMessage, ure);
         } catch (ConfigException ce) {
-            String errorMessage = handleConfigException(ce, context, _cruiseControlEndPoints.config());
+            String errorMessage = handleConfigException(ce, context);
             LOG.error(errorMessage, ce);
         } catch (Exception e) {
-            String errorMessage = handleException(e, context, _cruiseControlEndPoints.config());
+            String errorMessage = handleException(e, context);
             LOG.error(errorMessage, e);
         }
     }
 
-    private void handleGet(CruiseControlRequestContext<KafkaCruiseControlConfig> handler,
+    private void handleGet(CruiseControlRequestContext handler,
                            CruiseControlEndPoint endPoint,
                            Map<String, Object> requestConfigOverrides,
                            Map<String, Object> parameterConfigOverrides)
@@ -112,7 +111,7 @@ public class RequestHandler {
         CruiseControlParameters parameters = _cruiseControlEndPoints.config().getConfiguredInstance(requestParameter.parametersClass(),
                 CruiseControlParameters.class,
                 parameterConfigOverrides);
-        if (hasValidParameterNames(handler, _cruiseControlEndPoints.config(), parameters)) {
+        if (hasValidParameterNames(handler, parameters)) {
             requestConfigOverrides.put(requestParameter.parameterObject(), parameters);
             Request ccRequest = _cruiseControlEndPoints.config().getConfiguredInstance(requestParameter.requestClass(),
                     Request.class, requestConfigOverrides);
@@ -121,7 +120,7 @@ public class RequestHandler {
         }
     }
 
-    private void handlePost(CruiseControlRequestContext<?> handler,
+    private void handlePost(CruiseControlRequestContext handler,
                             CruiseControlEndPoint endPoint,
                             Map<String, Object> requestConfigOverrides,
                             Map<String, Object> parameterConfigOverrides)
@@ -137,14 +136,14 @@ public class RequestHandler {
 
             parameters = _cruiseControlEndPoints.config().getConfiguredInstance(requestParameter.parametersClass(),
                     CruiseControlParameters.class, parameterConfigOverrides);
-            if (!hasValidParameterNames(handler, _cruiseControlEndPoints.config(), parameters)) {
+            if (!hasValidParameterNames(handler, parameters)) {
                 return;
             }
         } else if (!_cruiseControlEndPoints.twoStepVerification()) {
             // Do not add to the purgatory if the two-step verification is disabled.
             parameters = _cruiseControlEndPoints.config().getConfiguredInstance(requestParameter.parametersClass(),
                     CruiseControlParameters.class, parameterConfigOverrides);
-            if (!hasValidParameterNames(handler, _cruiseControlEndPoints.config(), parameters)) {
+            if (!hasValidParameterNames(handler, parameters)) {
                 return;
             }
         } else {
