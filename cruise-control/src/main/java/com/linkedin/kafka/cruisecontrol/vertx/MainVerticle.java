@@ -101,10 +101,6 @@ public class MainVerticle extends AbstractVerticle {
             .setWebRoot("webroot/"));
     Router router = builder.createRouter();
 
-    router.route().consumes(APPLICATION_JSON);
-    router.route().produces(APPLICATION_JSON);
-    router.route().handler(BodyHandler.create());
-
     Set<String> allowedHeaders = new HashSet<>();
     allowedHeaders.add("auth");
     allowedHeaders.add("Content-Type");
@@ -117,14 +113,19 @@ public class MainVerticle extends AbstractVerticle {
     allowedMethods.add(HttpMethod.PATCH);
     allowedMethods.add(HttpMethod.PUT);
 
-    router.route().handler(CorsHandler.create("*").allowedHeaders(allowedHeaders).allowedMethods(allowedMethods));
-    router.route().handler(CorsHandler.create("*").allowedHeaders(allowedHeaders).allowedMethods(allowedMethods));
-    router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
-
-    router.route().handler(RoutingContext::next);
-    router.route().failureHandler(ErrorHandler.create(vertx, true));
-
     Router root = Router.router(vertx);
+
+    root.route().consumes(APPLICATION_JSON);
+    root.route().produces(APPLICATION_JSON);
+    root.route().handler(BodyHandler.create());
+
+    root.route().handler(CorsHandler.create("*").allowedHeaders(allowedHeaders).allowedMethods(allowedMethods));
+    root.route().handler(CorsHandler.create("*").allowedHeaders(allowedHeaders).allowedMethods(allowedMethods));
+    root.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
+
+    root.route().handler(RoutingContext::next);
+    root.route().failureHandler(ErrorHandler.create(vertx, true));
+
     String rootPath = _asynckafkaCruiseControl
             .config()
             .getString(WebServerConfig.WEBSERVER_API_URLPREFIX_CONFIG)

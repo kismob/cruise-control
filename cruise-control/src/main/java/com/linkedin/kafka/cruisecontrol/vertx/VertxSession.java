@@ -23,7 +23,6 @@ public class VertxSession implements CruiseControlHttpSession {
 
     @Override
     public long getLastAccessed() {
-        System.out.println(_vertxSession.lastAccessed());
         return _vertxSession.lastAccessed();
     }
 
