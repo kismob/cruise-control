@@ -10,7 +10,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestContext;
 import com.linkedin.kafka.cruisecontrol.KafkaCruiseControl;
-import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.kafka.common.config.AbstractConfig;
@@ -122,15 +121,13 @@ public final class ResponseUtils {
    * @param responseCode HTTP Status code to indicate the error.
    * @param json {@code true} if json, {@code false} otherwise.
    * @param wantJsonSchema {@code true} for json error response, {@code false} otherwise.
-   * @param config The configurations for Cruise Control.
    */
   public static void writeErrorResponse(CruiseControlRequestContext handler,
                                         Exception e,
                                         String errorMessage,
                                         int responseCode,
                                         boolean json,
-                                        boolean wantJsonSchema,
-                                        KafkaCruiseControlConfig config)
+                                        boolean wantJsonSchema)
       throws IOException {
     String responseMessage;
     ErrorResponse errorResponse = new ErrorResponse(e, errorMessage);
@@ -141,7 +138,7 @@ public final class ResponseUtils {
       responseMessage = errorResponse.toString();
     }
     // Send the CORS Task ID header as part of this error response if 2-step verification is enabled.
-    handler.writeResponseToOutputStream(responseCode, json, wantJsonSchema, responseMessage, config);
+    handler.writeResponseToOutputStream(responseCode, json, wantJsonSchema, responseMessage);
   }
 
   /**

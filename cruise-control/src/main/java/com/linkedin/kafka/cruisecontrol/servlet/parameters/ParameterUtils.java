@@ -199,9 +199,8 @@ public final class ParameterUtils {
                                             CruiseControlRequestContext handler,
                                             String errorMessage,
                                             boolean json,
-                                            boolean wantJsonSchema,
-                                            KafkaCruiseControlConfig config) throws IOException {
-    writeErrorResponse(handler, e, errorMessage, SC_BAD_REQUEST, json, wantJsonSchema, config);
+                                            boolean wantJsonSchema) throws IOException {
+    writeErrorResponse(handler, e, errorMessage, SC_BAD_REQUEST, json, wantJsonSchema);
   }
 
   /**
@@ -209,12 +208,10 @@ public final class ParameterUtils {
    * error message and return {@code false}, return {@code true} otherwise.
    *
    * @param handler the request handler.
-   * @param config The configurations for Cruise Control.
    * @param parameters Request parameters
    * @return {@code true} if the request has valid parameter names, {@code false} otherwise (and response is populated).
    */
-  public static boolean hasValidParameterNames(CruiseControlRequestContext<?> handler,
-                                               KafkaCruiseControlConfig config,
+  public static boolean hasValidParameterNames(CruiseControlRequestContext handler,
                                                CruiseControlParameters parameters) throws IOException {
     CruiseControlEndPoint endPoint = endPoint(handler);
     Set<String> validParamNames = parameters.caseInsensitiveParameterNames();
@@ -228,7 +225,7 @@ public final class ParameterUtils {
       // User request specifies parameters that are not a subset of the valid parameters.
       String errorMessage = String.format("Unrecognized endpoint parameters in %s %s request: %s.",
                                           endPoint, handler.getMethod(), userParams);
-      writeErrorResponse(handler, null, errorMessage, SC_BAD_REQUEST, wantJSON(handler), wantResponseSchema(handler), config);
+      writeErrorResponse(handler, null, errorMessage, SC_BAD_REQUEST, wantJSON(handler), wantResponseSchema(handler));
       return false;
     }
     return true;

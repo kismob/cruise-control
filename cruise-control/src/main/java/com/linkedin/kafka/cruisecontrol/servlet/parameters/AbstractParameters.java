@@ -76,7 +76,7 @@ public abstract class AbstractParameters implements CruiseControlParameters {
       return false;
     } catch (Exception e) {
       try {
-        handleParameterParseException(e, handler, e.getMessage(), _json, _wantResponseSchema, _config);
+        handleParameterParseException(e, handler, e.getMessage(), _json, _wantResponseSchema);
       } catch (IOException ioe) {
         LOG.error(String.format("Failed to write parse parameter exception to output stream. Endpoint: %s.", _endPoint), ioe);
       }
@@ -109,10 +109,10 @@ public abstract class AbstractParameters implements CruiseControlParameters {
     if (configs.get(ROUTING_CONTEXT_OBJECT_CONFIG) == null) {
       _handler = new ServletRequestContext(
               (HttpServletRequest) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_HTTP_SERVLET_REQUEST_OBJECT_CONFIG),
-              "HttpServletRequest configuration is missing from the request."), null);
+              "HttpServletRequest configuration is missing from the request."), null, _config);
     } else {
       _handler = new VertxRequestContext((RoutingContext) validateNotNull(configs.get(ROUTING_CONTEXT_OBJECT_CONFIG),
-              "HttpServletRequest configuration is missing from the request."));
+              "HttpServletRequest configuration is missing from the request."), _config);
     }
     _config = (KafkaCruiseControlConfig) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_CONFIG_OBJECT_CONFIG),
                                                          "KafkaCruiseControlConfig configuration is missing from the request.");

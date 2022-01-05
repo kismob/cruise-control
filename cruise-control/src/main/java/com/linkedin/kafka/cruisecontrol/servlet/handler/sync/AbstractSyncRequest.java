@@ -65,8 +65,6 @@ public abstract class AbstractSyncRequest extends AbstractRequest {
   }
 
   protected CruiseControlEndPoints getCruiseControlEndpoints() {
-    return _servletRequestHandler == null
-            ? _vertxRequestHandler.cruiseControlEndPoints()
-            : _servletRequestHandler.cruiseControlEndPoints();
+    return _requestHandler.cruiseControlEndPoints();
   }
 }

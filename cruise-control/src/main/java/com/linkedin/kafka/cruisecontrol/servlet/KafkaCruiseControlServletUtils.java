@@ -38,7 +38,7 @@ import static javax.servlet.http.HttpServletResponse.SC_OK;
 public final class KafkaCruiseControlServletUtils {
   public static final String GET_METHOD = "GET";
   public static final String POST_METHOD = "POST";
-  public static final String KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG = "kafka.cruise.control.servlet.object";
+  public static final String KAFKA_CRUISE_CONTROL_REQUEST_HANDLER_OBJECT_CONFIG = "kafka.cruise.control.request.handler.object";
   public static final String KAFKA_CRUISE_CONTROL_HTTP_SERVLET_REQUEST_OBJECT_CONFIG = "kafka.cruise.control.http.servlet.request.object";
   public static final String KAFKA_CRUISE_CONTROL_CONFIG_OBJECT_CONFIG = "kafka.cruise.control.config.object";
   public static final String ROUTING_CONTEXT_OBJECT_CONFIG = "routing.context.object";
@@ -188,11 +188,10 @@ public final class KafkaCruiseControlServletUtils {
    * the given HTTP response and (2) returns null.
    *
    * @param handler HTTP request received by Cruise Control.
-   * @param config The config of Cruise Control.
    * @return The endpoint if the request contains a valid one, otherwise (1) writes the error response to the given HTTP
    * response and (2) returns null.
    */
-  public static CruiseControlEndPoint getValidEndpoint(CruiseControlRequestContext handler, KafkaCruiseControlConfig config)
+  public static CruiseControlEndPoint getValidEndpoint(CruiseControlRequestContext handler)
       throws IOException {
     CruiseControlEndPoint endPoint = endPoint(handler);
     if (endPoint == null) {
@@ -201,7 +200,7 @@ public final class KafkaCruiseControlServletUtils {
                                           handler.getPathInfo(), method, method.equals(GET_METHOD)
                                                                          ? CruiseControlEndPoint.getEndpoints()
                                                                          : CruiseControlEndPoint.postEndpoints());
-      writeErrorResponse(handler, null, errorMessage, SC_NOT_FOUND, wantJSON(handler), wantResponseSchema(handler), config);
+      writeErrorResponse(handler, null, errorMessage, SC_NOT_FOUND, wantJSON(handler), wantResponseSchema(handler));
       return null;
     }
     return endPoint;
@@ -211,31 +210,27 @@ public final class KafkaCruiseControlServletUtils {
    * Creates a {@link HttpServletResponse#SC_BAD_REQUEST} Http servlet response.
    * @param ure User request exception to be handled.
    * @param handler HTTP request received by Cruise Control.
-   * @param config The configurations for Cruise Control.
    * @return The error message.
    */
   public static String handleUserRequestException(UserRequestException ure,
-                                                  CruiseControlRequestContext handler,
-                                                  KafkaCruiseControlConfig config)
+                                                  CruiseControlRequestContext handler)
       throws IOException {
     String errorMessage = String.format("Bad %s request '%s' due to '%s'.", handler.getMethod(), handler.getPathInfo(), ure.getMessage());
-    writeErrorResponse(handler, ure, errorMessage, SC_BAD_REQUEST, wantJSON(handler), wantResponseSchema(handler), config);
+    writeErrorResponse(handler, ure, errorMessage, SC_BAD_REQUEST, wantJSON(handler), wantResponseSchema(handler));
     return errorMessage;
   }
   /**
    * Creates a {@link HttpServletResponse#SC_FORBIDDEN} Http servlet response.
    * @param ce Config exception to be handled.
    * @param handler HTTP request received by Cruise Control.
-   * @param config The configurations for Cruise Control.
    * @return The error message.
    */
   public static String handleConfigException(ConfigException ce,
-                                             CruiseControlRequestContext handler,
-                                             KafkaCruiseControlConfig config)
+                                             CruiseControlRequestContext handler)
       throws IOException {
     String errorMessage = String.format("Cannot process %s request '%s' due to: '%s'.",
             handler.getMethod(), handler.getPathInfo(), ce.getMessage());
-    writeErrorResponse(handler, ce, errorMessage, SC_FORBIDDEN, wantJSON(handler), wantResponseSchema(handler), config);
+    writeErrorResponse(handler, ce, errorMessage, SC_FORBIDDEN, wantJSON(handler), wantResponseSchema(handler));
     return errorMessage;
   }
 
@@ -243,16 +238,14 @@ public final class KafkaCruiseControlServletUtils {
    * Creates a {@link HttpServletResponse#SC_INTERNAL_SERVER_ERROR} Http servlet response.
    * @param e Exception to be handled
    * @param handler HTTP request received by Cruise Control.
-   * @param config The configurations for Cruise Control.
    * @return The error message.
    */
   public static String handleException(Exception e,
-                                       CruiseControlRequestContext handler,
-                                       KafkaCruiseControlConfig config)
+                                       CruiseControlRequestContext handler)
       throws IOException {
     String errorMessage = String.format("Error processing %s request '%s' due to: '%s'.",
             handler.getMethod(), handler.getPathInfo(), e.getMessage());
-    writeErrorResponse(handler, e, errorMessage, SC_INTERNAL_SERVER_ERROR, wantJSON(handler), wantResponseSchema(handler), config);
+    writeErrorResponse(handler, e, errorMessage, SC_INTERNAL_SERVER_ERROR, wantJSON(handler), wantResponseSchema(handler));
     return errorMessage;
   }
 

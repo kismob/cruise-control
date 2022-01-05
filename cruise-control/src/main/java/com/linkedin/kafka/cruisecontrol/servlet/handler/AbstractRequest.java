@@ -8,20 +8,18 @@ import com.linkedin.cruisecontrol.servlet.handler.Request;
 import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
 import com.linkedin.cruisecontrol.servlet.response.CruiseControlResponse;
 import com.linkedin.cruisecontrol.httframeworkhandler.CruiseControlRequestContext;
-import com.linkedin.kafka.cruisecontrol.servlet.ServletRequestHandler;
-import com.linkedin.kafka.cruisecontrol.vertx.VertxRequestHandler;
+import com.linkedin.kafka.cruisecontrol.RequestHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Map;
 
 import static com.linkedin.cruisecontrol.common.utils.Utils.validateNotNull;
-import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG;
+import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.KAFKA_CRUISE_CONTROL_REQUEST_HANDLER_OBJECT_CONFIG;
 
 
 public abstract class AbstractRequest implements Request {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractRequest.class);
-  protected ServletRequestHandler _servletRequestHandler;
-  protected VertxRequestHandler _vertxRequestHandler;
+  protected RequestHandler _requestHandler;
 
   /**
    * Handle the request and populate the response.
@@ -57,13 +55,9 @@ public abstract class AbstractRequest implements Request {
 
   @Override
   public void configure(Map<String, ?> configs) {
-    if (configs.get(KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG).getClass().equals(ServletRequestHandler.class)) {
-      _servletRequestHandler = (ServletRequestHandler) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG),
-              "Kafka Cruise Control vertx configuration is missing from the request.");
-    }
-    if (configs.get(KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG).getClass().equals(VertxRequestHandler.class)) {
-      _vertxRequestHandler = (VertxRequestHandler) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_SERVLET_OBJECT_CONFIG),
-              "Kafka Cruise Control vertx configuration is missing from the request.");
+    if (configs.get(KAFKA_CRUISE_CONTROL_REQUEST_HANDLER_OBJECT_CONFIG).getClass().equals(RequestHandler.class)) {
+      _requestHandler = (RequestHandler) validateNotNull(configs.get(KAFKA_CRUISE_CONTROL_REQUEST_HANDLER_OBJECT_CONFIG),
+              "Kafka Cruise Control request handler configuration is missing from the request.");
     }
   }
 }

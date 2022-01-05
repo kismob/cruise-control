@@ -32,7 +32,7 @@ public abstract class AbstractCruiseControlResponse implements CruiseControlResp
     boolean json = parameters.json();
     boolean wantResponseSchema = parameters.wantResponseSchema();
     discardIrrelevantResponse(parameters);
-    handler.writeResponseToOutputStream(SC_OK, json, wantResponseSchema, _cachedResponse, _config);
+    handler.writeResponseToOutputStream(SC_OK, json, wantResponseSchema, _cachedResponse);
   }
 
   @Override
