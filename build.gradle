@@ -283,7 +283,6 @@ project(':cruise-control') {
     api 'io.vertx:vertx-core:4.2.2'
     api 'io.vertx:vertx-web:4.2.2'
     api 'io.vertx:vertx-junit5:4.2.2'
-    testImplementation 'org.junit.platform:junit-platform-launcher:1.2.0'
     api 'io.swagger.core.v3:swagger-annotations:2.0.2'
     api 'io.swagger.core.v3:swagger-core:2.0.2'
     api 'com.google.guava:guava:25.1-jre'
@@ -301,6 +300,7 @@ project(':cruise-control') {
     testImplementation 'org.bouncycastle:bcpkix-jdk15on:1.70'
     testImplementation 'org.apache.kerby:kerb-simplekdc:2.0.1'
     testImplementation 'com.jayway.jsonpath:json-path:2.7.0'
+    testImplementation 'org.junit.platform:junit-platform-launcher:1.2.0'
 
     implementation group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.2'
 
