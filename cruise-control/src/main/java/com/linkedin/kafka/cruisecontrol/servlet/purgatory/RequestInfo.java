@@ -6,15 +6,14 @@ package com.linkedin.kafka.cruisecontrol.servlet.purgatory;
 
 import com.linkedin.cruisecontrol.servlet.EndPoint;
 import com.linkedin.cruisecontrol.servlet.parameters.CruiseControlParameters;
+import com.linkedin.cruisecontrol.http.CruiseControlRequestContext;
 import com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils;
 import com.linkedin.kafka.cruisecontrol.servlet.response.JsonResponseClass;
 import com.linkedin.kafka.cruisecontrol.servlet.response.JsonResponseField;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import javax.servlet.http.HttpServletRequest;
 
-import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.getClientIpAddress;
 import static com.linkedin.kafka.cruisecontrol.servlet.KafkaCruiseControlServletUtils.queryWithParameters;
 import static com.linkedin.kafka.cruisecontrol.servlet.purgatory.ReviewStatus.*;
 
@@ -43,8 +42,8 @@ public class RequestInfo {
   private static final String INIT_REASON = "Awaiting review.";
   private static final String FINAL_REASON = "Submitted approved request.";
   private static final Map<ReviewStatus, Set<ReviewStatus>> VALID_TRANSFER =
-      Map.of(PENDING_REVIEW, Set.of(APPROVED, DISCARDED), APPROVED, Set.of(DISCARDED, SUBMITTED),
-             SUBMITTED, Collections.emptySet(), DISCARDED, Collections.emptySet());
+          Map.of(PENDING_REVIEW, Set.of(APPROVED, DISCARDED), APPROVED, Set.of(DISCARDED, SUBMITTED),
+                  SUBMITTED, Collections.emptySet(), DISCARDED, Collections.emptySet());
   private final String _submitterAddress;
   private final long _submissionTimeMs;
   private final Map<String, String[]> _parameterMap;
@@ -54,16 +53,16 @@ public class RequestInfo {
   private volatile String _reason;
   private volatile boolean _accessToAlreadySubmittedRequest;
 
-  public <P extends CruiseControlParameters> RequestInfo(HttpServletRequest request, P parameters) {
-    if (request == null) {
+  public <P extends CruiseControlParameters> RequestInfo(CruiseControlRequestContext handler, P parameters) {
+    if (handler == null) {
       throw new IllegalArgumentException("Request is missing from the request info.");
     } else if (parameters == null) {
       throw new IllegalArgumentException("Parameter is missing from the request info.");
     }
-    _submitterAddress = getClientIpAddress(request);
+    _submitterAddress = handler.getClientIdentity();
     _submissionTimeMs = System.currentTimeMillis();
-    _parameterMap = request.getParameterMap();
-    _endPoint = ParameterUtils.endPoint(request);
+    _parameterMap = handler.getParameterMap();
+    _endPoint = ParameterUtils.endPoint(handler);
     _parameters = parameters;
     _status = PENDING_REVIEW;
     _reason = INIT_REASON;
@@ -114,7 +113,7 @@ public class RequestInfo {
   void applyReview(ReviewStatus targetStatus, String reason) {
     if (!canTransferToStatus(targetStatus)) {
       throw new IllegalStateException("Cannot mark a task in " + _status + " to " + targetStatus + " status. The "
-                                      + "valid target statuses are " + validTargetStatus());
+              + "valid target statuses are " + validTargetStatus());
     }
     _status = targetStatus;
     _reason = reason;
@@ -161,6 +160,6 @@ public class RequestInfo {
    */
   public Map<String, Object> getJsonStructure(Integer reviewId) {
     return Map.of(ID, reviewId, SUBMITTER_ADDRESS, _submitterAddress, SUBMISSION_TIME_MS, _submissionTimeMs,
-                  STATUS, _status.toString(), ENDPOINT_WITH_PARAMS, endpointWithParams(), REASON, _reason);
+            STATUS, _status.toString(), ENDPOINT_WITH_PARAMS, endpointWithParams(), REASON, _reason);
   }
 }

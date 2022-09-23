@@ -9,8 +9,10 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.linkedin.cruisecontrol.servlet.EndPoint;
 import com.linkedin.cruisecontrol.servlet.EndpointType;
+import com.linkedin.cruisecontrol.http.CruiseControlRequestContext;
 import com.linkedin.kafka.cruisecontrol.config.constants.UserTaskManagerConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
+import com.linkedin.cruisecontrol.http.CruiseControlHttpSession;
 import com.linkedin.kafka.cruisecontrol.servlet.handler.async.runnable.OperationFuture;
 import com.linkedin.kafka.cruisecontrol.common.KafkaCruiseControlThreadFactory;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
@@ -39,7 +41,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import com.linkedin.kafka.cruisecontrol.servlet.response.JsonResponseClass;
 import com.linkedin.kafka.cruisecontrol.servlet.response.JsonResponseField;
@@ -80,9 +81,9 @@ public class UserTaskManager implements Closeable {
   private final int _maxActiveUserTasks;
   private final Time _time;
   private final ScheduledExecutorService _userTaskScannerExecutor =
-      Executors.newSingleThreadScheduledExecutor(new KafkaCruiseControlThreadFactory("UserTaskScanner"));
+          Executors.newSingleThreadScheduledExecutor(new KafkaCruiseControlThreadFactory("UserTaskScanner"));
   private final ExecutorService _userTaskLoggerExecutor =
-      Executors.newSingleThreadScheduledExecutor(new KafkaCruiseControlThreadFactory("UserTaskLogger"));
+          Executors.newSingleThreadScheduledExecutor(new KafkaCruiseControlThreadFactory("UserTaskLogger"));
   private final UuidGenerator _uuidGenerator;
   private final Map<EndPoint, Timer> _successfulRequestExecutionTimer;
   private final Map<EndpointType, Long> _completedUserTaskRetentionTimeMs;
@@ -104,13 +105,13 @@ public class UserTaskManager implements Closeable {
     _time = Time.SYSTEM;
     _uuidGenerator = new UuidGenerator();
     _userTaskScannerExecutor.scheduleAtFixedRate(new UserTaskScanner(),
-                                                 USER_TASK_SCANNER_INITIAL_DELAY_SECONDS,
-                                                 USER_TASK_SCANNER_PERIOD_SECONDS,
-                                                 TimeUnit.SECONDS);
+            USER_TASK_SCANNER_INITIAL_DELAY_SECONDS,
+            USER_TASK_SCANNER_PERIOD_SECONDS,
+            TimeUnit.SECONDS);
     dropwizardMetricRegistry.register(MetricRegistry.name(USER_TASK_MANAGER_SENSOR, "num-active-sessions"),
-                                      (Gauge<Integer>) _sessionKeyToUserTaskIdMap::size);
+            (Gauge<Integer>) _sessionKeyToUserTaskIdMap::size);
     dropwizardMetricRegistry.register(MetricRegistry.name(USER_TASK_MANAGER_SENSOR, "num-active-user-tasks"),
-                                      (Gauge<Integer>) _uuidToActiveUserTaskInfoMap::size);
+            (Gauge<Integer>) _uuidToActiveUserTaskInfoMap::size);
     _successfulRequestExecutionTimer = successfulRequestExecutionTimer;
   }
 
@@ -141,9 +142,9 @@ public class UserTaskManager implements Closeable {
     _time = time;
     _uuidGenerator = uuidGenerator;
     _userTaskScannerExecutor.scheduleAtFixedRate(new UserTaskScanner(),
-                                                 USER_TASK_SCANNER_INITIAL_DELAY_SECONDS,
-                                                 USER_TASK_SCANNER_PERIOD_SECONDS,
-                                                 TimeUnit.SECONDS);
+            USER_TASK_SCANNER_INITIAL_DELAY_SECONDS,
+            USER_TASK_SCANNER_PERIOD_SECONDS,
+            TimeUnit.SECONDS);
     _successfulRequestExecutionTimer = new HashMap<>();
     CruiseControlEndPoint.cachedValues().forEach(e -> _successfulRequestExecutionTimer.put(e, new Timer()));
   }
@@ -166,27 +167,27 @@ public class UserTaskManager implements Closeable {
       switch (endpointType) {
         case CRUISE_CONTROL_ADMIN:
           maxCachedCompletedUserTasks =
-              config.getInt(UserTaskManagerConfig.MAX_CACHED_COMPLETED_CRUISE_CONTROL_ADMIN_USER_TASKS_CONFIG);
+                  config.getInt(UserTaskManagerConfig.MAX_CACHED_COMPLETED_CRUISE_CONTROL_ADMIN_USER_TASKS_CONFIG);
           completedUserTaskRetentionTimeMs =
-              config.getLong(UserTaskManagerConfig.COMPLETED_CRUISE_CONTROL_ADMIN_USER_TASK_RETENTION_TIME_MS_CONFIG);
+                  config.getLong(UserTaskManagerConfig.COMPLETED_CRUISE_CONTROL_ADMIN_USER_TASK_RETENTION_TIME_MS_CONFIG);
           break;
         case KAFKA_ADMIN:
           maxCachedCompletedUserTasks =
-              config.getInt(UserTaskManagerConfig.MAX_CACHED_COMPLETED_KAFKA_ADMIN_USER_TASKS_CONFIG);
+                  config.getInt(UserTaskManagerConfig.MAX_CACHED_COMPLETED_KAFKA_ADMIN_USER_TASKS_CONFIG);
           completedUserTaskRetentionTimeMs =
-              config.getLong(UserTaskManagerConfig.COMPLETED_KAFKA_ADMIN_USER_TASK_RETENTION_TIME_MS_CONFIG);
+                  config.getLong(UserTaskManagerConfig.COMPLETED_KAFKA_ADMIN_USER_TASK_RETENTION_TIME_MS_CONFIG);
           break;
         case CRUISE_CONTROL_MONITOR:
           maxCachedCompletedUserTasks =
-              config.getInt(UserTaskManagerConfig.MAX_CACHED_COMPLETED_CRUISE_CONTROL_MONITOR_USER_TASKS_CONFIG);
+                  config.getInt(UserTaskManagerConfig.MAX_CACHED_COMPLETED_CRUISE_CONTROL_MONITOR_USER_TASKS_CONFIG);
           completedUserTaskRetentionTimeMs =
-              config.getLong(UserTaskManagerConfig.COMPLETED_CRUISE_CONTROL_MONITOR_USER_TASK_RETENTION_TIME_MS_CONFIG);
+                  config.getLong(UserTaskManagerConfig.COMPLETED_CRUISE_CONTROL_MONITOR_USER_TASK_RETENTION_TIME_MS_CONFIG);
           break;
         case KAFKA_MONITOR:
           maxCachedCompletedUserTasks =
-              config.getInt(UserTaskManagerConfig.MAX_CACHED_COMPLETED_KAFKA_MONITOR_USER_TASKS_CONFIG);
+                  config.getInt(UserTaskManagerConfig.MAX_CACHED_COMPLETED_KAFKA_MONITOR_USER_TASKS_CONFIG);
           completedUserTaskRetentionTimeMs =
-              config.getLong(UserTaskManagerConfig.COMPLETED_KAFKA_MONITOR_USER_TASK_RETENTION_TIME_MS_CONFIG);
+                  config.getLong(UserTaskManagerConfig.COMPLETED_KAFKA_MONITOR_USER_TASK_RETENTION_TIME_MS_CONFIG);
           break;
         default:
           throw new IllegalStateException("Unknown endpoint type " + endpointType);
@@ -199,7 +200,7 @@ public class UserTaskManager implements Closeable {
         }
       });
       _completedUserTaskRetentionTimeMs.put(endpointType,
-          completedUserTaskRetentionTimeMs == null ? defaultCompletedUserTaskRetentionTimeMs : completedUserTaskRetentionTimeMs);
+              completedUserTaskRetentionTimeMs == null ? defaultCompletedUserTaskRetentionTimeMs : completedUserTaskRetentionTimeMs);
     }
   }
 
@@ -210,8 +211,7 @@ public class UserTaskManager implements Closeable {
    * header then that takes precedence over {@link HttpSession}. For sync task, only UUID can be used to fetch {@link OperationFuture},
    * which already contains the finished result.
    *
-   * @param httpServletRequest the HttpServletRequest to create the {@link UserTaskInfo} reference.
-   * @param httpServletResponse the HttpServletResponse that contains the UserTaskId in the HttpServletResponse header.
+   * @param handler the HttpFrameworkHandler to create the {@link UserTaskInfo} reference.
    * @param function A function that takes a UUID and returns {@link OperationFuture}. For sync task, the function always
    *                 returns a completed Future.
    * @param step The index of the step that has to be added or fetched.
@@ -219,47 +219,44 @@ public class UserTaskManager implements Closeable {
    * @param parameters Parsed parameters from http request, or null if the parsing result is unavailable.
    * @return An unmodifiable list of {@link OperationFuture} for the linked UserTask.
    */
-  public List<OperationFuture> getOrCreateUserTask(HttpServletRequest httpServletRequest,
-                                                   HttpServletResponse httpServletResponse,
+  public List<OperationFuture> getOrCreateUserTask(CruiseControlRequestContext handler,
                                                    Function<String, OperationFuture> function,
                                                    int step,
                                                    boolean isAsyncRequest,
-                                                   CruiseControlParameters parameters) {
-    UUID userTaskId = getUserTaskId(httpServletRequest);
-    UserTaskInfo userTaskInfo = getUserTaskByUserTaskId(userTaskId, httpServletRequest);
-
+                                                   CruiseControlParameters parameters) throws Exception {
+    UUID userTaskId = getUserTaskId(handler);
+    UserTaskInfo userTaskInfo = getUserTaskByUserTaskId(userTaskId, handler);
     if (userTaskInfo != null) {
       LOG.info("Fetch an existing UserTask {}", userTaskId);
-      httpServletResponse.setHeader(USER_TASK_HEADER_NAME, userTaskId.toString());
+      handler.setHeader(USER_TASK_HEADER_NAME, userTaskId.toString());
       if (step < userTaskInfo.futures().size()) {
         return Collections.unmodifiableList(userTaskInfo.futures());
       } else if (step == userTaskInfo.futures().size()) {
         LOG.info("Add a new future to existing UserTask {}", userTaskId);
-        return Collections.unmodifiableList(insertFuturesByUserTaskId(userTaskId, function, httpServletRequest, parameters).futures());
+        return Collections.unmodifiableList(insertFuturesByUserTaskId(userTaskId, function, handler, parameters).futures());
       } else {
         throw new IllegalArgumentException(
-            String.format("There are %d steps in the session. Cannot add step %d.", userTaskInfo.futures().size(), step));
+                String.format("There are %d steps in the session. Cannot add step %d.", userTaskInfo.futures().size(), step));
       }
     } else {
-      ensureHeaderNotPresent(httpServletRequest, USER_TASK_HEADER_NAME);
+      ensureHeaderNotPresent(handler, USER_TASK_HEADER_NAME);
       if (step != 0) {
         throw new IllegalArgumentException(
-            String.format("There are no step in the session. Cannot add step %d.", step));
+                String.format("There are no step in the session. Cannot add step %d.", step));
       }
       userTaskId = _uuidGenerator.randomUUID();
-      userTaskInfo = insertFuturesByUserTaskId(userTaskId, function, httpServletRequest, parameters);
+      userTaskInfo = insertFuturesByUserTaskId(userTaskId, function, handler, parameters);
       // Only create user task id to session mapping for async request
       if (isAsyncRequest) {
-        createSessionKeyMapping(userTaskId, httpServletRequest);
+        createSessionKeyMapping(userTaskId, handler);
       }
-
-      httpServletResponse.setHeader(USER_TASK_HEADER_NAME, userTaskId.toString());
+      handler.setHeader(USER_TASK_HEADER_NAME, userTaskId.toString());
       return Collections.unmodifiableList(userTaskInfo.futures());
     }
   }
 
-  private void createSessionKeyMapping(UUID userTaskId, HttpServletRequest httpServletRequest) {
-    SessionKey sessionKey = new SessionKey(httpServletRequest);
+  private void createSessionKeyMapping(UUID userTaskId, CruiseControlRequestContext handler) {
+    SessionKey sessionKey = new SessionKey(handler);
     LOG.info("Create a new UserTask {} with SessionKey {}", userTaskId, sessionKey);
     synchronized (_sessionKeyToUserTaskIdMap) {
       _sessionKeyToUserTaskIdMap.put(sessionKey, userTaskId);
@@ -269,14 +266,14 @@ public class UserTaskManager implements Closeable {
   /**
    * Get the future from the given request.
    *
-   * @param request HTTP request received by Cruise Control.
+   * @param handler HTTP request received by Cruise Control.
    * @param <T> The returned future type.
    * @return The future from the given request.
    */
   @SuppressWarnings("unchecked")
-  public <T> T getFuture(HttpServletRequest request) {
-    UUID userTaskId = getUserTaskId(request);
-    UserTaskInfo userTaskInfo = getUserTaskByUserTaskId(userTaskId, request);
+  public <T> T getFuture(CruiseControlRequestContext handler) {
+    UUID userTaskId = getUserTaskId(handler);
+    UserTaskInfo userTaskInfo = getUserTaskByUserTaskId(userTaskId, handler);
     List<OperationFuture> operationFutures = null;
     if (userTaskInfo != null) {
       operationFutures = userTaskInfo.futures();
@@ -295,21 +292,22 @@ public class UserTaskManager implements Closeable {
       while (iter.hasNext()) {
         Map.Entry<SessionKey, UUID> entry = iter.next();
         SessionKey sessionKey = entry.getKey();
-        HttpSession session = sessionKey.httpSession();
         try {
           if (LOG.isTraceEnabled()) {
-            LOG.trace("Session {} was last accessed at {}, age is {} ms.", session, session.getLastAccessedTime(),
-                      now - session.getLastAccessedTime());
+            LOG.trace("Session {} was last accessed at {}, age is {} ms.",
+                    sessionKey.getSessionId(), sessionKey.getLastAccessed(),
+                    now - sessionKey.getLastAccessed());
           }
-          if (now >= session.getLastAccessedTime() + _sessionExpiryMs) {
+          if (now >= sessionKey.getLastAccessed() + _sessionExpiryMs) {
             LOG.info("Expiring the session associated with {}.", sessionKey);
-            session.invalidate();
+            sessionKey.invalidateSession();
             iter.remove();
           }
         } catch (IllegalStateException e) {
           LOG.info("Already expired the session associated with {}.", sessionKey);
           iter.remove();
         }
+        return;
       }
     }
   }
@@ -319,41 +317,39 @@ public class UserTaskManager implements Closeable {
    * the User-Task-ID from the request header and check if there is any UserTask with the same User-Task-ID.
    * If no User-Task-ID is passed then the {@link HttpSession} is used to fetch the User-Task-ID.
    *
-   * @param httpServletRequest the HttpServletRequest to fetch the User-Task-ID and HTTPSession.
+   * @param handler the HttpServletRequest to fetch the User-Task-ID and HTTPSession.
    * @return UUID of the user tasks or null if user task doesn't exist.
    */
-  public UUID getUserTaskId(HttpServletRequest httpServletRequest) {
-    String userTaskIdString = httpServletRequest.getHeader(USER_TASK_HEADER_NAME);
-
+  public UUID getUserTaskId(CruiseControlRequestContext handler) {
+    String userTaskIdString = handler.getHeader(USER_TASK_HEADER_NAME);
     UUID userTaskId;
     if (userTaskIdString != null && !userTaskIdString.isEmpty()) {
       // valid user task id
       userTaskId = UUID.fromString(userTaskIdString);
     } else {
-      SessionKey sessionKey = new SessionKey(httpServletRequest);
+      SessionKey sessionKey = new SessionKey(handler);
       synchronized (_sessionKeyToUserTaskIdMap) {
         userTaskId = _sessionKeyToUserTaskIdMap.get(sessionKey);
       }
     }
-
     return userTaskId;
   }
 
-   synchronized void checkActiveUserTasks() {
+  synchronized void checkActiveUserTasks() {
     Iterator<Map.Entry<UUID, UserTaskInfo>> iter = _uuidToActiveUserTaskInfoMap.entrySet().iterator();
     while (iter.hasNext()) {
       Map.Entry<UUID, UserTaskInfo> entry = iter.next();
       if (entry.getValue().isUserTaskDoneExceptionally()) {
         LOG.warn("UserTask {} is completed with Exception and removed from active tasks list", entry.getKey());
         _uuidToCompletedUserTaskInfoMap.get(entry.getValue().endPoint().endpointType())
-                                       .put(entry.getKey(), entry.getValue().setState(TaskState.COMPLETED_WITH_ERROR));
+                .put(entry.getKey(), entry.getValue().setState(TaskState.COMPLETED_WITH_ERROR));
         iter.remove();
         _userTaskLoggerExecutor.submit(() -> entry.getValue().logOperation());
       } else if (entry.getValue().isUserTaskDone()) {
         LOG.info("UserTask {} is completed and removed from active tasks list", entry.getKey());
         _successfulRequestExecutionTimer.get(entry.getValue().endPoint()).update(entry.getValue().executionTimeNs(), TimeUnit.NANOSECONDS);
         _uuidToCompletedUserTaskInfoMap.get(entry.getValue().endPoint().endpointType())
-                                       .put(entry.getKey(), entry.getValue().setState(TaskState.COMPLETED));
+                .put(entry.getKey(), entry.getValue().setState(TaskState.COMPLETED));
         iter.remove();
         _userTaskLoggerExecutor.submit(() -> entry.getValue().logOperation());
       }
@@ -434,7 +430,7 @@ public class UserTaskManager implements Closeable {
       _inExecutionUserTaskInfo.setState(TaskState.COMPLETED);
     }
     _uuidToCompletedUserTaskInfoMap.get(_inExecutionUserTaskInfo.endPoint().endpointType())
-                                   .put(_inExecutionUserTaskInfo.userTaskId(), _inExecutionUserTaskInfo);
+            .put(_inExecutionUserTaskInfo.userTaskId(), _inExecutionUserTaskInfo);
     _inExecutionUserTaskInfo = null;
   }
 
@@ -442,20 +438,20 @@ public class UserTaskManager implements Closeable {
    * Get user task by user task id.
    *
    * @param userTaskId UUID to uniquely identify task.
-   * @param httpServletRequest the HttpServletRequest.
+   * @param handler the HttpServletRequest.
    * @return User task by user task id.
    */
-  public synchronized UserTaskInfo getUserTaskByUserTaskId(UUID userTaskId, HttpServletRequest httpServletRequest) {
+  public synchronized UserTaskInfo getUserTaskByUserTaskId(UUID userTaskId, CruiseControlRequestContext handler) {
     if (userTaskId == null) {
       return null;
     }
 
-    String requestUrl = httpServletRequestToString(httpServletRequest);
+    String requestUrl = httpServletRequestToString(handler);
     for (Map<UUID, UserTaskInfo> infoMap : _uuidToCompletedUserTaskInfoMap.values()) {
       if (infoMap.containsKey(userTaskId)) {
         UserTaskInfo userTaskInfo = infoMap.get(userTaskId);
         if (userTaskInfo.requestUrl().equals(requestUrl)
-            && hasTheSameHttpParameter(userTaskInfo.queryParams(), httpServletRequest.getParameterMap())) {
+                && hasTheSameHttpParameter(userTaskInfo.queryParams(), handler.getParameterMap())) {
           return userTaskInfo;
         }
       }
@@ -464,15 +460,15 @@ public class UserTaskManager implements Closeable {
     if (_uuidToActiveUserTaskInfoMap.containsKey(userTaskId)) {
       UserTaskInfo userTaskInfo = _uuidToActiveUserTaskInfoMap.get(userTaskId);
       if (userTaskInfo.requestUrl().equals(requestUrl)
-          && hasTheSameHttpParameter(userTaskInfo.queryParams(), httpServletRequest.getParameterMap())) {
+              && hasTheSameHttpParameter(userTaskInfo.queryParams(), handler.getParameterMap())) {
         return userTaskInfo;
       }
     }
 
     if (_inExecutionUserTaskInfo != null
-        && _inExecutionUserTaskInfo.userTaskId().equals(userTaskId)
-        && _inExecutionUserTaskInfo.requestUrl().equals(requestUrl)
-        && hasTheSameHttpParameter(_inExecutionUserTaskInfo.queryParams(), httpServletRequest.getParameterMap())) {
+            && _inExecutionUserTaskInfo.userTaskId().equals(userTaskId)
+            && _inExecutionUserTaskInfo.requestUrl().equals(requestUrl)
+            && hasTheSameHttpParameter(_inExecutionUserTaskInfo.queryParams(), handler.getParameterMap())) {
       return _inExecutionUserTaskInfo;
     }
 
@@ -483,24 +479,24 @@ public class UserTaskManager implements Closeable {
    * Common function for adding sync/async tasks
    * @param userTaskId UUID to uniquely identify task.
    * @param operation lambda function to provide result to UserTaskInfo object
-   * @param httpServletRequest http request associated with the task
+   * @param handler the request handler.
    * @param parameters Parsed parameters from http request, or null if parsing result is unavailable.
    * @return {@link UserTaskInfo} containing request detail and  {@link OperationFuture}
    */
   private synchronized UserTaskInfo insertFuturesByUserTaskId(UUID userTaskId,
                                                               Function<String, OperationFuture> operation,
-                                                              HttpServletRequest httpServletRequest,
+                                                              CruiseControlRequestContext handler,
                                                               CruiseControlParameters parameters) {
     if (_uuidToActiveUserTaskInfoMap.containsKey(userTaskId)) {
       _uuidToActiveUserTaskInfoMap.get(userTaskId).futures().add(operation.apply(userTaskId.toString()));
     } else {
       if (_uuidToActiveUserTaskInfoMap.size() >= _maxActiveUserTasks) {
         throw new RuntimeException("There are already " + _uuidToActiveUserTaskInfoMap.size()
-                                   + " active user tasks, which has reached the servlet capacity.");
+                + " active user tasks, which has reached the servlet capacity.");
       }
       UserTaskInfo userTaskInfo =
-          new UserTaskInfo(httpServletRequest, new ArrayList<>(Collections.singleton(operation.apply(userTaskId.toString()))),
-                           _time.milliseconds(), userTaskId, TaskState.ACTIVE, parameters);
+              new UserTaskInfo(handler, new ArrayList<>(Collections.singleton(operation.apply(userTaskId.toString()))),
+                      _time.milliseconds(), userTaskId, TaskState.ACTIVE, parameters);
       _uuidToActiveUserTaskInfoMap.put(userTaskId, userTaskInfo);
     }
     return _uuidToActiveUserTaskInfoMap.get(userTaskId);
@@ -515,7 +511,7 @@ public class UserTaskManager implements Closeable {
       allUserTasks.add(_inExecutionUserTaskInfo);
     }
     allUserTasks.addAll(_uuidToCompletedUserTaskInfoMap.values().stream().flatMap(map -> map.values().stream())
-                                                       .collect(Collectors.toList()));
+            .collect(Collectors.toList()));
     return allUserTasks;
   }
 
@@ -533,10 +529,10 @@ public class UserTaskManager implements Closeable {
       });
     }
     return "UserTaskManager{_sessionKeyToUserTaskIdMap=" + _sessionKeyToUserTaskIdMap
-           + ", _uuidToActiveUserTaskInfoMap=" + _uuidToActiveUserTaskInfoMap
-           + ", _inExecutionUserTask=" + (_inExecutionUserTaskInfo != null ? _inExecutionUserTaskInfo : "No-User-Initiated-Execution")
-           + ", _uuidToCompletedWithSuccessUserTaskInfoMap=" + uuidToCompletedWithSuccessUserTaskInfoMap
-           + ", _uuidToCompletedWithErrorUserTaskInfoMap=" + uuidToCompletedWithErrorUserTaskInfoMap + '}';
+            + ", _uuidToActiveUserTaskInfoMap=" + _uuidToActiveUserTaskInfoMap
+            + ", _inExecutionUserTask=" + (_inExecutionUserTaskInfo != null ? _inExecutionUserTaskInfo : "No-User-Initiated-Execution")
+            + ", _uuidToCompletedWithSuccessUserTaskInfoMap=" + uuidToCompletedWithSuccessUserTaskInfoMap
+            + ", _uuidToCompletedWithErrorUserTaskInfoMap=" + uuidToCompletedWithErrorUserTaskInfoMap + '}';
   }
 
   @Override
@@ -565,15 +561,23 @@ public class UserTaskManager implements Closeable {
   }
 
   public static class SessionKey {
-    private final HttpSession _httpSession;
+    private final CruiseControlHttpSession _session;
     private final String _requestUrl;
     private final Map<String, Set<String>> _queryParams;
 
-    SessionKey(HttpServletRequest httpServletRequest) {
-      _httpSession = httpServletRequest.getSession();
-      _requestUrl = httpServletRequestToString(httpServletRequest);
+    SessionKey(CruiseControlRequestContext handler) {
+      _session = handler.getSession();
+      _requestUrl = httpServletRequestToString(handler);
       _queryParams = new HashMap<>();
-      httpServletRequest.getParameterMap().forEach((k, v) -> _queryParams.put(k, new HashSet<>(Arrays.asList(v))));
+      handler.getParameterMap().forEach((k, v) -> _queryParams.put(k, new HashSet<>(Arrays.asList(v))));
+    }
+
+    protected void invalidateSession() {
+      _session.invalidateSession();
+    }
+
+    protected long getLastAccessed() {
+      return _session.getLastAccessed();
     }
 
     @Override
@@ -585,24 +589,24 @@ public class UserTaskManager implements Closeable {
         return false;
       }
       SessionKey that = (SessionKey) o;
-      return Objects.equals(_httpSession, that._httpSession)
-             && Objects.equals(_requestUrl, that._requestUrl)
-             && Objects.equals(_queryParams, that._queryParams);
+      return Objects.equals(_session, that._session)
+              && Objects.equals(_requestUrl, that._requestUrl)
+              && Objects.equals(_queryParams, that._queryParams);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(_httpSession, _requestUrl, _queryParams);
+      return Objects.hash(_session, _requestUrl, _queryParams);
     }
 
     @Override
     public String toString() {
-      return String.format("SessionKey{_httpSession=%s,_requestUrl=%s,_queryParams=%s}", _httpSession, _requestUrl,
-                           _queryParams);
+      return String.format("SessionKey{_handler=%s,_requestUrl=%s,_queryParams=%s}", _session, _requestUrl,
+              _queryParams);
     }
 
-    public HttpSession httpSession() {
-      return _httpSession;
+    public Object getSessionId() {
+      return _session.getSessionId();
     }
   }
 
@@ -643,7 +647,7 @@ public class UserTaskManager implements Closeable {
     private TaskState _state;
     private final CruiseControlParameters _parameters;
 
-    public UserTaskInfo(HttpServletRequest httpServletRequest,
+    public UserTaskInfo(CruiseControlRequestContext handler,
                         List<OperationFuture> futures,
                         long startMs,
                         UUID userTaskId,
@@ -653,12 +657,12 @@ public class UserTaskManager implements Closeable {
         throw new IllegalArgumentException("Invalid OperationFuture list " + futures + " is provided for UserTaskInfo.");
       }
       _futures = futures;
-      _requestUrl = httpServletRequestToString(httpServletRequest);
-      _clientIdentity = KafkaCruiseControlServletUtils.getClientIpAddress(httpServletRequest);
+      _requestUrl = httpServletRequestToString(handler);
+      _clientIdentity = KafkaCruiseControlServletUtils.getClientIpAddress(handler);
       _startMs = startMs;
       _userTaskId = userTaskId;
-      _queryParams = httpServletRequest.getParameterMap();
-      _endPoint = ParameterUtils.endPoint(httpServletRequest);
+      _queryParams = handler.getParameterMap();
+      _endPoint = ParameterUtils.endPoint(handler);
       _state = state;
       _parameters = parameters;
     }
@@ -824,4 +828,5 @@ public class UserTaskManager implements Closeable {
       return Collections.unmodifiableList(CACHED_VALUES);
     }
   }
+
 }

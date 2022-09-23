@@ -17,3 +17,5 @@ target/
 access.log
 *.egg
 /bin/
+.vertx
+**openapi.json

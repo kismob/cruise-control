@@ -7,24 +7,14 @@ package com.linkedin.kafka.cruisecontrol;
 import com.linkedin.kafka.cruisecontrol.analyzer.AnalyzerUtils;
 import com.linkedin.kafka.cruisecontrol.analyzer.goals.Goal;
 import com.linkedin.kafka.cruisecontrol.analyzer.goals.PreferredLeaderElectionGoal;
-import com.linkedin.kafka.cruisecontrol.metricsreporter.config.EnvConfigProvider;
 import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.AnalyzerConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.ExecutorConfig;
 import com.linkedin.kafka.cruisecontrol.exception.SamplingException;
 import com.linkedin.kafka.cruisecontrol.metricsreporter.CruiseControlMetricsUtils;
+import com.linkedin.kafka.cruisecontrol.metricsreporter.config.EnvConfigProvider;
 import com.linkedin.kafka.cruisecontrol.monitor.ModelCompletenessRequirements;
 import com.linkedin.kafka.cruisecontrol.monitor.task.LoadMonitorTaskRunner;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.time.Duration;
-import java.util.Collections;
-import java.util.NoSuchElementException;
-import java.util.Random;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import kafka.zk.KafkaZkClient;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
@@ -64,15 +54,26 @@ import org.apache.kafka.common.utils.SystemTime;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import javax.servlet.ServletException;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.time.Duration;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Properties;
+import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import scala.Option;
 
@@ -210,7 +211,7 @@ public final class KafkaCruiseControlUtils {
    * @return Cluster configs, or {@code null} if there is a timeout.
    */
   public static Config describeClusterConfigs(AdminClient adminClient, Duration timeout)
-      throws InterruptedException, ExecutionException {
+          throws InterruptedException, ExecutionException {
     Set<ConfigResource> resources = Collections.singleton(CLUSTER_CONFIG);
     KafkaFuture<Config> clusterConfigFuture = adminClient.describeConfigs(resources).values().get(CLUSTER_CONFIG);
 
@@ -235,8 +236,8 @@ public final class KafkaCruiseControlUtils {
   public static NewTopic wrapTopic(String topic, int partitionCount, short replicationFactor, long retentionMs) {
     if (partitionCount <= 0 || replicationFactor <= 0 || retentionMs <= 0) {
       throw new IllegalArgumentException(String.format("Partition count (%d), replication factor (%d), and retention ms (%d)"
-                                                       + " must be positive for the topic (%s).", partitionCount,
-                                                       replicationFactor, retentionMs, topic));
+                      + " must be positive for the topic (%s).", partitionCount,
+              replicationFactor, retentionMs, topic));
     }
 
     NewTopic newTopic = new NewTopic(topic, partitionCount, replicationFactor);
@@ -293,7 +294,7 @@ public final class KafkaCruiseControlUtils {
       maybeUpdateConfig(alterConfigOps, desiredConfig, topicConfig);
       if (!alterConfigOps.isEmpty()) {
         AlterConfigsResult alterConfigsResult
-            = adminClient.incrementalAlterConfigs(Collections.singletonMap(topicResource, alterConfigOps));
+                = adminClient.incrementalAlterConfigs(Collections.singletonMap(topicResource, alterConfigOps));
         try {
           alterConfigsResult.values().get(topicResource).get(CLIENT_REQUEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
@@ -321,7 +322,7 @@ public final class KafkaCruiseControlUtils {
     TopicDescription topicDescription;
     try {
       topicDescription = adminClient.describeTopics(Collections.singletonList(topicName)).values()
-                                    .get(topicName).get(CLIENT_REQUEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+              .get(topicName).get(CLIENT_REQUEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
       LOG.warn("Partition count increase check for topic {} failed due to failure to describe cluster.", topicName, e);
       return CompletionType.COMPLETED_WITH_ERROR;
@@ -330,13 +331,13 @@ public final class KafkaCruiseControlUtils {
     // Update partition count of topic if needed.
     if (topicDescription.partitions().size() < topicToAddPartitions.numPartitions()) {
       CreatePartitionsResult createPartitionsResult = adminClient.createPartitions(
-          Collections.singletonMap(topicName, NewPartitions.increaseTo(topicToAddPartitions.numPartitions())));
+              Collections.singletonMap(topicName, NewPartitions.increaseTo(topicToAddPartitions.numPartitions())));
 
       try {
         createPartitionsResult.values().get(topicName).get(CLIENT_REQUEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
       } catch (InterruptedException | ExecutionException | TimeoutException e) {
         LOG.warn("Partition count increase to {} for topic {} failed{}.", topicToAddPartitions.numPartitions(), topicName,
-                 (e.getCause() instanceof ReassignmentInProgressException) ? " due to ongoing reassignment" : "", e);
+                (e.getCause() instanceof ReassignmentInProgressException) ? " due to ongoing reassignment" : "", e);
         return CompletionType.COMPLETED_WITH_ERROR;
       }
     } else {
@@ -363,7 +364,7 @@ public final class KafkaCruiseControlUtils {
    */
   public static void sanityCheckOffsetFetch(Map<TopicPartition, Long> endOffsets,
                                             Map<TopicPartition, OffsetAndTimestamp> offsetsForTimes)
-      throws SamplingException {
+          throws SamplingException {
     Set<TopicPartition> failedToFetchOffsets = new HashSet<>();
     for (Map.Entry<TopicPartition, OffsetAndTimestamp> entry : offsetsForTimes.entrySet()) {
       if (entry.getValue() == null && endOffsets.get(entry.getKey()) == null) {
@@ -373,8 +374,8 @@ public final class KafkaCruiseControlUtils {
 
     if (!failedToFetchOffsets.isEmpty()) {
       throw new SamplingException(String.format("Consumer failed to fetch offsets for %s. Consider decreasing "
-                                                + "reconnect.backoff.ms to mitigate consumption failures"
-                                                + " due to transient network issues.", failedToFetchOffsets));
+              + "reconnect.backoff.ms to mitigate consumption failures"
+              + " due to transient network issues.", failedToFetchOffsets));
     }
   }
 
@@ -423,13 +424,13 @@ public final class KafkaCruiseControlUtils {
    */
   public static void sanityCheckGoals(List<String> goals, boolean skipHardGoalCheck, KafkaCruiseControlConfig config) {
     if (goals != null && !goals.isEmpty() && !skipHardGoalCheck
-        && !(goals.size() == 1 && goals.get(0).equals(PreferredLeaderElectionGoal.class.getSimpleName()))) {
+            && !(goals.size() == 1 && goals.get(0).equals(PreferredLeaderElectionGoal.class.getSimpleName()))) {
       sanityCheckNonExistingGoal(goals, AnalyzerUtils.getCaseInsensitiveGoalsByName(config));
       Set<String> hardGoals = hardGoals(config);
       if (!goals.containsAll(hardGoals)) {
         throw new IllegalArgumentException(String.format("Missing hard goals %s in the provided goals: %s. Add %s=true "
-                                                         + "parameter to ignore this sanity check.", hardGoals, goals,
-                                                         SKIP_HARD_GOAL_CHECK_PARAM));
+                        + "parameter to ignore this sanity check.", hardGoals, goals,
+                SKIP_HARD_GOAL_CHECK_PARAM));
       }
     }
   }
@@ -442,7 +443,7 @@ public final class KafkaCruiseControlUtils {
    */
   public static Set<String> hardGoals(KafkaCruiseControlConfig config) {
     return config.getList(AnalyzerConfig.HARD_GOALS_CONFIG).stream()
-                 .map(goalName -> goalName.substring(goalName.lastIndexOf(".") + 1)).collect(Collectors.toSet());
+            .map(goalName -> goalName.substring(goalName.lastIndexOf(".") + 1)).collect(Collectors.toSet());
   }
 
   /**
@@ -458,9 +459,9 @@ public final class KafkaCruiseControlUtils {
   public static void sanityCheckLoadMonitorReadiness(ModelCompletenessRequirements completenessRequirements,
                                                      LoadMonitorTaskRunner.LoadMonitorTaskRunnerState loadMonitorTaskRunnerState) {
     if (completenessRequirements.minRequiredNumWindows() > 0
-        && loadMonitorTaskRunnerState == LoadMonitorTaskRunner.LoadMonitorTaskRunnerState.LOADING) {
+            && loadMonitorTaskRunnerState == LoadMonitorTaskRunner.LoadMonitorTaskRunnerState.LOADING) {
       throw new IllegalStateException("Unable to generate proposal since load monitor is in "
-                                      + LoadMonitorTaskRunner.LoadMonitorTaskRunnerState.LOADING + " state.");
+              + LoadMonitorTaskRunner.LoadMonitorTaskRunnerState.LOADING + " state.");
     }
   }
 
@@ -543,11 +544,11 @@ public final class KafkaCruiseControlUtils {
     try {
       String zkClientName = String.format("%s-%s", metricGroup, metricType);
       Method kafka31PlusMet = KafkaZkClient.class.getMethod("apply", String.class, boolean.class, int.class, int.class, int.class,
-                                                            org.apache.kafka.common.utils.Time.class, String.class, ZKClientConfig.class,
-                                                            String.class, String.class, boolean.class);
+              org.apache.kafka.common.utils.Time.class, String.class, ZKClientConfig.class,
+              String.class, String.class, boolean.class);
       kafkaZkClient = (KafkaZkClient) kafka31PlusMet.invoke(null, connectString, zkSecurityEnabled, ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT,
-                                                            Integer.MAX_VALUE, new SystemTime(), zkClientName, zkClientConfig, metricGroup,
-                                                            metricType, false);
+              Integer.MAX_VALUE, new SystemTime(), zkClientName, zkClientConfig, metricGroup,
+              metricType, false);
     } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
       LOG.debug("Unable to find apply method in KafkaZkClient for Kafka 3.1+.", e);
     }
@@ -556,10 +557,10 @@ public final class KafkaCruiseControlUtils {
         Option<String> zkClientName = Option.apply(String.format("%s-%s", metricGroup, metricType));
         Option<ZKClientConfig> zkConfig = Option.apply(zkClientConfig);
         Method kafka31MinusMet = KafkaZkClient.class.getMethod("apply", String.class, boolean.class, int.class, int.class, int.class,
-                                                               org.apache.kafka.common.utils.Time.class, String.class, String.class, Option.class,
-                                                               Option.class);
+                org.apache.kafka.common.utils.Time.class, String.class, String.class, Option.class,
+                Option.class);
         kafkaZkClient = (KafkaZkClient) kafka31MinusMet.invoke(null, connectString, zkSecurityEnabled, ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT,
-                                                               Integer.MAX_VALUE, new SystemTime(), metricGroup, metricType, zkClientName, zkConfig);
+                Integer.MAX_VALUE, new SystemTime(), metricGroup, metricType, zkClientName, zkConfig);
       } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
         LOG.debug("Unable to find apply method in KafkaZkClient for Kafka 3.1-.", e);
       }
@@ -617,9 +618,9 @@ public final class KafkaCruiseControlUtils {
     // Add bootstrap server.
     List<String> bootstrapServers = configs.getList(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG);
     String bootstrapServersString = bootstrapServers.toString()
-                                                    .replace(" ", "")
-                                                    .replace("[", "")
-                                                    .replace("]", "");
+            .replace(" ", "")
+            .replace("[", "")
+            .replace("]", "");
     adminClientConfigs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServersString);
     adminClientConfigs.put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, configs.getInt(ExecutorConfig.ADMIN_CLIENT_REQUEST_TIMEOUT_MS_CONFIG));
     adminClientConfigs.put(AdminClientConfig.RECONNECT_BACKOFF_MS_CONFIG, configs.getLong(RECONNECT_BACKOFF_MS_CONFIG));
@@ -670,10 +671,10 @@ public final class KafkaCruiseControlUtils {
     MetadataResponseData responseData = new MetadataResponseData();
     responseData.setThrottleTimeMs(AbstractResponse.DEFAULT_THROTTLE_TIME);
     brokers.forEach(broker -> responseData.brokers().add(
-        new MetadataResponseData.MetadataResponseBroker().setNodeId(broker.id())
-                                                         .setHost(broker.host())
-                                                         .setPort(broker.port())
-                                                         .setRack(broker.rack())));
+            new MetadataResponseData.MetadataResponseBroker().setNodeId(broker.id())
+                    .setHost(broker.host())
+                    .setPort(broker.port())
+                    .setRack(broker.rack())));
 
     responseData.setClusterId(clusterId);
     responseData.setControllerId(controllerId);
@@ -730,20 +731,20 @@ public final class KafkaCruiseControlUtils {
   private static MetadataResponseData.MetadataResponseTopic prepareMetadataResponseTopic(MetadataResponse.TopicMetadata topicMetadata) {
     MetadataResponseData.MetadataResponseTopic metadataResponseTopic = new MetadataResponseData.MetadataResponseTopic();
     metadataResponseTopic.setErrorCode(topicMetadata.error().code())
-                         .setName(topicMetadata.topic())
-                         .setIsInternal(topicMetadata.isInternal())
-                         .setTopicAuthorizedOperations(topicMetadata.authorizedOperations());
+            .setName(topicMetadata.topic())
+            .setIsInternal(topicMetadata.isInternal())
+            .setTopicAuthorizedOperations(topicMetadata.authorizedOperations());
 
     for (MetadataResponse.PartitionMetadata partitionMetadata : topicMetadata.partitionMetadata()) {
       metadataResponseTopic.partitions().add(
-          new MetadataResponseData.MetadataResponsePartition()
-              .setErrorCode(partitionMetadata.error.code())
-              .setPartitionIndex(partitionMetadata.partition())
-              .setLeaderId(partitionMetadata.leaderId.orElse(MetadataResponse.NO_LEADER_ID))
-              .setLeaderEpoch(partitionMetadata.leaderEpoch.orElse(RecordBatch.NO_PARTITION_LEADER_EPOCH))
-              .setReplicaNodes(partitionMetadata.replicaIds)
-              .setIsrNodes(partitionMetadata.inSyncReplicaIds)
-              .setOfflineReplicas(partitionMetadata.offlineReplicaIds));
+              new MetadataResponseData.MetadataResponsePartition()
+                      .setErrorCode(partitionMetadata.error.code())
+                      .setPartitionIndex(partitionMetadata.partition())
+                      .setLeaderId(partitionMetadata.leaderId.orElse(MetadataResponse.NO_LEADER_ID))
+                      .setLeaderEpoch(partitionMetadata.leaderEpoch.orElse(RecordBatch.NO_PARTITION_LEADER_EPOCH))
+                      .setReplicaNodes(partitionMetadata.replicaIds)
+                      .setIsrNodes(partitionMetadata.inSyncReplicaIds)
+                      .setOfflineReplicas(partitionMetadata.offlineReplicaIds));
     }
 
     return metadataResponseTopic;
@@ -826,7 +827,7 @@ public final class KafkaCruiseControlUtils {
       throw new IllegalArgumentException("At least one goal must be provided to get the balancedness cost.");
     } else if (priorityWeight <= 0 || strictnessWeight <= 0) {
       throw new IllegalArgumentException(String.format("Balancedness weights must be positive (priority:%f, strictness:%f).",
-                                                       priorityWeight, strictnessWeight));
+              priorityWeight, strictnessWeight));
     }
     Map<String, Double> balancednessCostByGoal = new HashMap<>();
     // Step-1: Get weights.
@@ -900,6 +901,20 @@ public final class KafkaCruiseControlUtils {
     consumerProps.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, valueDeserializer.getName());
     consumerProps.setProperty(ConsumerConfig.RECONNECT_BACKOFF_MS_CONFIG, configs.get(RECONNECT_BACKOFF_MS_CONFIG).toString());
     return new KafkaConsumer<>(consumerProps);
+  }
+
+  /**
+   *
+   * Returns the right KafkaCruiseControl app, depending on the vertx.enabled property.
+   *
+   * @param config The configurations for Cruise Control.
+   * @param port The port for the REST API.
+   * @param hostname The hostname for the REST API.
+   * @return KafkaCruiseControlApp class depending on the vertx.enabled property.
+   * @throws ServletException
+   */
+  public static KafkaCruiseControlApp getCruiseControlApp(KafkaCruiseControlConfig config, Integer port, String hostname) throws ServletException {
+    return new KafkaCruiseControlServletApp(config, port, hostname);
   }
 
   public enum CompletionType {

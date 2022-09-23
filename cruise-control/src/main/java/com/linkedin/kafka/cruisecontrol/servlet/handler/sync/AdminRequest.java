@@ -67,13 +67,13 @@ public class AdminRequest extends AbstractSyncRequest {
     processUpdateConcurrencyAdjusterRequest(concurrencyAdjusterBefore, concurrencyAdjusterAfter, minIsrBasedConcurrencyAdjustmentRequest);
 
     return new AdminResult(selfHealingBefore,
-                           selfHealingAfter,
-                           ongoingConcurrencyChangeRequest,
-                           dropRecentBrokersRequest,
-                           concurrencyAdjusterBefore,
-                           concurrencyAdjusterAfter,
-                           minIsrBasedConcurrencyAdjustmentRequest.toString(),
-                           _kafkaCruiseControl.config());
+            selfHealingAfter,
+            ongoingConcurrencyChangeRequest,
+            dropRecentBrokersRequest,
+            concurrencyAdjusterBefore,
+            concurrencyAdjusterAfter,
+            minIsrBasedConcurrencyAdjustmentRequest.toString(),
+            _kafkaCruiseControl.config());
   }
 
   protected void processUpdateConcurrencyAdjusterRequest(Map<ConcurrencyType, Boolean> concurrencyAdjusterBefore,
@@ -87,7 +87,7 @@ public class AdminRequest extends AbstractSyncRequest {
       if (minIsrBasedConcurrencyAdjustment != null) {
         boolean oldValue = _kafkaCruiseControl.setConcurrencyAdjusterMinIsrCheck(minIsrBasedConcurrencyAdjustment);
         minIsrBasedConcurrencyAdjustmentRequest.append(String.format("MinISR-based concurrency adjustment is modified (before: %s after: %s).",
-                                                                     oldValue, minIsrBasedConcurrencyAdjustment));
+                oldValue, minIsrBasedConcurrencyAdjustment));
         LOG.info("MinISR-based concurrency adjustment is modified by user (before: {} after: {}).", oldValue, minIsrBasedConcurrencyAdjustment);
       }
 
@@ -187,15 +187,15 @@ public class AdminRequest extends AbstractSyncRequest {
       if (!_kafkaCruiseControl.dropRecentBrokers(brokersToDropFromRecentlyRemoved, true)) {
         Set<Integer> recentlyRemovedBrokers = _kafkaCruiseControl.recentBrokers(true);
         sb.append(String.format("None of the brokers to drop (%s) are in the recently removed broker set"
-                                + " (%s).%n", brokersToDropFromRecentlyRemoved, recentlyRemovedBrokers));
+                + " (%s).%n", brokersToDropFromRecentlyRemoved, recentlyRemovedBrokers));
         LOG.warn("None of the user-requested brokers to drop ({}) are in the recently removed broker set ({}).",
-                 brokersToDropFromRecentlyRemoved, recentlyRemovedBrokers);
+                brokersToDropFromRecentlyRemoved, recentlyRemovedBrokers);
       } else {
         Set<Integer> recentlyRemovedBrokers = _kafkaCruiseControl.recentBrokers(true);
         sb.append(String.format("Dropped recently removed brokers (requested: %s after-dropping: %s).%n",
-                                brokersToDropFromRecentlyRemoved, recentlyRemovedBrokers));
+                brokersToDropFromRecentlyRemoved, recentlyRemovedBrokers));
         LOG.info("Recently removed brokers are dropped by user (requested: {} after-dropping: {}).",
-                 brokersToDropFromRecentlyRemoved, recentlyRemovedBrokers);
+                brokersToDropFromRecentlyRemoved, recentlyRemovedBrokers);
       }
     }
 
@@ -204,15 +204,15 @@ public class AdminRequest extends AbstractSyncRequest {
       if (!_kafkaCruiseControl.dropRecentBrokers(brokersToDropFromRecentlyDemoted, false)) {
         Set<Integer> recentlyDemotedBrokers = _kafkaCruiseControl.recentBrokers(false);
         sb.append(String.format("None of the brokers to drop (%s) are in the recently demoted broker set"
-                                + " (%s).%n", brokersToDropFromRecentlyDemoted, recentlyDemotedBrokers));
+                + " (%s).%n", brokersToDropFromRecentlyDemoted, recentlyDemotedBrokers));
         LOG.warn("None of the user-requested brokers to drop ({}) are in the recently demoted broker set ({}).",
-                 brokersToDropFromRecentlyDemoted, recentlyDemotedBrokers);
+                brokersToDropFromRecentlyDemoted, recentlyDemotedBrokers);
       } else {
         Set<Integer> recentlyDemotedBrokers = _kafkaCruiseControl.recentBrokers(false);
         sb.append(String.format("Dropped recently demoted brokers (requested: %s after-dropping: %s).%n",
-                                brokersToDropFromRecentlyDemoted, recentlyDemotedBrokers));
+                brokersToDropFromRecentlyDemoted, recentlyDemotedBrokers));
         LOG.info("Recently demoted brokers are dropped by user (requested: {} after-dropping: {}).",
-                 brokersToDropFromRecentlyDemoted, recentlyDemotedBrokers);
+                brokersToDropFromRecentlyDemoted, recentlyDemotedBrokers);
       }
     }
 
@@ -232,8 +232,8 @@ public class AdminRequest extends AbstractSyncRequest {
   @Override
   public void configure(Map<String, ?> configs) {
     super.configure(configs);
-    _kafkaCruiseControl = _servlet.asyncKafkaCruiseControl();
+    _kafkaCruiseControl = getCruiseControlEndpoints().asyncKafkaCruiseControl();
     _parameters = (AdminParameters) validateNotNull(configs.get(ADMIN_PARAMETER_OBJECT_CONFIG),
-                                                    "Parameter configuration is missing from the request.");
+            "Parameter configuration is missing from the request.");
   }
 }
