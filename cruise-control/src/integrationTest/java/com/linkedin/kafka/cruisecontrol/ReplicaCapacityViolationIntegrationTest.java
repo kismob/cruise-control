@@ -131,7 +131,7 @@ public class ReplicaCapacityViolationIntegrationTest extends CruiseControlIntegr
   private void waitForReplicasCreatedOnNewBroker() {
     KafkaCruiseControlIntegrationTestUtils.waitForConditionMeet(() -> {
         String responseMessage = KafkaCruiseControlIntegrationTestUtils
-            .callCruiseControl(_app.serverUrl(), CRUISE_CONTROL_KAFKA_CLUSTER_STATE_ENDPOINT);
+            .callCruiseControl(_app.serverUrl(), CRUISE_CONTROL_KAFKA_CLUSTER_STATE_ENDPOINT, _vertxEnabled);
         Integer replicaCountOnBroker = JsonPath.read(responseMessage, "KafkaBrokerState.ReplicaCountByBrokerId."
           + BROKER_ID_TO_ADD);
         return replicaCountOnBroker > 0;
@@ -141,7 +141,7 @@ public class ReplicaCapacityViolationIntegrationTest extends CruiseControlIntegr
   private void waitForReplicaCapacityGoalViolation() {
     KafkaCruiseControlIntegrationTestUtils.waitForConditionMeet(() -> {
         String responseMessage = KafkaCruiseControlIntegrationTestUtils
-            .callCruiseControl(_app.serverUrl(), CRUISE_CONTROL_STATE_ENDPOINT);
+            .callCruiseControl(_app.serverUrl(), CRUISE_CONTROL_STATE_ENDPOINT, _vertxEnabled);
         JSONArray unfixableGoalsArray = JsonPath.read(responseMessage,
             "$.AnomalyDetectorState.recentGoalViolations[*].unfixableViolatedGoals.[*]");
         List<String> unfixableGoals = JsonPath.parse(unfixableGoalsArray, _gsonJsonConfig)

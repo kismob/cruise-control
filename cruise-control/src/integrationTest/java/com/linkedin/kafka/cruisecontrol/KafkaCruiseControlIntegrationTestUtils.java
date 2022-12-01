@@ -148,10 +148,11 @@ public final class KafkaCruiseControlIntegrationTestUtils {
    * @param path the path with get parameters
    * @return the response body as string
    */
-  public static String callCruiseControl(String serverUrl, String path) {
+  public static String callCruiseControl(String serverUrl, String path, boolean vertxEnabled) {
     try {
       HttpURLConnection stateEndpointConnection = (HttpURLConnection) new URI(serverUrl)
           .resolve(path.toLowerCase(Locale.ROOT)).toURL().openConnection();
+      System.out.println(stateEndpointConnection.getURL().toString() + "\t" + vertxEnabled);
       return IOUtils.toString(stateEndpointConnection.getInputStream(), Charset.defaultCharset());
     } catch (Exception e) {
       throw new RuntimeException(e);

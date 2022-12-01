@@ -147,7 +147,7 @@ public class DiskFailureIntegrationTest extends CruiseControlIntegrationTestHarn
   private void waitForOfflineReplicasFixed() {
     KafkaCruiseControlIntegrationTestUtils.waitForConditionMeet(() -> {
       String responseMessage = KafkaCruiseControlIntegrationTestUtils
-          .callCruiseControl(_app.serverUrl(), CRUISE_CONTROL_KAFKA_CLUSTER_STATE_ENDPOINT);
+          .callCruiseControl(_app.serverUrl(), CRUISE_CONTROL_KAFKA_CLUSTER_STATE_ENDPOINT, _vertxEnabled);
       Map<String, String> offlineReplicas = JsonPath.read(responseMessage,
             "$.KafkaBrokerState.OfflineReplicaCountByBrokerId");
       return offlineReplicas.isEmpty();
@@ -157,7 +157,7 @@ public class DiskFailureIntegrationTest extends CruiseControlIntegrationTestHarn
   private void waitForDiskFailureFixStarted() {
     KafkaCruiseControlIntegrationTestUtils.waitForConditionMeet(() -> {
       String responseMessage = KafkaCruiseControlIntegrationTestUtils
-          .callCruiseControl(_app.serverUrl(), CRUISE_CONTROL_STATE_ENDPOINT);
+          .callCruiseControl(_app.serverUrl(), CRUISE_CONTROL_STATE_ENDPOINT, _vertxEnabled);
       JSONArray diskFailuresArray = JsonPath.read(responseMessage,
             "$.AnomalyDetectorState.recentDiskFailures[?(@.status=='" + AnomalyState.Status.FIX_STARTED + "')].anomalyId");
       return diskFailuresArray.size() == 1;
@@ -167,7 +167,7 @@ public class DiskFailureIntegrationTest extends CruiseControlIntegrationTestHarn
   private void waitForOfflineReplicaDetection() {
     KafkaCruiseControlIntegrationTestUtils.waitForConditionMeet(() -> {
       String responseMessage = KafkaCruiseControlIntegrationTestUtils
-          .callCruiseControl(_app.serverUrl(), CRUISE_CONTROL_KAFKA_CLUSTER_STATE_ENDPOINT);
+          .callCruiseControl(_app.serverUrl(), CRUISE_CONTROL_KAFKA_CLUSTER_STATE_ENDPOINT, _vertxEnabled);
       Integer offlineReplicas = JsonPath.read(responseMessage,
           "$.KafkaBrokerState.OfflineReplicaCountByBrokerId." + BROKER_ID_TO_CAUSE_DISK_FAILURE);
       return offlineReplicas > 0;
@@ -177,7 +177,7 @@ public class DiskFailureIntegrationTest extends CruiseControlIntegrationTestHarn
   private void waitForProposal() {
     KafkaCruiseControlIntegrationTestUtils.waitForConditionMeet(() -> {
       String responseMessage = KafkaCruiseControlIntegrationTestUtils
-          .callCruiseControl(_app.serverUrl(), CRUISE_CONTROL_ANALYZER_STATE_ENDPOINT);
+          .callCruiseControl(_app.serverUrl(), CRUISE_CONTROL_ANALYZER_STATE_ENDPOINT, _vertxEnabled);
       return JsonPath.<Boolean>read(responseMessage, "AnalyzerState.isProposalReady");
     }, Duration.ofSeconds(200), Duration.ofSeconds(15), new AssertionError("No proposal available"));
   }
@@ -185,7 +185,7 @@ public class DiskFailureIntegrationTest extends CruiseControlIntegrationTestHarn
   private void waitForMetadataPropagates() {
     KafkaCruiseControlIntegrationTestUtils.waitForConditionMeet(() -> {
       String responseMessage = KafkaCruiseControlIntegrationTestUtils
-          .callCruiseControl(_app.serverUrl(), CRUISE_CONTROL_KAFKA_CLUSTER_STATE_ENDPOINT);
+          .callCruiseControl(_app.serverUrl(), CRUISE_CONTROL_KAFKA_CLUSTER_STATE_ENDPOINT, _vertxEnabled);
       JSONArray partitionLeadersArray = JsonPath.<JSONArray>read(responseMessage,
           "$.KafkaPartitionState.other[?(@.topic == '" + TOPIC0 + "')].leader");
       List<Integer> partitionLeaders = JsonPath.parse(partitionLeadersArray, _gsonJsonConfig)

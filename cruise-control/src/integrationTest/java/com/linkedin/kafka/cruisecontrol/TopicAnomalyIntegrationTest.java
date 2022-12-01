@@ -116,7 +116,7 @@ public class TopicAnomalyIntegrationTest extends CruiseControlIntegrationTestHar
   private void waitUntilNewReplicasAppearForTheTopic() {
     KafkaCruiseControlIntegrationTestUtils.waitForConditionMeet(() -> {
       String responseMessage = KafkaCruiseControlIntegrationTestUtils
-          .callCruiseControl(_app.serverUrl(), CRUISE_CONTROL_KAFKA_CLUSTER_STATE_ENDPOINT);
+          .callCruiseControl(_app.serverUrl(), CRUISE_CONTROL_KAFKA_CLUSTER_STATE_ENDPOINT, _vertxEnabled);
       JSONArray replicasArray = JsonPath.read(responseMessage,
           "$.KafkaPartitionState.other[?(@.topic == '" + TOPIC0 + "')].replicas");
       List<List<Integer>> partitionReplicas = JsonPath.parse(replicasArray, _gsonJsonConfig)
@@ -128,7 +128,7 @@ public class TopicAnomalyIntegrationTest extends CruiseControlIntegrationTestHar
   private void waitForMetadataPropagates() {
     KafkaCruiseControlIntegrationTestUtils.waitForConditionMeet(() -> {
         String responseMessage = KafkaCruiseControlIntegrationTestUtils
-            .callCruiseControl(_app.serverUrl(), CRUISE_CONTROL_KAFKA_CLUSTER_STATE_ENDPOINT);
+            .callCruiseControl(_app.serverUrl(), CRUISE_CONTROL_KAFKA_CLUSTER_STATE_ENDPOINT, _vertxEnabled);
         JSONArray partitionLeadersArray = JsonPath.read(responseMessage,
             "$.KafkaPartitionState.other[?(@.topic == '" + TOPIC0 + "')].leader");
         List<Integer> partitionLeaders = JsonPath.parse(partitionLeadersArray, _gsonJsonConfig)
