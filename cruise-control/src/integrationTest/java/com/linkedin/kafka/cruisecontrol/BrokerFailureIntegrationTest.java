@@ -146,6 +146,7 @@ public class BrokerFailureIntegrationTest extends CruiseControlIntegrationTestHa
     KafkaCruiseControlIntegrationTestUtils.waitForConditionMeet(() -> {
       String responseMessage = KafkaCruiseControlIntegrationTestUtils
           .callCruiseControl(_app.serverUrl(), CRUISE_CONTROL_STATE_ENDPOINT, _vertxEnabled);
+      LOG.info(responseMessage + "\n" + _vertxEnabled + "\n" + "\n");
       return JsonPath.<Boolean>read(responseMessage, "AnalyzerState.isProposalReady");
     }, 100, new AssertionError("No proposals were ready"));
   }

@@ -142,6 +142,7 @@ public class ReplicaCapacityViolationIntegrationTest extends CruiseControlIntegr
     KafkaCruiseControlIntegrationTestUtils.waitForConditionMeet(() -> {
         String responseMessage = KafkaCruiseControlIntegrationTestUtils
             .callCruiseControl(_app.serverUrl(), CRUISE_CONTROL_STATE_ENDPOINT, _vertxEnabled);
+      LOG.info(responseMessage + "\n" + _vertxEnabled + "\n" + "\n");
         JSONArray unfixableGoalsArray = JsonPath.read(responseMessage,
             "$.AnomalyDetectorState.recentGoalViolations[*].unfixableViolatedGoals.[*]");
         List<String> unfixableGoals = JsonPath.parse(unfixableGoalsArray, _gsonJsonConfig)

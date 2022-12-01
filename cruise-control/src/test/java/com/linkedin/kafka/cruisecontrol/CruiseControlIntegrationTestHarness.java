@@ -10,11 +10,15 @@ import com.linkedin.kafka.cruisecontrol.config.constants.MonitorConfig;
 import com.linkedin.kafka.cruisecontrol.metricsreporter.utils.CCEmbeddedBroker;
 import com.linkedin.kafka.cruisecontrol.metricsreporter.utils.CCKafkaIntegrationTestHarness;
 import com.linkedin.kafka.cruisecontrol.monitor.sampling.KafkaSampleStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 
 public abstract class CruiseControlIntegrationTestHarness extends CCKafkaIntegrationTestHarness {
+  protected static final Logger LOG = LoggerFactory.getLogger(CruiseControlIntegrationTestHarness.class);
 
   protected KafkaCruiseControlConfig _config;
   protected KafkaCruiseControlApp _app;

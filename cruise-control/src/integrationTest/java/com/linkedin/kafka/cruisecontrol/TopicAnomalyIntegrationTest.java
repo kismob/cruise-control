@@ -129,6 +129,7 @@ public class TopicAnomalyIntegrationTest extends CruiseControlIntegrationTestHar
     KafkaCruiseControlIntegrationTestUtils.waitForConditionMeet(() -> {
         String responseMessage = KafkaCruiseControlIntegrationTestUtils
             .callCruiseControl(_app.serverUrl(), CRUISE_CONTROL_KAFKA_CLUSTER_STATE_ENDPOINT, _vertxEnabled);
+        LOG.info(responseMessage + "\n" + _vertxEnabled + "\n" + "\n");
         JSONArray partitionLeadersArray = JsonPath.read(responseMessage,
             "$.KafkaPartitionState.other[?(@.topic == '" + TOPIC0 + "')].leader");
         List<Integer> partitionLeaders = JsonPath.parse(partitionLeadersArray, _gsonJsonConfig)
