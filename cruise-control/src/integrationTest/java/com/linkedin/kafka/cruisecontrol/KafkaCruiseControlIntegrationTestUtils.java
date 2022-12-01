@@ -146,6 +146,7 @@ public final class KafkaCruiseControlIntegrationTestUtils {
    * Call cruise control REST API 
    * @param serverUrl the server base URL
    * @param path the path with get parameters
+   * @param vertxEnabled is vertx enabled
    * @return the response body as string
    */
   public static String callCruiseControl(String serverUrl, String path, boolean vertxEnabled) {
