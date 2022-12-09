@@ -135,7 +135,7 @@ public class TopicAnomalyIntegrationTest extends CruiseControlIntegrationTestHar
         List<Integer> partitionLeaders = JsonPath.parse(partitionLeadersArray, _gsonJsonConfig)
             .read("$.*", new TypeRef<>() { });
         return partitionLeaders.size() == PARTITION_COUNT;
-    }, 180, new AssertionError("Topic partitions not found for " + TOPIC0));
+    }, 80, new AssertionError("Topic partitions not found for " + TOPIC0));
   }
 
 }
