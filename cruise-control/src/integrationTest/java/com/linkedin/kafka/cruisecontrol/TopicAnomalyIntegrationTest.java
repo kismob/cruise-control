@@ -54,7 +54,7 @@ public class TopicAnomalyIntegrationTest extends CruiseControlIntegrationTestHar
    */
   @Parameterized.Parameters
   public static Collection<Integer> data() {
-    Integer[] data = {190, 240, 290, 340, 390, 440, 490};
+    Integer[] data = {190 + 25, 240 + 25, 290 + 25, 340 + 25, 390 + 25, 440 + 25, 490 + 25};
     return Arrays.asList(data);
   }
 
