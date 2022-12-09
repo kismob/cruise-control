@@ -12,6 +12,8 @@ import com.linkedin.kafka.cruisecontrol.metricsreporter.utils.CCKafkaIntegration
 import com.linkedin.kafka.cruisecontrol.monitor.sampling.KafkaSampleStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.ServerSocket;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
@@ -46,7 +48,7 @@ public abstract class CruiseControlIntegrationTestHarness extends CCKafkaIntegra
     super.setUp();
     _brokers.values().forEach(CCEmbeddedBroker::startup);
     setupConfig();
-    _app = KafkaCruiseControlUtils.getCruiseControlApp(_config, ANY_PORT, LOCALHOST);
+    _app = KafkaCruiseControlUtils.getCruiseControlApp(_config, new ServerSocket(0).getLocalPort(), LOCALHOST);
     _app.start();
   }
 
