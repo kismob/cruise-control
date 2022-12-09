@@ -44,7 +44,7 @@ jobs:
       - restore_cache:
           key: dependency-cache-{{ checksum "build.gradle" }}
       - run:
-          command: ./gradlew --no-daemon -PmaxParallelForks=1 clean integrationTest
+          command: ./gradlew :cruise-control:integrationTest --tests "com.linkedin.kafka.cruisecontrol.ReplicaCapacityViolationIntegrationTest" --tests com.linkedin.kafka.cruisecontrol.TopicAnomalyIntegrationTest --info
       - run:
           # run static analysis tasks standalone to avoid OOME in CircleCI
           command: ./gradlew --max-workers=1 --no-daemon analyze

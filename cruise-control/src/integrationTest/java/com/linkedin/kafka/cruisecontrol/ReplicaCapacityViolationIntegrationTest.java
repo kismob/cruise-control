@@ -47,10 +47,11 @@ public class ReplicaCapacityViolationIntegrationTest extends CruiseControlIntegr
   private static final String CRUISE_CONTROL_STATE_ENDPOINT =
       KAFKA_CRUISE_CONTROL_BASE_PATH + STATE + "?substates=anomaly_detector&json=true";
   private final Configuration _gsonJsonConfig = KafkaCruiseControlIntegrationTestUtils.createJsonMappingConfig();
-  private final Boolean _vertxEnabled;
+  private final Boolean _vertxEnabled = true;
+  private final Integer _timeout;
 
-  public ReplicaCapacityViolationIntegrationTest(Boolean vertxEnabled) {
-    this._vertxEnabled = vertxEnabled;
+  public ReplicaCapacityViolationIntegrationTest(int timeout) {
+    this._timeout = timeout;
   }
 
   /**
@@ -58,8 +59,8 @@ public class ReplicaCapacityViolationIntegrationTest extends CruiseControlIntegr
    * @return Parameters for the test runs.
    */
   @Parameterized.Parameters
-  public static Collection<Boolean> data() {
-    Boolean[] data = {true, false};
+  public static Collection<Integer> data() {
+    Integer[] data = {190, 240, 290, 340, 390, 440, 490};
     return Arrays.asList(data);
   }
 
@@ -148,7 +149,7 @@ public class ReplicaCapacityViolationIntegrationTest extends CruiseControlIntegr
         List<String> unfixableGoals = JsonPath.parse(unfixableGoalsArray, _gsonJsonConfig)
             .read("$..*", new TypeRef<>() { });
         return unfixableGoals.contains("ReplicaCapacityGoal");
-    }, 100, new AssertionError("Replica capacity goal violation not found"));
+    }, _timeout, new AssertionError("Replica capacity goal violation not found"));
   }
 
 }
