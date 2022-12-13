@@ -129,7 +129,7 @@ public class ReplicaCapacityViolationIntegrationTest extends CruiseControlIntegr
         List<String> unfixableGoals = JsonPath.parse(unfixableGoalsArray, _gsonJsonConfig)
             .read("$..*", new TypeRef<>() { });
         return unfixableGoals.contains("ReplicaCapacityGoal");
-    }, 1000, new AssertionError("Replica capacity goal violation not found"));
+    }, 500, new AssertionError("Replica capacity goal violation not found"));
   }
 
 }
