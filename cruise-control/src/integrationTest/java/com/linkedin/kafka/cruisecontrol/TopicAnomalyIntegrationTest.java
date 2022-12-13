@@ -4,11 +4,6 @@
 
 package com.linkedin.kafka.cruisecontrol;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.StringJoiner;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.TypeRef;
@@ -25,14 +20,14 @@ import org.apache.kafka.clients.admin.NewTopic;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import java.util.List;
+import java.util.Map;
+import java.util.StringJoiner;
 
-import static com.linkedin.kafka.cruisecontrol.common.TestConstants.TOPIC0;
 import static com.linkedin.kafka.cruisecontrol.KafkaCruiseControlIntegrationTestUtils.KAFKA_CRUISE_CONTROL_BASE_PATH;
+import static com.linkedin.kafka.cruisecontrol.common.TestConstants.TOPIC0;
 import static com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint.KAFKA_CLUSTER_STATE;
 
-@RunWith(Parameterized.class)
 public class TopicAnomalyIntegrationTest extends CruiseControlIntegrationTestHarness {
 
   private static final int EXPECTED_REPLICA_COUNT = 3;
@@ -42,21 +37,6 @@ public class TopicAnomalyIntegrationTest extends CruiseControlIntegrationTestHar
       KAFKA_CRUISE_CONTROL_BASE_PATH + KAFKA_CLUSTER_STATE + "?verbose=true&json=true";
   private final Configuration _gsonJsonConfig = KafkaCruiseControlIntegrationTestUtils.createJsonMappingConfig();
   private final Boolean _vertxEnabled = true;
-  private final Integer _timeout;
-
-  public TopicAnomalyIntegrationTest(Integer timeout) {
-    this._timeout = timeout;
-  }
-
-  /**
-   * Sets different parameters for test runs.
-   * @return Parameters for the test runs.
-   */
-  @Parameterized.Parameters
-  public static Collection<Integer> data() {
-    Integer[] data = {190 + 25, 240 + 25, 290 + 25, 340 + 25, 390 + 25, 440 + 25, 490 + 25};
-    return Arrays.asList(data);
-  }
 
   @Before
   public void setup() throws Exception {
@@ -127,7 +107,6 @@ public class TopicAnomalyIntegrationTest extends CruiseControlIntegrationTestHar
   }
 
   private void waitForMetadataPropagates() {
-    System.out.println(_timeout);
     KafkaCruiseControlIntegrationTestUtils.waitForConditionMeet(() -> {
         String responseMessage = KafkaCruiseControlIntegrationTestUtils
             .callCruiseControl(_app.serverUrl(), CRUISE_CONTROL_KAFKA_CLUSTER_STATE_ENDPOINT, _vertxEnabled);
@@ -137,7 +116,7 @@ public class TopicAnomalyIntegrationTest extends CruiseControlIntegrationTestHar
         List<Integer> partitionLeaders = JsonPath.parse(partitionLeadersArray, _gsonJsonConfig)
             .read("$.*", new TypeRef<>() { });
         return partitionLeaders.size() == PARTITION_COUNT;
-    }, _timeout, new AssertionError("Topic partitions not found for " + TOPIC0));
+    }, 1000, new AssertionError("Topic partitions not found for " + TOPIC0));
   }
 
 }

@@ -12,7 +12,6 @@ import com.linkedin.kafka.cruisecontrol.metricsreporter.utils.CCKafkaIntegration
 import com.linkedin.kafka.cruisecontrol.monitor.sampling.KafkaSampleStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.net.ServerSocket;
 import java.util.Collections;
 import java.util.Map;

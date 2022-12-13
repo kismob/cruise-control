@@ -4,11 +4,6 @@
 
 package com.linkedin.kafka.cruisecontrol;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.StringJoiner;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.TypeRef;
@@ -28,15 +23,15 @@ import org.apache.kafka.clients.admin.NewTopic;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import java.util.List;
+import java.util.Map;
+import java.util.StringJoiner;
 
+import static com.linkedin.kafka.cruisecontrol.KafkaCruiseControlIntegrationTestUtils.KAFKA_CRUISE_CONTROL_BASE_PATH;
 import static com.linkedin.kafka.cruisecontrol.common.TestConstants.TOPIC0;
 import static com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint.KAFKA_CLUSTER_STATE;
 import static com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint.STATE;
-import static com.linkedin.kafka.cruisecontrol.KafkaCruiseControlIntegrationTestUtils.KAFKA_CRUISE_CONTROL_BASE_PATH;
 
-@RunWith(Parameterized.class)
 public class ReplicaCapacityViolationIntegrationTest extends CruiseControlIntegrationTestHarness {
 
   private static final int BROKER_ID_TO_ADD = 3;
@@ -48,21 +43,6 @@ public class ReplicaCapacityViolationIntegrationTest extends CruiseControlIntegr
       KAFKA_CRUISE_CONTROL_BASE_PATH + STATE + "?substates=anomaly_detector&json=true";
   private final Configuration _gsonJsonConfig = KafkaCruiseControlIntegrationTestUtils.createJsonMappingConfig();
   private final Boolean _vertxEnabled = true;
-  private final Integer _timeout;
-
-  public ReplicaCapacityViolationIntegrationTest(int timeout) {
-    this._timeout = timeout;
-  }
-
-  /**
-   * Sets different parameters for test runs.
-   * @return Parameters for the test runs.
-   */
-  @Parameterized.Parameters
-  public static Collection<Integer> data() {
-    Integer[] data = {190 + 25, 240 + 25, 290 + 25, 340 + 25, 390 + 25, 440 + 25, 490 + 25};
-    return Arrays.asList(data);
-  }
 
   @Before
   public void setup() throws Exception {
@@ -149,7 +129,7 @@ public class ReplicaCapacityViolationIntegrationTest extends CruiseControlIntegr
         List<String> unfixableGoals = JsonPath.parse(unfixableGoalsArray, _gsonJsonConfig)
             .read("$..*", new TypeRef<>() { });
         return unfixableGoals.contains("ReplicaCapacityGoal");
-    }, _timeout, new AssertionError("Replica capacity goal violation not found"));
+    }, 1000, new AssertionError("Replica capacity goal violation not found"));
   }
 
 }
